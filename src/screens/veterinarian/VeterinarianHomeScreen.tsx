@@ -1,0 +1,37 @@
+import { Button, StyleSheet, Text, View } from 'react-native';
+import { useAuth } from '../../contexts/AuthContext';
+
+export function VeterinarianHomeScreen() {
+    const { signOut } = useAuth();
+
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>Veterin�rio</Text>
+            <Text style={styles.description}>Perfil autenticado: VETERINARIO</Text>
+            <Button title="Sair" onPress={() => void signOut()} color="#2f7d6d" />
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        backgroundColor: '#f4f8f7',
+    },
+    title: {
+        marginBottom: 8,
+        color: '#173f37',
+        fontSize: 24,
+        fontWeight: '700',
+        textAlign: 'center',
+    },
+    description: {
+        marginBottom: 24,
+        color: '#4b625d',
+        fontSize: 16,
+        textAlign: 'center',
+    },
+});

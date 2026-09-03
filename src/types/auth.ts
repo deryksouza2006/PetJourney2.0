@@ -26,3 +26,8 @@ export interface AuthUser {
     tutorId: number | null;
     veterinarianId: number | null;
 }
+
+export interface AuthSession {
+    token: string;
+    user: AuthUser;
+}
