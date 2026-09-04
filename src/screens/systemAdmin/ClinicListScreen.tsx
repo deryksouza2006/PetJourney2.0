@@ -1,12 +1,14 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
     ActivityIndicator,
+    Alert,
     Button,
     FlatList,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
+import { useDeleteClinic } from '../../hooks/clinics/useDeleteClinic';
 import { useClinics } from '../../hooks/clinics/useClinics';
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
 import { Clinic } from '../../types/clinic';
@@ -18,6 +20,37 @@ type Props = NativeStackScreenProps<
 
 export function ClinicListScreen({ navigation }: Props) {
     const { data, isPending, isError } = useClinics();
+    const deleteClinic = useDeleteClinic();
+
+    async function deleteSelectedClinic(id: number): Promise<void> {
+        try {
+            await deleteClinic.mutateAsync(id);
+        } catch {
+            Alert.alert(
+                'N\u00e3o foi poss\u00edvel excluir',
+                'A cl\u00ednica n\u00e3o p\u00f4de ser exclu\u00edda. Ela pode possuir dados vinculados.',
+            );
+        }
+    }
+
+    function confirmDelete(clinic: Clinic): void {
+        if (deleteClinic.isPending) {
+            return;
+        }
+
+        Alert.alert(
+            `Excluir ${clinic.name}?`,
+            'Essa a\u00e7\u00e3o n\u00e3o pode ser desfeita.',
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                    text: 'Excluir',
+                    style: 'destructive',
+                    onPress: () => void deleteSelectedClinic(clinic.id),
+                },
+            ],
+        );
+    }
 
     function renderClinic({ item }: { item: Clinic }) {
         return (
@@ -27,6 +60,26 @@ export function ClinicListScreen({ navigation }: Props) {
                 <Text style={styles.detail}>Telefone: {item.phone ?? 'N\u00e3o informado'}</Text>
                 <Text style={styles.detail}>E-mail: {item.email ?? 'N\u00e3o informado'}</Text>
                 <Text style={styles.detail}>Endere\u00e7o: {item.address ?? 'N\u00e3o informado'}</Text>
+                <View style={styles.cardActions}>
+                    <Button
+                        title="Editar"
+                        onPress={() =>
+                            navigation.navigate('EditClinic', { clinic: item })
+                        }
+                        color="#2f7d6d"
+                    />
+                    <Button
+                        title={
+                            deleteClinic.isPending &&
+                            deleteClinic.variables === item.id
+                                ? 'Excluindo...'
+                                : 'Excluir'
+                        }
+                        onPress={() => confirmDelete(item)}
+                        disabled={deleteClinic.isPending}
+                        color="#b42318"
+                    />
+                </View>
             </View>
         );
     }
@@ -106,6 +159,12 @@ const styles = StyleSheet.create({
         marginBottom: 4,
         color: '#4b625d',
         fontSize: 15,
+    },
+    cardActions: {
+        flexDirection: 'row',
+        gap: 8,
+        marginTop: 8,
+        alignSelf: 'flex-start',
     },
     message: {
         color: '#4b625d',

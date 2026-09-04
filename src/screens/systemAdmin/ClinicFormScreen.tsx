@@ -10,22 +10,27 @@ import {
     TextInput,
 } from 'react-native';
 import { useCreateClinic } from '../../hooks/clinics/useCreateClinic';
+import { useUpdateClinic } from '../../hooks/clinics/useUpdateClinic';
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
 import { ClinicRequest } from '../../types/clinic';
 
-type Props = NativeStackScreenProps<
-    SystemAdminStackParamList,
-    'CreateClinic'
->;
+type Props =
+    | NativeStackScreenProps<SystemAdminStackParamList, 'CreateClinic'>
+    | NativeStackScreenProps<SystemAdminStackParamList, 'EditClinic'>;
 
-export function ClinicFormScreen({ navigation }: Props) {
+export function ClinicFormScreen(props: Props) {
+    const { navigation, route } = props;
+    const clinic = route.name === 'EditClinic' ? route.params.clinic : undefined;
+    const isEditing = clinic !== undefined;
     const createClinic = useCreateClinic();
-    const [name, setName] = useState('');
-    const [cnpj, setCnpj] = useState('');
-    const [phone, setPhone] = useState('');
-    const [email, setEmail] = useState('');
-    const [address, setAddress] = useState('');
+    const updateClinic = useUpdateClinic();
+    const [name, setName] = useState(clinic?.name ?? '');
+    const [cnpj, setCnpj] = useState(clinic?.cnpj ?? '');
+    const [phone, setPhone] = useState(clinic?.phone ?? '');
+    const [email, setEmail] = useState(clinic?.email ?? '');
+    const [address, setAddress] = useState(clinic?.address ?? '');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const isPending = createClinic.isPending || updateClinic.isPending;
 
     async function handleSubmit(): Promise<void> {
         const trimmedName = name.trim();
@@ -56,15 +61,24 @@ export function ClinicFormScreen({ navigation }: Props) {
         setErrorMessage(null);
 
         try {
-            await createClinic.mutateAsync(request);
+            if (clinic) {
+                await updateClinic.mutateAsync({ id: clinic.id, request });
+            } else {
+                await createClinic.mutateAsync(request);
+            }
+
             Alert.alert(
-                'Cadastro conclu\u00eddo',
-                'Cl\u00ednica cadastrada com sucesso.',
+                isEditing ? 'Altera\u00e7\u00f5es salvas' : 'Cadastro conclu\u00eddo',
+                isEditing
+                    ? 'Cl\u00ednica atualizada com sucesso.'
+                    : 'Cl\u00ednica cadastrada com sucesso.',
                 [{ text: 'OK', onPress: () => navigation.goBack() }],
             );
         } catch {
             setErrorMessage(
-                'N\u00e3o foi poss\u00edvel cadastrar a cl\u00ednica. Verifique os dados.',
+                isEditing
+                    ? 'N\u00e3o foi poss\u00edvel atualizar a cl\u00ednica. Verifique os dados.'
+                    : 'N\u00e3o foi poss\u00edvel cadastrar a cl\u00ednica. Verifique os dados.',
             );
         }
     }
@@ -75,14 +89,16 @@ export function ClinicFormScreen({ navigation }: Props) {
             contentContainerStyle={styles.content}
             keyboardShouldPersistTaps="handled"
         >
-            <Text style={styles.title}>Cadastrar Cl\u00ednica</Text>
+            <Text style={styles.title}>
+                {isEditing ? 'Editar Cl\u00ednica' : 'Cadastrar Cl\u00ednica'}
+            </Text>
 
             <TextInput
                 style={styles.input}
                 value={name}
                 onChangeText={setName}
                 placeholder="Nome"
-                editable={!createClinic.isPending}
+                editable={!isPending}
             />
             <TextInput
                 style={styles.input}
@@ -90,7 +106,7 @@ export function ClinicFormScreen({ navigation }: Props) {
                 onChangeText={setCnpj}
                 placeholder="CNPJ"
                 keyboardType="numeric"
-                editable={!createClinic.isPending}
+                editable={!isPending}
             />
             <TextInput
                 style={styles.input}
@@ -98,7 +114,7 @@ export function ClinicFormScreen({ navigation }: Props) {
                 onChangeText={setPhone}
                 placeholder="Telefone"
                 keyboardType="phone-pad"
-                editable={!createClinic.isPending}
+                editable={!isPending}
             />
             <TextInput
                 style={styles.input}
@@ -108,14 +124,14 @@ export function ClinicFormScreen({ navigation }: Props) {
                 autoCapitalize="none"
                 autoCorrect={false}
                 keyboardType="email-address"
-                editable={!createClinic.isPending}
+                editable={!isPending}
             />
             <TextInput
                 style={styles.input}
                 value={address}
                 onChangeText={setAddress}
                 placeholder="Endere\u00e7o"
-                editable={!createClinic.isPending}
+                editable={!isPending}
             />
 
             {errorMessage ? (
@@ -126,15 +142,17 @@ export function ClinicFormScreen({ navigation }: Props) {
                 style={({ pressed }) => [
                     styles.button,
                     pressed && styles.buttonPressed,
-                    createClinic.isPending && styles.buttonDisabled,
+                    isPending && styles.buttonDisabled,
                 ]}
                 onPress={() => void handleSubmit()}
-                disabled={createClinic.isPending}
+                disabled={isPending}
             >
-                {createClinic.isPending ? (
+                {isPending ? (
                     <ActivityIndicator color="#ffffff" />
                 ) : (
-                    <Text style={styles.buttonText}>Cadastrar</Text>
+                    <Text style={styles.buttonText}>
+                        {isEditing ? 'Salvar altera\u00e7\u00f5es' : 'Cadastrar'}
+                    </Text>
                 )}
             </Pressable>
         </ScrollView>
