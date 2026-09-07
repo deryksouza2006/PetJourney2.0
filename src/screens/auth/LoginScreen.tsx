@@ -1,3 +1,4 @@
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import {
     ActivityIndicator,
@@ -8,8 +9,11 @@ import {
     View,
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { AuthStackParamList } from '../../navigation/AuthNavigator';
 
-export function LoginScreen() {
+type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+
+export function LoginScreen({ navigation }: Props) {
     const { signIn } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -83,6 +87,16 @@ export function LoginScreen() {
                         <Text style={styles.buttonText}>Entrar</Text>
                     )}
                 </Pressable>
+
+                <Pressable
+                    style={styles.firstAccessButton}
+                    onPress={() => navigation.navigate('FirstAccess')}
+                    disabled={isSubmitting}
+                >
+                    <Text style={styles.firstAccessButtonText}>
+                        Primeiro acesso
+                    </Text>
+                </Pressable>
             </View>
         </View>
     );
@@ -145,5 +159,15 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         fontSize: 16,
         fontWeight: '700',
+    },
+    firstAccessButton: {
+        marginTop: 16,
+        padding: 8,
+        alignItems: 'center',
+    },
+    firstAccessButtonText: {
+        color: '#2f7d6d',
+        fontSize: 16,
+        fontWeight: '600',
     },
 });

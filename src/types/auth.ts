@@ -9,6 +9,12 @@ export interface LoginRequest {
     password: string;
 }
 
+export interface FirstAccessRequest {
+    username: string;
+    code: string;
+    password: string;
+}
+
 export interface LoginResponse {
     token: string;
     role: UserRole;

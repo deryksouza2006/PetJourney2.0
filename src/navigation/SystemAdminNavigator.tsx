@@ -1,4 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { ClinicAdminFormScreen } from '../screens/systemAdmin/ClinicAdminFormScreen';
 import { ClinicFormScreen } from '../screens/systemAdmin/ClinicFormScreen';
 import { ClinicListScreen } from '../screens/systemAdmin/ClinicListScreen';
 import { SystemAdminHomeScreen } from '../screens/systemAdmin/SystemAdminHomeScreen';
@@ -9,6 +10,7 @@ export type SystemAdminStackParamList = {
     Clinics: undefined;
     CreateClinic: undefined;
     EditClinic: { clinic: Clinic };
+    CreateClinicAdmin: { clinicId: number; clinicName: string };
 };
 
 const Stack = createNativeStackNavigator<SystemAdminStackParamList>();
@@ -35,6 +37,11 @@ export function SystemAdminNavigator() {
                 name="EditClinic"
                 component={ClinicFormScreen}
                 options={{ title: 'Editar Cl\u00ednica' }}
+            />
+            <Stack.Screen
+                name="CreateClinicAdmin"
+                component={ClinicAdminFormScreen}
+                options={{ title: 'Criar administrador' }}
             />
         </Stack.Navigator>
     );

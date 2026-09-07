@@ -1,4 +1,3 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
     ActivityIndicator,
     Alert,
@@ -8,85 +7,88 @@ import {
     Text,
     View,
 } from 'react-native';
-import { useDeleteClinic } from '../../hooks/clinics/useDeleteClinic';
-import { useClinics } from '../../hooks/clinics/useClinics';
-import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
-import { Clinic } from '../../types/clinic';
+import { useDeleteVeterinarian } from '../../hooks/veterinarians/useDeleteVeterinarian';
+import { useVeterinarians } from '../../hooks/veterinarians/useVeterinarians';
+import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
+import { Veterinarian } from '../../types/veterinarian';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 type Props = NativeStackScreenProps<
-    SystemAdminStackParamList,
-    'Clinics'
+    ClinicAdminStackParamList,
+    'Veterinarians'
 >;
 
-export function ClinicListScreen({ navigation }: Props) {
-    const { data, isPending, isError } = useClinics();
-    const deleteClinic = useDeleteClinic();
+export function VeterinarianListScreen({ navigation }: Props) {
+    const { data, isPending, isError } = useVeterinarians();
+    const deleteVeterinarian = useDeleteVeterinarian();
 
-    async function deleteSelectedClinic(id: number): Promise<void> {
+    async function deleteSelectedVeterinarian(id: number): Promise<void> {
         try {
-            await deleteClinic.mutateAsync(id);
+            await deleteVeterinarian.mutateAsync(id);
         } catch {
             Alert.alert(
                 'N\u00e3o foi poss\u00edvel excluir',
-                'A cl\u00ednica n\u00e3o p\u00f4de ser exclu\u00edda. Ela pode possuir dados vinculados.',
+                'O veterin\u00e1rio n\u00e3o p\u00f4de ser exclu\u00eddo. Ele pode possuir dados vinculados.',
             );
         }
     }
 
-    function confirmDelete(clinic: Clinic): void {
-        if (deleteClinic.isPending) {
+    function confirmDelete(veterinarian: Veterinarian): void {
+        if (deleteVeterinarian.isPending) {
             return;
         }
 
         Alert.alert(
-            `Excluir ${clinic.name}?`,
+            `Excluir ${veterinarian.name}?`,
             'Essa a\u00e7\u00e3o n\u00e3o pode ser desfeita.',
             [
                 { text: 'Cancelar', style: 'cancel' },
                 {
                     text: 'Excluir',
                     style: 'destructive',
-                    onPress: () => void deleteSelectedClinic(clinic.id),
+                    onPress: () =>
+                        void deleteSelectedVeterinarian(veterinarian.id),
                 },
             ],
         );
     }
 
-    function renderClinic({ item }: { item: Clinic }) {
+    function renderVeterinarian({ item }: { item: Veterinarian }) {
         return (
             <View style={styles.card}>
-                <Text style={styles.clinicName}>{item.name}</Text>
-                <Text style={styles.detail}>CNPJ: {item.cnpj}</Text>
-                <Text style={styles.detail}>Telefone: {item.phone ?? 'N\u00e3o informado'}</Text>
-                <Text style={styles.detail}>E-mail: {item.email ?? 'N\u00e3o informado'}</Text>
-                <Text style={styles.detail}>Endere\u00e7o: {item.address ?? 'N\u00e3o informado'}</Text>
+                <Text style={styles.veterinarianName}>{item.name}</Text>
+                <Text style={styles.detail}>CRMV: {item.crmv}</Text>
+                <Text style={styles.detail}>
+                    Telefone: {item.phone ?? 'N\u00e3o informado'}
+                </Text>
+                <Text style={styles.detail}>
+                    E-mail: {item.email ?? 'N\u00e3o informado'}
+                </Text>
+                <Text style={styles.detail}>
+                    Especialidade: {item.specialty ?? 'N\u00e3o informada'}
+                </Text>
+                <Text style={styles.detail}>
+                    Cl\u00ednica: {item.clinicName ?? 'N\u00e3o informada'}
+                </Text>
                 <View style={styles.cardActions}>
                     <Button
-                        title="Criar administrador"
+                        title="Editar"
                         onPress={() =>
-                            navigation.navigate('CreateClinicAdmin', {
-                                clinicId: item.id,
-                                clinicName: item.name,
+                            navigation.navigate('EditVeterinarian', {
+                                veterinarian: item,
                             })
                         }
                         color="#2f7d6d"
                     />
                     <Button
-                        title="Editar"
-                        onPress={() =>
-                            navigation.navigate('EditClinic', { clinic: item })
-                        }
-                        color="#2f7d6d"
-                    />
-                    <Button
                         title={
-                            deleteClinic.isPending &&
-                            deleteClinic.variables === item.id
+                            deleteVeterinarian.isPending &&
+                            deleteVeterinarian.variables === item.id
                                 ? 'Excluindo...'
                                 : 'Excluir'
                         }
                         onPress={() => confirmDelete(item)}
-                        disabled={deleteClinic.isPending}
+                        disabled={deleteVeterinarian.isPending}
                         color="#b42318"
                     />
                 </View>
@@ -96,11 +98,11 @@ export function ClinicListScreen({ navigation }: Props) {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Cl\u00ednicas</Text>
+            <Text style={styles.title}>Veterin\u00e1rios</Text>
             <View style={styles.action}>
                 <Button
-                    title="Cadastrar cl\u00ednica"
-                    onPress={() => navigation.navigate('CreateClinic')}
+                    title="Cadastrar veterin\u00e1rio"
+                    onPress={() => navigation.navigate('CreateVeterinarian')}
                     color="#2f7d6d"
                 />
             </View>
@@ -109,19 +111,19 @@ export function ClinicListScreen({ navigation }: Props) {
                 <ActivityIndicator size="large" color="#2f7d6d" />
             ) : isError ? (
                 <Text style={styles.message}>
-                    N\u00e3o foi poss\u00edvel carregar as cl\u00ednicas.
+                    N\u00e3o foi poss\u00edvel carregar os veterin\u00e1rios.
                 </Text>
             ) : (
                 <FlatList
                     data={data.content}
-                    keyExtractor={(clinic) => clinic.id.toString()}
-                    renderItem={renderClinic}
+                    keyExtractor={(veterinarian) => veterinarian.id.toString()}
+                    renderItem={renderVeterinarian}
                     contentContainerStyle={
                         data.content.length === 0 ? styles.emptyList : styles.list
                     }
                     ListEmptyComponent={
                         <Text style={styles.message}>
-                            Nenhuma cl\u00ednica encontrada.
+                            Nenhum veterin\u00e1rio encontrado.
                         </Text>
                     }
                 />
@@ -159,7 +161,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         backgroundColor: '#ffffff',
     },
-    clinicName: {
+    veterinarianName: {
         marginBottom: 8,
         color: '#173f37',
         fontSize: 18,
@@ -172,7 +174,6 @@ const styles = StyleSheet.create({
     },
     cardActions: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
         gap: 8,
         marginTop: 8,
         alignSelf: 'flex-start',
