@@ -1,22 +1,31 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
+    KeyboardAvoidingView,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
     Text,
     TextInput,
+    View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppButton } from '../../components/AppButton';
+import { AppInput } from '../../components/AppInput';
+import { BrandMark } from '../../components/BrandMark';
 import { useFirstAccess } from '../../hooks/auth/useFirstAccess';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { FirstAccessRequest } from '../../types/auth';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'FirstAccess'>;
 
 export function FirstAccessScreen({ navigation }: Props) {
     const firstAccess = useFirstAccess();
+    const codeInputRef = useRef<TextInput>(null);
+    const passwordInputRef = useRef<TextInput>(null);
     const [email, setEmail] = useState('');
     const [code, setCode] = useState('');
     const [password, setPassword] = useState('');
@@ -27,7 +36,7 @@ export function FirstAccessScreen({ navigation }: Props) {
         const trimmedCode = code.trim();
 
         if (!username || !trimmedCode || !password.trim()) {
-            setErrorMessage('E-mail, c\u00f3digo e nova senha s\u00e3o obrigat\u00f3rios.');
+            setErrorMessage('E-mail, código e nova senha são obrigatórios.');
             return;
         }
 
@@ -48,150 +57,173 @@ export function FirstAccessScreen({ navigation }: Props) {
             await firstAccess.mutateAsync(request);
             Alert.alert(
                 'Conta ativada',
-                'Primeiro acesso conclu\u00eddo. Entre com seu e-mail e a nova senha.',
+                'Primeiro acesso concluído. Entre com seu e-mail e a nova senha.',
                 [{ text: 'OK', onPress: () => navigation.goBack() }],
             );
         } catch {
             setErrorMessage(
-                'N\u00e3o foi poss\u00edvel ativar a conta. Verifique o e-mail, o c\u00f3digo e a nova senha.',
+                'Não foi possível ativar a conta. Verifique o e-mail, o código e a nova senha.',
             );
         }
     }
 
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-        >
-            <Text style={styles.title}>Primeiro acesso</Text>
-            <Text style={styles.subtitle}>
-                Informe o c\u00f3digo tempor\u00e1rio e defina sua senha.
-            </Text>
-
-            <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="E-mail"
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                editable={!firstAccess.isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={code}
-                onChangeText={setCode}
-                placeholder="C\u00f3digo tempor\u00e1rio"
-                keyboardType="numeric"
-                editable={!firstAccess.isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Nova senha"
-                secureTextEntry
-                editable={!firstAccess.isPending}
-                onSubmitEditing={() => void handleActivate()}
-            />
-
-            {errorMessage ? (
-                <Text style={styles.error}>{errorMessage}</Text>
-            ) : null}
-
-            <Pressable
-                style={({ pressed }) => [
-                    styles.button,
-                    pressed && styles.buttonPressed,
-                    firstAccess.isPending && styles.buttonDisabled,
-                ]}
-                onPress={() => void handleActivate()}
-                disabled={firstAccess.isPending}
+        <SafeAreaView style={styles.safeArea}>
+            <KeyboardAvoidingView
+                style={styles.keyboardView}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-                {firstAccess.isPending ? (
-                    <ActivityIndicator color="#ffffff" />
-                ) : (
-                    <Text style={styles.buttonText}>Ativar conta</Text>
-                )}
-            </Pressable>
+                <ScrollView
+                    contentContainerStyle={styles.content}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.wrapper}>
+                        <View style={styles.brandArea}>
+                            <BrandMark />
+                            <Text style={styles.welcome}>Ative seu acesso ao PetJourney.</Text>
+                            <Text style={styles.introduction}>
+                                Use o código temporário recebido e crie uma senha segura.
+                            </Text>
+                        </View>
 
-            <Pressable
-                style={styles.backButton}
-                onPress={() => navigation.goBack()}
-                disabled={firstAccess.isPending}
-            >
-                <Text style={styles.backButtonText}>Voltar para o login</Text>
-            </Pressable>
-        </ScrollView>
+                        <View style={styles.card}>
+                            <Text style={styles.title}>Primeiro acesso</Text>
+                            <Text style={styles.subtitle}>
+                                Confirme seus dados para ativar sua conta.
+                            </Text>
+
+                            <View style={styles.fields}>
+                                <AppInput
+                                    label="E-mail"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    placeholder="nome@exemplo.com"
+                                    autoCapitalize="none"
+                                    autoComplete="email"
+                                    autoCorrect={false}
+                                    keyboardType="email-address"
+                                    returnKeyType="next"
+                                    editable={!firstAccess.isPending}
+                                    onSubmitEditing={() => codeInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={codeInputRef}
+                                    label="Código de primeiro acesso"
+                                    value={code}
+                                    onChangeText={setCode}
+                                    placeholder="Digite o código recebido"
+                                    keyboardType="numeric"
+                                    returnKeyType="next"
+                                    editable={!firstAccess.isPending}
+                                    onSubmitEditing={() => passwordInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={passwordInputRef}
+                                    label="Nova senha"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    placeholder="Mínimo de 6 caracteres"
+                                    autoCapitalize="none"
+                                    autoComplete="new-password"
+                                    secureTextEntry
+                                    returnKeyType="done"
+                                    editable={!firstAccess.isPending}
+                                    onSubmitEditing={() => void handleActivate()}
+                                />
+                            </View>
+
+                            {errorMessage ? (
+                                <View style={styles.errorContainer} accessibilityLiveRegion="polite">
+                                    <Text style={styles.error}>{errorMessage}</Text>
+                                </View>
+                            ) : null}
+
+                            <AppButton
+                                label="Ativar conta"
+                                onPress={() => void handleActivate()}
+                                loading={firstAccess.isPending}
+                            />
+
+                            <View style={styles.backArea}>
+                                <Text style={styles.backPrompt}>Já ativou sua conta?</Text>
+                                <Pressable
+                                    accessibilityRole="button"
+                                    style={({ pressed }) => [
+                                        styles.backButton,
+                                        pressed && styles.backButtonPressed,
+                                    ]}
+                                    onPress={() => navigation.goBack()}
+                                    disabled={firstAccess.isPending}
+                                >
+                                    <Text style={styles.backButtonText}>Voltar para o login</Text>
+                                </Pressable>
+                            </View>
+                        </View>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f4f8f7',
-    },
+    safeArea: { flex: 1, backgroundColor: colors.background },
+    keyboardView: { flex: 1 },
     content: {
         flexGrow: 1,
         justifyContent: 'center',
-        padding: 24,
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.xxl,
     },
-    title: {
-        color: '#173f37',
-        fontSize: 30,
-        fontWeight: '700',
-        textAlign: 'center',
+    wrapper: { width: '100%', maxWidth: 480, alignSelf: 'center' },
+    brandArea: { marginBottom: spacing.xxl },
+    welcome: {
+        marginTop: spacing.xl,
+        color: colors.text,
+        fontSize: typography.display,
+        fontWeight: '800',
+        lineHeight: 38,
+        letterSpacing: -1,
     },
-    subtitle: {
-        marginTop: 6,
-        marginBottom: 24,
-        color: '#5b6f6b',
-        fontSize: 16,
-        textAlign: 'center',
+    introduction: {
+        marginTop: spacing.md,
+        color: colors.textSecondary,
+        fontSize: typography.body,
+        lineHeight: 24,
     },
-    input: {
-        height: 48,
-        marginBottom: 14,
-        paddingHorizontal: 14,
+    card: {
+        padding: spacing.xl,
         borderWidth: 1,
-        borderColor: '#b8c9c5',
-        borderRadius: 8,
-        backgroundColor: '#ffffff',
-        fontSize: 16,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+        ...shadows.card,
     },
-    error: {
-        marginBottom: 14,
-        color: '#b42318',
-        textAlign: 'center',
+    title: { color: colors.text, fontSize: typography.heading, fontWeight: '800' },
+    subtitle: {
+        marginTop: spacing.xs,
+        color: colors.textSecondary,
+        fontSize: typography.caption,
+        lineHeight: 20,
     },
-    button: {
-        minHeight: 48,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 8,
-        backgroundColor: '#2f7d6d',
+    fields: { marginTop: spacing.xl, marginBottom: spacing.lg, gap: spacing.lg },
+    errorContainer: {
+        marginBottom: spacing.lg,
+        padding: spacing.md,
+        borderLeftWidth: 3,
+        borderLeftColor: colors.danger,
+        borderRadius: radii.sm,
+        backgroundColor: '#FDF0F0',
     },
-    buttonPressed: {
-        opacity: 0.85,
-    },
-    buttonDisabled: {
-        opacity: 0.65,
-    },
-    buttonText: {
-        color: '#ffffff',
-        fontSize: 16,
-        fontWeight: '700',
-    },
+    error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
+    backArea: { alignItems: 'center', marginTop: spacing.xl },
+    backPrompt: { color: colors.textSecondary, fontSize: typography.caption },
     backButton: {
-        marginTop: 16,
-        padding: 8,
-        alignItems: 'center',
+        minHeight: 44,
+        justifyContent: 'center',
+        paddingHorizontal: spacing.md,
     },
-    backButtonText: {
-        color: '#2f7d6d',
-        fontSize: 16,
-        fontWeight: '600',
-    },
+    backButtonPressed: { opacity: 0.65 },
+    backButtonText: { color: colors.primary, fontSize: typography.caption, fontWeight: '800' },
 });

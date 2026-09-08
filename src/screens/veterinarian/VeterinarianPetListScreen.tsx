@@ -1,20 +1,12 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import {
-    ActivityIndicator,
-    FlatList,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePets } from '../../hooks/pets/usePets';
 import { VeterinarianStackParamList } from '../../navigation/VeterinarianNavigator';
+import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { Pet } from '../../types/pet';
 
-type Props = NativeStackScreenProps<
-    VeterinarianStackParamList,
-    'Patients'
->;
+type Props = NativeStackScreenProps<VeterinarianStackParamList, 'Patients'>;
 
 export function VeterinarianPetListScreen({ navigation }: Props) {
     const { data, isPending, isError } = usePets();
@@ -22,94 +14,202 @@ export function VeterinarianPetListScreen({ navigation }: Props) {
     function renderPet({ item }: { item: Pet }) {
         return (
             <Pressable
-                style={({ pressed }) => [
-                    styles.card,
-                    pressed && styles.cardPressed,
-                ]}
-                onPress={() =>
-                    navigation.navigate('PetDetails', { petId: item.id })
-                }
+                accessibilityRole="button"
+                accessibilityLabel={`Ver detalhes de ${item.name}`}
+                style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+                onPress={() => navigation.navigate('PetDetails', { petId: item.id })}
             >
-                <Text style={styles.petName}>{item.name}</Text>
-                <Text style={styles.detail}>Espécie: {item.species}</Text>
-                <Text style={styles.detail}>
-                    Tutor: {item.tutorName ?? 'Não informado'}
-                </Text>
+                <View style={styles.cardHeader}>
+                    <View style={styles.petIcon}>
+                        <Text style={styles.petIconText}>PET</Text>
+                    </View>
+                    <View style={styles.cardHeaderCopy}>
+                        <Text style={styles.petName}>{item.name}</Text>
+                        <Text style={styles.species}>{item.species}</Text>
+                    </View>
+                    <Text style={styles.arrow} accessibilityElementsHidden>›</Text>
+                </View>
+
+                <View style={styles.details}>
+                    <View style={styles.detailBlock}>
+                        <Text style={styles.detailLabel}>Raça</Text>
+                        <Text style={styles.detailValue}>{item.breed ?? 'Não informada'}</Text>
+                    </View>
+                    <View style={styles.detailBlock}>
+                        <Text style={styles.detailLabel}>Sexo</Text>
+                        <Text style={styles.detailValue}>{item.sex ?? 'Não informado'}</Text>
+                    </View>
+                    <View style={styles.detailBlockWide}>
+                        <Text style={styles.detailLabel}>Tutor responsável</Text>
+                        <Text style={styles.detailValue}>{item.tutorName ?? 'Não informado'}</Text>
+                    </View>
+                </View>
             </Pressable>
         );
     }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Pacientes</Text>
+        <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
+            <View style={styles.container}>
+                <View style={styles.heading}>
+                    <Text style={styles.eyebrow}>ATENDIMENTO</Text>
+                    <Text style={styles.title}>Pacientes</Text>
+                    <Text style={styles.description}>
+                        Consulte os pets disponíveis para atendimento.
+                    </Text>
+                </View>
 
-            {isPending ? (
-                <ActivityIndicator size="large" color="#2f7d6d" />
-            ) : isError ? (
-                <Text style={styles.message}>
-                    Não foi possível carregar os Pets.
-                </Text>
-            ) : (
-                <FlatList
-                    data={data.content}
-                    keyExtractor={(pet) => pet.id.toString()}
-                    renderItem={renderPet}
-                    contentContainerStyle={
-                        data.content.length === 0 ? styles.emptyList : styles.list
-                    }
-                    ListEmptyComponent={
-                        <Text style={styles.message}>
-                            Nenhum Pet encontrado.
+                {isPending ? (
+                    <View style={styles.stateContainer}>
+                        <ActivityIndicator size="large" color={colors.primary} />
+                        <Text style={styles.stateMessage}>Carregando pacientes...</Text>
+                    </View>
+                ) : isError ? (
+                    <View style={styles.stateCard}>
+                        <Text style={styles.stateTitle}>Não foi possível carregar</Text>
+                        <Text style={styles.stateMessage}>
+                            Não foi possível carregar os Pets.
                         </Text>
-                    }
-                />
-            )}
-        </View>
+                    </View>
+                ) : (
+                    <FlatList
+                        style={styles.listContainer}
+                        data={data.content}
+                        keyExtractor={(pet) => pet.id.toString()}
+                        renderItem={renderPet}
+                        contentContainerStyle={
+                            data.content.length === 0 ? styles.emptyList : styles.list
+                        }
+                        showsVerticalScrollIndicator={false}
+                        ListEmptyComponent={
+                            <View style={styles.stateCard}>
+                                <Text style={styles.stateTitle}>Nenhum Pet encontrado.</Text>
+                                <Text style={styles.stateMessage}>
+                                    Não há pacientes disponíveis no momento.
+                                </Text>
+                            </View>
+                        }
+                    />
+                )}
+            </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    safeArea: { flex: 1, backgroundColor: colors.background },
     container: {
         flex: 1,
-        padding: 20,
-        backgroundColor: '#f4f8f7',
+        paddingHorizontal: spacing.xl,
+        backgroundColor: colors.background,
+    },
+    heading: {
+        width: '100%',
+        maxWidth: 760,
+        alignSelf: 'center',
+        paddingVertical: spacing.xl,
+    },
+    eyebrow: {
+        marginBottom: spacing.sm,
+        color: colors.primary,
+        fontSize: typography.small,
+        fontWeight: '800',
+        letterSpacing: 1.4,
     },
     title: {
-        marginBottom: 16,
-        color: '#173f37',
-        fontSize: 28,
-        fontWeight: '700',
+        color: colors.text,
+        fontSize: typography.title,
+        fontWeight: '800',
+        letterSpacing: -0.5,
     },
-    list: {
-        paddingBottom: 20,
+    description: {
+        marginTop: spacing.sm,
+        color: colors.textSecondary,
+        fontSize: typography.body,
+        lineHeight: 23,
     },
-    emptyList: {
-        flexGrow: 1,
-        justifyContent: 'center',
-    },
+    listContainer: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center' },
+    list: { paddingBottom: spacing.xxl },
+    emptyList: { flexGrow: 1, justifyContent: 'center', paddingBottom: spacing.xxl },
     card: {
-        marginBottom: 12,
-        padding: 16,
-        borderRadius: 10,
-        backgroundColor: '#ffffff',
+        marginBottom: spacing.lg,
+        padding: spacing.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+        ...shadows.card,
     },
     cardPressed: {
-        opacity: 0.85,
+        borderColor: colors.primary,
+        backgroundColor: colors.primarySoft,
+        transform: [{ scale: 0.99 }],
     },
-    petName: {
-        marginBottom: 8,
-        color: '#173f37',
-        fontSize: 18,
+    cardHeader: { flexDirection: 'row', alignItems: 'center' },
+    petIcon: {
+        width: 46,
+        height: 46,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: radii.md,
+        backgroundColor: colors.primarySoft,
+    },
+    petIconText: { color: colors.primary, fontSize: 10, fontWeight: '800' },
+    cardHeaderCopy: { flex: 1, marginLeft: spacing.md },
+    petName: { color: colors.text, fontSize: typography.heading, fontWeight: '800' },
+    species: {
+        marginTop: spacing.xs,
+        color: colors.textSecondary,
+        fontSize: typography.caption,
+    },
+    arrow: { color: colors.primary, fontSize: 30, fontWeight: '400' },
+    details: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: spacing.lg,
+        marginTop: spacing.xl,
+        paddingTop: spacing.lg,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+    },
+    detailBlock: { flexGrow: 1, flexBasis: 130 },
+    detailBlockWide: { width: '100%' },
+    detailLabel: {
+        marginBottom: spacing.xs,
+        color: colors.textSecondary,
+        fontSize: typography.small,
         fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
-    detail: {
-        marginBottom: 4,
-        color: '#4b625d',
-        fontSize: 15,
+    detailValue: { color: colors.text, fontSize: typography.caption, lineHeight: 20 },
+    stateContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: spacing.md,
     },
-    message: {
-        color: '#4b625d',
-        fontSize: 16,
+    stateCard: {
+        width: '100%',
+        maxWidth: 760,
+        alignSelf: 'center',
+        padding: spacing.xl,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+    },
+    stateTitle: {
+        color: colors.text,
+        fontSize: typography.body,
+        fontWeight: '800',
+        textAlign: 'center',
+    },
+    stateMessage: {
+        marginTop: spacing.sm,
+        color: colors.textSecondary,
+        fontSize: typography.caption,
+        lineHeight: 20,
         textAlign: 'center',
     },
 });

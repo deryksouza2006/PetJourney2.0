@@ -1,8 +1,9 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
+    KeyboardAvoidingView,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -10,15 +11,16 @@ import {
     TextInput,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppButton } from '../../components/AppButton';
+import { AppInput } from '../../components/AppInput';
 import { useRegisterTutorWithPet } from '../../hooks/workflows/useRegisterTutorWithPet';
 import { VeterinarianStackParamList } from '../../navigation/VeterinarianNavigator';
+import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { PetSex, PetSpecies } from '../../types/pet';
 import { RegisterTutorWithPetRequest } from '../../types/workflow';
 
-type Props = NativeStackScreenProps<
-    VeterinarianStackParamList,
-    'RegisterTutorWithPet'
->;
+type Props = NativeStackScreenProps<VeterinarianStackParamList, 'RegisterTutorWithPet'>;
 
 const SPECIES_OPTIONS: PetSpecies[] = [
     'CACHORRO',
@@ -33,6 +35,13 @@ const SEX_OPTIONS: PetSex[] = ['MACHO', 'FEMEA'];
 
 export function RegisterTutorWithPetScreen({ navigation }: Props) {
     const registerTutorWithPet = useRegisterTutorWithPet();
+    const cpfInputRef = useRef<TextInput>(null);
+    const phoneInputRef = useRef<TextInput>(null);
+    const emailInputRef = useRef<TextInput>(null);
+    const petNameInputRef = useRef<TextInput>(null);
+    const breedInputRef = useRef<TextInput>(null);
+    const birthDateInputRef = useRef<TextInput>(null);
+    const weightInputRef = useRef<TextInput>(null);
     const [tutorName, setTutorName] = useState('');
     const [cpf, setCpf] = useState('');
     const [phone, setPhone] = useState('');
@@ -73,10 +82,7 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
 
         const trimmedBirthDate = birthDate.trim();
 
-        if (
-            trimmedBirthDate &&
-            !/^\d{4}-\d{2}-\d{2}$/.test(trimmedBirthDate)
-        ) {
+        if (trimmedBirthDate && !/^\d{4}-\d{2}-\d{2}$/.test(trimmedBirthDate)) {
             setErrorMessage('Use o formato AAAA-MM-DD para o nascimento.');
             return;
         }
@@ -143,253 +149,326 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
         }
     }
 
+    const isPending = registerTutorWithPet.isPending;
+
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-        >
-            <Text style={styles.title}>Cadastrar Tutor + Pet</Text>
-
-            <Text style={styles.sectionTitle}>Tutor</Text>
-            <TextInput
-                style={styles.input}
-                value={tutorName}
-                onChangeText={setTutorName}
-                placeholder="Nome"
-                editable={!registerTutorWithPet.isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={cpf}
-                onChangeText={setCpf}
-                placeholder="CPF (11 dígitos)"
-                keyboardType="number-pad"
-                maxLength={11}
-                editable={!registerTutorWithPet.isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="Telefone (opcional)"
-                keyboardType="phone-pad"
-                editable={!registerTutorWithPet.isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="E-mail (opcional)"
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                editable={!registerTutorWithPet.isPending}
-            />
-
-            <Text style={styles.sectionTitle}>Pet</Text>
-            <TextInput
-                style={styles.input}
-                value={petName}
-                onChangeText={setPetName}
-                placeholder="Nome"
-                editable={!registerTutorWithPet.isPending}
-            />
-
-            <Text style={styles.label}>Espécie</Text>
-            <View style={styles.options}>
-                {SPECIES_OPTIONS.map((option) => (
-                    <Pressable
-                        key={option}
-                        style={[
-                            styles.option,
-                            species === option && styles.optionSelected,
-                        ]}
-                        onPress={() => setSpecies(option)}
-                        disabled={registerTutorWithPet.isPending}
-                    >
-                        <Text
-                            style={[
-                                styles.optionText,
-                                species === option && styles.optionTextSelected,
-                            ]}
-                        >
-                            {option}
-                        </Text>
-                    </Pressable>
-                ))}
-            </View>
-
-            <TextInput
-                style={styles.input}
-                value={breed}
-                onChangeText={setBreed}
-                placeholder="Raça (opcional)"
-                editable={!registerTutorWithPet.isPending}
-            />
-
-            <Text style={styles.label}>Sexo (opcional)</Text>
-            <View style={styles.options}>
-                {SEX_OPTIONS.map((option) => (
-                    <Pressable
-                        key={option}
-                        style={[
-                            styles.option,
-                            sex === option && styles.optionSelected,
-                        ]}
-                        onPress={() => setSex(option)}
-                        disabled={registerTutorWithPet.isPending}
-                    >
-                        <Text
-                            style={[
-                                styles.optionText,
-                                sex === option && styles.optionTextSelected,
-                            ]}
-                        >
-                            {option}
-                        </Text>
-                    </Pressable>
-                ))}
-                <Pressable
-                    style={[
-                        styles.option,
-                        sex === null && styles.optionSelected,
-                    ]}
-                    onPress={() => setSex(null)}
-                    disabled={registerTutorWithPet.isPending}
-                >
-                    <Text
-                        style={[
-                            styles.optionText,
-                            sex === null && styles.optionTextSelected,
-                        ]}
-                    >
-                        Não informar
-                    </Text>
-                </Pressable>
-            </View>
-
-            <TextInput
-                style={styles.input}
-                value={birthDate}
-                onChangeText={setBirthDate}
-                placeholder="Nascimento (AAAA-MM-DD, opcional)"
-                editable={!registerTutorWithPet.isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={weight}
-                onChangeText={setWeight}
-                placeholder="Peso (opcional)"
-                keyboardType="decimal-pad"
-                editable={!registerTutorWithPet.isPending}
-            />
-
-            {errorMessage ? (
-                <Text style={styles.error}>{errorMessage}</Text>
-            ) : null}
-
-            <Pressable
-                style={({ pressed }) => [
-                    styles.button,
-                    pressed && styles.buttonPressed,
-                    registerTutorWithPet.isPending && styles.buttonDisabled,
-                ]}
-                onPress={() => void handleSubmit()}
-                disabled={registerTutorWithPet.isPending}
+        <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
+            <KeyboardAvoidingView
+                style={styles.keyboardView}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-                {registerTutorWithPet.isPending ? (
-                    <ActivityIndicator color="#ffffff" />
-                ) : (
-                    <Text style={styles.buttonText}>Cadastrar</Text>
-                )}
-            </Pressable>
-        </ScrollView>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.content}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.wrapper}>
+                        <Text style={styles.eyebrow}>NOVO CADASTRO</Text>
+                        <Text style={styles.title}>Cadastrar Tutor + Pet</Text>
+                        <Text style={styles.description}>
+                            Registre o responsável e o paciente em um único cadastro.
+                        </Text>
+
+                        <View style={styles.card}>
+                            <Text style={styles.sectionEyebrow}>RESPONSÁVEL</Text>
+                            <Text style={styles.sectionTitle}>Dados do Tutor</Text>
+                            <Text style={styles.requiredHint}>Nome e CPF são obrigatórios.</Text>
+
+                            <View style={styles.fields}>
+                                <AppInput
+                                    label="Nome *"
+                                    value={tutorName}
+                                    onChangeText={setTutorName}
+                                    placeholder="Nome do Tutor"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => cpfInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={cpfInputRef}
+                                    label="CPF *"
+                                    value={cpf}
+                                    onChangeText={setCpf}
+                                    placeholder="CPF (11 dígitos)"
+                                    keyboardType="number-pad"
+                                    maxLength={11}
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => phoneInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={phoneInputRef}
+                                    label="Telefone"
+                                    value={phone}
+                                    onChangeText={setPhone}
+                                    placeholder="Telefone (opcional)"
+                                    keyboardType="phone-pad"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => emailInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={emailInputRef}
+                                    label="E-mail"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    placeholder="nome@exemplo.com"
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    keyboardType="email-address"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => petNameInputRef.current?.focus()}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.card}>
+                            <Text style={styles.sectionEyebrow}>PACIENTE</Text>
+                            <Text style={styles.sectionTitle}>Dados do Pet</Text>
+                            <Text style={styles.requiredHint}>Nome e espécie são obrigatórios.</Text>
+
+                            <View style={styles.fields}>
+                                <AppInput
+                                    ref={petNameInputRef}
+                                    label="Nome *"
+                                    value={petName}
+                                    onChangeText={setPetName}
+                                    placeholder="Nome do Pet"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => breedInputRef.current?.focus()}
+                                />
+
+                                <View style={styles.fieldGroup}>
+                                    <Text style={styles.label}>Espécie *</Text>
+                                    <View style={styles.options}>
+                                        {SPECIES_OPTIONS.map((option) => (
+                                            <Pressable
+                                                key={option}
+                                                accessibilityRole="button"
+                                                accessibilityState={{
+                                                    selected: species === option,
+                                                    disabled: isPending,
+                                                }}
+                                                style={({ pressed }) => [
+                                                    styles.option,
+                                                    species === option && styles.optionSelected,
+                                                    pressed && !isPending && styles.optionPressed,
+                                                    isPending && styles.optionDisabled,
+                                                ]}
+                                                onPress={() => setSpecies(option)}
+                                                disabled={isPending}
+                                            >
+                                                <Text
+                                                    style={[
+                                                        styles.optionText,
+                                                        species === option && styles.optionTextSelected,
+                                                    ]}
+                                                >
+                                                    {option}
+                                                </Text>
+                                            </Pressable>
+                                        ))}
+                                    </View>
+                                </View>
+
+                                <AppInput
+                                    ref={breedInputRef}
+                                    label="Raça"
+                                    value={breed}
+                                    onChangeText={setBreed}
+                                    placeholder="Raça (opcional)"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => birthDateInputRef.current?.focus()}
+                                />
+
+                                <View style={styles.fieldGroup}>
+                                    <Text style={styles.label}>Sexo (opcional)</Text>
+                                    <View style={styles.options}>
+                                        {SEX_OPTIONS.map((option) => (
+                                            <Pressable
+                                                key={option}
+                                                accessibilityRole="button"
+                                                accessibilityState={{
+                                                    selected: sex === option,
+                                                    disabled: isPending,
+                                                }}
+                                                style={({ pressed }) => [
+                                                    styles.option,
+                                                    sex === option && styles.optionSelected,
+                                                    pressed && !isPending && styles.optionPressed,
+                                                    isPending && styles.optionDisabled,
+                                                ]}
+                                                onPress={() => setSex(option)}
+                                                disabled={isPending}
+                                            >
+                                                <Text
+                                                    style={[
+                                                        styles.optionText,
+                                                        sex === option && styles.optionTextSelected,
+                                                    ]}
+                                                >
+                                                    {option}
+                                                </Text>
+                                            </Pressable>
+                                        ))}
+                                        <Pressable
+                                            accessibilityRole="button"
+                                            accessibilityState={{
+                                                selected: sex === null,
+                                                disabled: isPending,
+                                            }}
+                                            style={({ pressed }) => [
+                                                styles.option,
+                                                sex === null && styles.optionSelected,
+                                                pressed && !isPending && styles.optionPressed,
+                                                isPending && styles.optionDisabled,
+                                            ]}
+                                            onPress={() => setSex(null)}
+                                            disabled={isPending}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.optionText,
+                                                    sex === null && styles.optionTextSelected,
+                                                ]}
+                                            >
+                                                Não informar
+                                            </Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
+
+                                <AppInput
+                                    ref={birthDateInputRef}
+                                    label="Nascimento"
+                                    value={birthDate}
+                                    onChangeText={setBirthDate}
+                                    placeholder="AAAA-MM-DD (opcional)"
+                                    autoCapitalize="none"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => weightInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={weightInputRef}
+                                    label="Peso"
+                                    value={weight}
+                                    onChangeText={setWeight}
+                                    placeholder="Peso em kg (opcional)"
+                                    keyboardType="decimal-pad"
+                                    editable={!isPending}
+                                    returnKeyType="done"
+                                    onSubmitEditing={() => void handleSubmit()}
+                                />
+                            </View>
+                        </View>
+
+                        {errorMessage ? (
+                            <View style={styles.errorContainer} accessibilityLiveRegion="polite">
+                                <Text style={styles.error}>{errorMessage}</Text>
+                            </View>
+                        ) : null}
+
+                        <AppButton
+                            label="Cadastrar Tutor + Pet"
+                            onPress={() => void handleSubmit()}
+                            loading={isPending}
+                        />
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f4f8f7',
-    },
-    content: {
-        padding: 20,
+    safeArea: { flex: 1, backgroundColor: colors.background },
+    keyboardView: { flex: 1 },
+    scrollView: { flex: 1, backgroundColor: colors.background },
+    content: { flexGrow: 1, padding: spacing.xl },
+    wrapper: { width: '100%', maxWidth: 640, alignSelf: 'center' },
+    eyebrow: {
+        marginBottom: spacing.sm,
+        color: colors.primary,
+        fontSize: typography.small,
+        fontWeight: '800',
+        letterSpacing: 1.4,
     },
     title: {
-        marginBottom: 20,
-        color: '#173f37',
-        fontSize: 28,
-        fontWeight: '700',
+        color: colors.text,
+        fontSize: typography.title,
+        fontWeight: '800',
+        letterSpacing: -0.5,
+    },
+    description: {
+        marginTop: spacing.sm,
+        color: colors.textSecondary,
+        fontSize: typography.body,
+        lineHeight: 23,
+    },
+    card: {
+        marginTop: spacing.xl,
+        padding: spacing.xl,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+        ...shadows.card,
+    },
+    sectionEyebrow: {
+        marginBottom: spacing.xs,
+        color: colors.primary,
+        fontSize: typography.small,
+        fontWeight: '800',
+        letterSpacing: 1,
     },
     sectionTitle: {
-        marginBottom: 12,
-        color: '#173f37',
-        fontSize: 20,
-        fontWeight: '700',
+        color: colors.text,
+        fontSize: typography.heading,
+        fontWeight: '800',
     },
-    input: {
-        height: 48,
-        marginBottom: 14,
-        paddingHorizontal: 14,
-        borderWidth: 1,
-        borderColor: '#b8c9c5',
-        borderRadius: 8,
-        backgroundColor: '#ffffff',
-        fontSize: 16,
+    requiredHint: {
+        marginTop: spacing.xs,
+        color: colors.textSecondary,
+        fontSize: typography.caption,
     },
+    fields: { gap: spacing.xl, marginTop: spacing.xl },
+    fieldGroup: { gap: spacing.sm },
     label: {
-        marginBottom: 8,
-        color: '#173f37',
-        fontSize: 16,
+        color: colors.text,
+        fontSize: typography.caption,
         fontWeight: '700',
     },
-    options: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-        marginBottom: 14,
-    },
+    options: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     option: {
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        borderWidth: 1,
-        borderColor: '#b8c9c5',
-        borderRadius: 8,
-        backgroundColor: '#ffffff',
-    },
-    optionSelected: {
-        borderColor: '#2f7d6d',
-        backgroundColor: '#2f7d6d',
-    },
-    optionText: {
-        color: '#173f37',
-        fontSize: 15,
-    },
-    optionTextSelected: {
-        color: '#ffffff',
-    },
-    error: {
-        marginBottom: 14,
-        color: '#b42318',
-        textAlign: 'center',
-    },
-    button: {
-        minHeight: 48,
-        alignItems: 'center',
+        minHeight: 44,
         justifyContent: 'center',
-        borderRadius: 8,
-        backgroundColor: '#2f7d6d',
+        paddingHorizontal: spacing.md,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.sm,
+        backgroundColor: colors.surface,
     },
-    buttonPressed: {
-        opacity: 0.85,
-    },
-    buttonDisabled: {
-        opacity: 0.65,
-    },
-    buttonText: {
-        color: '#ffffff',
-        fontSize: 16,
+    optionSelected: { borderColor: colors.primary, backgroundColor: colors.primary },
+    optionPressed: { opacity: 0.75 },
+    optionDisabled: { opacity: 0.6 },
+    optionText: {
+        color: colors.text,
+        fontSize: typography.caption,
         fontWeight: '700',
     },
+    optionTextSelected: { color: colors.white },
+    errorContainer: {
+        marginVertical: spacing.lg,
+        padding: spacing.md,
+        borderLeftWidth: 3,
+        borderLeftColor: colors.danger,
+        borderRadius: radii.sm,
+        backgroundColor: '#FDF0F0',
+    },
+    error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
 });
