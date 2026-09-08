@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useQueryClient } from '@tanstack/react-query';
 import {
     createContext,
     PropsWithChildren,
@@ -31,8 +32,14 @@ function isInvalidSessionError(error: unknown): boolean {
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
+    const queryClient = useQueryClient();
     const [session, setSession] = useState<AuthSession | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    const clearSessionCache = useCallback(async (): Promise<void> => {
+        await queryClient.cancelQueries({}, { silent: true });
+        queryClient.clear();
+    }, [queryClient]);
 
     useEffect(() => {
         let isMounted = true;
@@ -53,6 +60,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
                     }
                 } catch (error: unknown) {
                     if (isInvalidSessionError(error)) {
+                        await clearSessionCache();
                         await removeToken();
                     }
                 }
@@ -70,7 +78,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [clearSessionCache]);
 
     const signIn = useCallback(async (credentials: LoginRequest): Promise<void> => {
         const loginResponse = await login(credentials);
@@ -78,6 +86,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
         try {
             const user = await getMe();
+            await clearSessionCache();
             setSession({ token: loginResponse.token, user });
         } catch (error: unknown) {
             if (isInvalidSessionError(error)) {
@@ -86,12 +95,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
             throw error;
         }
-    }, []);
+    }, [clearSessionCache]);
 
     const signOut = useCallback(async (): Promise<void> => {
         setSession(null);
+        await clearSessionCache();
         await removeToken();
-    }, []);
+    }, [clearSessionCache]);
 
     const value = useMemo<AuthContextValue>(() => ({
         user: session?.user ?? null,
