@@ -1,37 +1,37 @@
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { HomeActionCard, HomeScreenLayout } from '../../components/HomeScreenLayout';
 import { useAuth } from '../../contexts/AuthContext';
+import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
 
-export function ClinicAdminHomeScreen() {
+type Props = NativeStackScreenProps<ClinicAdminStackParamList, 'ClinicAdminHome'>;
+
+export function ClinicAdminHomeScreen({ navigation }: Props) {
     const { signOut } = useAuth();
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Administrador da Cl�nica</Text>
-            <Text style={styles.description}>Perfil autenticado: ADMIN_CLINICA</Text>
-            <Button title="Sair" onPress={() => void signOut()} color="#2f7d6d" />
-        </View>
+        <HomeScreenLayout
+            title="Administração da clínica"
+            description="Organize os profissionais, tutores e pets atendidos pela clínica."
+            onSignOut={() => void signOut()}
+        >
+            <HomeActionCard
+                icon="VE"
+                title="Veterinários"
+                description="Consulte e gerencie os profissionais da clínica."
+                onPress={() => navigation.navigate('Veterinarians')}
+            />
+            <HomeActionCard
+                icon="TU"
+                title="Tutores"
+                description="Acesse os cadastros de responsáveis pelos pets."
+                onPress={() => navigation.navigate('Tutors')}
+            />
+            <HomeActionCard
+                icon="PE"
+                title="Pets"
+                description="Consulte e gerencie os pets cadastrados."
+                onPress={() => navigation.navigate('Pets')}
+            />
+        </HomeScreenLayout>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-        backgroundColor: '#f4f8f7',
-    },
-    title: {
-        marginBottom: 8,
-        color: '#173f37',
-        fontSize: 24,
-        fontWeight: '700',
-        textAlign: 'center',
-    },
-    description: {
-        marginBottom: 24,
-        color: '#4b625d',
-        fontSize: 16,
-        textAlign: 'center',
-    },
-});

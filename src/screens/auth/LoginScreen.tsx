@@ -1,20 +1,28 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
-    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppButton } from '../../components/AppButton';
+import { AppInput } from '../../components/AppInput';
+import { BrandMark } from '../../components/BrandMark';
 import { useAuth } from '../../contexts/AuthContext';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export function LoginScreen({ navigation }: Props) {
     const { signIn } = useAuth();
+    const passwordInputRef = useRef<TextInput>(null);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,144 +38,158 @@ export function LoginScreen({ navigation }: Props) {
         setErrorMessage(null);
 
         try {
-            await signIn({
-                username: email.trim(),
-                password,
-            });
+            await signIn({ username: email.trim(), password });
         } catch {
-            setErrorMessage('N�o foi poss�vel entrar. Verifique suas credenciais.');
+            setErrorMessage('Não foi possível entrar. Verifique suas credenciais.');
         } finally {
             setIsSubmitting(false);
         }
     }
 
     return (
-        <View style={styles.container}>
-            <View style={styles.card}>
-                <Text style={styles.title}>PetJourney</Text>
-                <Text style={styles.subtitle}>Acesso � cl�nica veterin�ria</Text>
-
-                <TextInput
-                    style={styles.input}
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="E-mail"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardType="email-address"
-                    editable={!isSubmitting}
-                />
-
-                <TextInput
-                    style={styles.input}
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Senha"
-                    secureTextEntry
-                    editable={!isSubmitting}
-                    onSubmitEditing={() => void handleSignIn()}
-                />
-
-                {errorMessage ? (
-                    <Text style={styles.error}>{errorMessage}</Text>
-                ) : null}
-
-                <Pressable
-                    style={({ pressed }) => [
-                        styles.button,
-                        pressed && styles.buttonPressed,
-                        isSubmitting && styles.buttonDisabled,
-                    ]}
-                    onPress={() => void handleSignIn()}
-                    disabled={isSubmitting}
+        <SafeAreaView style={styles.safeArea}>
+            <KeyboardAvoidingView
+                style={styles.keyboardView}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+                <ScrollView
+                    contentContainerStyle={styles.content}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
                 >
-                    {isSubmitting ? (
-                        <ActivityIndicator color="#ffffff" />
-                    ) : (
-                        <Text style={styles.buttonText}>Entrar</Text>
-                    )}
-                </Pressable>
+                    <View style={styles.wrapper}>
+                        <View style={styles.brandArea}>
+                            <BrandMark />
+                            <Text style={styles.welcome}>Cuidado conectado, jornada tranquila.</Text>
+                            <Text style={styles.introduction}>
+                                Acesse sua rotina veterinária com segurança e praticidade.
+                            </Text>
+                        </View>
 
-                <Pressable
-                    style={styles.firstAccessButton}
-                    onPress={() => navigation.navigate('FirstAccess')}
-                    disabled={isSubmitting}
-                >
-                    <Text style={styles.firstAccessButtonText}>
-                        Primeiro acesso
-                    </Text>
-                </Pressable>
-            </View>
-        </View>
+                        <View style={styles.card}>
+                            <Text style={styles.title}>Bem-vindo</Text>
+                            <Text style={styles.subtitle}>Entre com seus dados para continuar.</Text>
+
+                            <View style={styles.fields}>
+                                <AppInput
+                                    label="E-mail"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    placeholder="nome@exemplo.com"
+                                    autoCapitalize="none"
+                                    autoComplete="email"
+                                    autoCorrect={false}
+                                    keyboardType="email-address"
+                                    returnKeyType="next"
+                                    editable={!isSubmitting}
+                                    onSubmitEditing={() => passwordInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={passwordInputRef}
+                                    label="Senha"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    placeholder="Digite sua senha"
+                                    autoCapitalize="none"
+                                    autoComplete="current-password"
+                                    secureTextEntry
+                                    returnKeyType="done"
+                                    editable={!isSubmitting}
+                                    onSubmitEditing={() => void handleSignIn()}
+                                />
+                            </View>
+
+                            {errorMessage ? (
+                                <View style={styles.errorContainer} accessibilityLiveRegion="polite">
+                                    <Text style={styles.error}>{errorMessage}</Text>
+                                </View>
+                            ) : null}
+
+                            <AppButton
+                                label="Entrar"
+                                onPress={() => void handleSignIn()}
+                                loading={isSubmitting}
+                            />
+
+                            <View style={styles.firstAccessArea}>
+                                <Text style={styles.firstAccessPrompt}>Recebeu um código de acesso?</Text>
+                                <Pressable
+                                    accessibilityRole="button"
+                                    style={({ pressed }) => [
+                                        styles.firstAccessButton,
+                                        pressed && styles.firstAccessButtonPressed,
+                                    ]}
+                                    onPress={() => navigation.navigate('FirstAccess')}
+                                    disabled={isSubmitting}
+                                >
+                                    <Text style={styles.firstAccessButtonText}>Primeiro acesso</Text>
+                                </Pressable>
+                            </View>
+                        </View>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
+    safeArea: { flex: 1, backgroundColor: colors.background },
+    keyboardView: { flex: 1 },
+    content: {
+        flexGrow: 1,
         justifyContent: 'center',
-        padding: 24,
-        backgroundColor: '#f4f8f7',
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.xxl,
+    },
+    wrapper: { width: '100%', maxWidth: 480, alignSelf: 'center' },
+    brandArea: { marginBottom: spacing.xxl },
+    welcome: {
+        marginTop: spacing.xl,
+        color: colors.text,
+        fontSize: typography.display,
+        fontWeight: '800',
+        lineHeight: 38,
+        letterSpacing: -1,
+    },
+    introduction: {
+        marginTop: spacing.md,
+        color: colors.textSecondary,
+        fontSize: typography.body,
+        lineHeight: 24,
     },
     card: {
-        padding: 24,
-        borderRadius: 12,
-        backgroundColor: '#ffffff',
-    },
-    title: {
-        color: '#173f37',
-        fontSize: 30,
-        fontWeight: '700',
-        textAlign: 'center',
-    },
-    subtitle: {
-        marginTop: 6,
-        marginBottom: 24,
-        color: '#5b6f6b',
-        fontSize: 16,
-        textAlign: 'center',
-    },
-    input: {
-        height: 48,
-        marginBottom: 14,
-        paddingHorizontal: 14,
+        padding: spacing.xl,
         borderWidth: 1,
-        borderColor: '#b8c9c5',
-        borderRadius: 8,
-        backgroundColor: '#ffffff',
-        fontSize: 16,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+        ...shadows.card,
     },
-    error: {
-        marginBottom: 14,
-        color: '#b42318',
-        textAlign: 'center',
+    title: { color: colors.text, fontSize: typography.heading, fontWeight: '800' },
+    subtitle: {
+        marginTop: spacing.xs,
+        color: colors.textSecondary,
+        fontSize: typography.caption,
+        lineHeight: 20,
     },
-    button: {
-        minHeight: 48,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 8,
-        backgroundColor: '#2f7d6d',
+    fields: { marginTop: spacing.xl, marginBottom: spacing.lg, gap: spacing.lg },
+    errorContainer: {
+        marginBottom: spacing.lg,
+        padding: spacing.md,
+        borderLeftWidth: 3,
+        borderLeftColor: colors.danger,
+        borderRadius: radii.sm,
+        backgroundColor: '#FDF0F0',
     },
-    buttonPressed: {
-        opacity: 0.85,
-    },
-    buttonDisabled: {
-        opacity: 0.65,
-    },
-    buttonText: {
-        color: '#ffffff',
-        fontSize: 16,
-        fontWeight: '700',
-    },
+    error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
+    firstAccessArea: { alignItems: 'center', marginTop: spacing.xl },
+    firstAccessPrompt: { color: colors.textSecondary, fontSize: typography.caption },
     firstAccessButton: {
-        marginTop: 16,
-        padding: 8,
-        alignItems: 'center',
+        minHeight: 44,
+        justifyContent: 'center',
+        paddingHorizontal: spacing.md,
     },
-    firstAccessButtonText: {
-        color: '#2f7d6d',
-        fontSize: 16,
-        fontWeight: '600',
-    },
+    firstAccessButtonPressed: { opacity: 0.65 },
+    firstAccessButtonText: { color: colors.primary, fontSize: typography.caption, fontWeight: '800' },
 });

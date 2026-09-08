@@ -21,7 +21,7 @@ export function SystemAdminNavigator() {
             <Stack.Screen
                 name="SystemAdminHome"
                 component={SystemAdminHomeScreen}
-                options={{ title: 'PetJourney' }}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="Clinics"

@@ -19,7 +19,7 @@ export function VeterinarianNavigator() {
             <Stack.Screen
                 name="VeterinarianHome"
                 component={VeterinarianHomeScreen}
-                options={{ title: 'PetJourney' }}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="RegisterTutorWithPet"

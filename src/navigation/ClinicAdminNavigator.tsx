@@ -1,5 +1,4 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Button, View } from 'react-native';
 import { ClinicAdminHomeScreen } from '../screens/clinicAdmin/ClinicAdminHomeScreen';
 import { PetFormScreen } from '../screens/clinicAdmin/PetFormScreen';
 import { PetListScreen } from '../screens/clinicAdmin/PetListScreen';
@@ -32,30 +31,7 @@ export function ClinicAdminNavigator() {
             <Stack.Screen
                 name="ClinicAdminHome"
                 component={ClinicAdminHomeScreen}
-                options={({ navigation }) => ({
-                    title: 'PetJourney',
-                    headerRight: () => (
-                        <View style={{ flexDirection: 'row' }}>
-                            <Button
-                                title="Veterin\u00e1rios"
-                                onPress={() =>
-                                    navigation.navigate('Veterinarians')
-                                }
-                                color="#2f7d6d"
-                            />
-                            <Button
-                                title="Tutores"
-                                onPress={() => navigation.navigate('Tutors')}
-                                color="#2f7d6d"
-                            />
-                            <Button
-                                title="Pets"
-                                onPress={() => navigation.navigate('Pets')}
-                                color="#2f7d6d"
-                            />
-                        </View>
-                    ),
-                })}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="Veterinarians"
