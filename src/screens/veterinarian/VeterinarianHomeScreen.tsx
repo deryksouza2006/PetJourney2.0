@@ -1,14 +1,32 @@
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Button, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { VeterinarianStackParamList } from '../../navigation/VeterinarianNavigator';
 
-export function VeterinarianHomeScreen() {
+type Props = NativeStackScreenProps<
+    VeterinarianStackParamList,
+    'VeterinarianHome'
+>;
+
+export function VeterinarianHomeScreen({ navigation }: Props) {
     const { signOut } = useAuth();
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Veterin�rio</Text>
             <Text style={styles.description}>Perfil autenticado: VETERINARIO</Text>
-            <Button title="Sair" onPress={() => void signOut()} color="#2f7d6d" />
+            <View style={styles.actions}>
+                <Button
+                    title="Cadastrar Tutor + Pet"
+                    onPress={() => navigation.navigate('RegisterTutorWithPet')}
+                    color="#2f7d6d"
+                />
+                <Button
+                    title="Sair"
+                    onPress={() => void signOut()}
+                    color="#2f7d6d"
+                />
+            </View>
         </View>
     );
 }
@@ -33,5 +51,8 @@ const styles = StyleSheet.create({
         color: '#4b625d',
         fontSize: 16,
         textAlign: 'center',
+    },
+    actions: {
+        gap: 12,
     },
 });
