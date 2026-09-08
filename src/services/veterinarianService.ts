@@ -5,8 +5,13 @@ import {
 } from '../types/veterinarian';
 import { api } from './api';
 
-export async function getVeterinarians(): Promise<VeterinarianPage> {
-    const response = await api.get<VeterinarianPage>('/veterinarians');
+export async function getVeterinarians(
+    page: number,
+    size: number,
+): Promise<VeterinarianPage> {
+    const response = await api.get<VeterinarianPage>('/veterinarians', {
+        params: { page, size },
+    });
 
     return response.data;
 }

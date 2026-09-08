@@ -1,8 +1,10 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import axios from 'axios';
+import { useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
+import { PaginationControls } from '../../components/PaginationControls';
 import { useDeleteTutor } from '../../hooks/tutors/useDeleteTutor';
 import { useTutors } from '../../hooks/tutors/useTutors';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
@@ -12,12 +14,17 @@ import { Tutor } from '../../types/tutor';
 type Props = NativeStackScreenProps<ClinicAdminStackParamList, 'Tutors'>;
 
 export function TutorListScreen({ navigation }: Props) {
-    const { data, isPending, isError } = useTutors();
+    const [page, setPage] = useState(0);
+    const { data, isPending, isError, isFetching } = useTutors(page);
     const deleteTutor = useDeleteTutor();
 
     async function deleteSelectedTutor(id: number): Promise<void> {
         try {
             await deleteTutor.mutateAsync(id);
+
+            if (data && data.number > 0 && data.numberOfElements === 1) {
+                setPage(data.number - 1);
+            }
         } catch (error: unknown) {
             if (axios.isAxiosError(error) && error.response?.status === 409) {
                 Alert.alert(
@@ -151,6 +158,19 @@ export function TutorListScreen({ navigation }: Props) {
                                     Cadastre um tutor para começar.
                                 </Text>
                             </View>
+                        }
+                        ListFooterComponent={
+                            data.totalPages > 0 ? (
+                                <PaginationControls
+                                    page={data.number}
+                                    totalPages={data.totalPages}
+                                    isFirst={data.first}
+                                    isLast={data.last}
+                                    disabled={isFetching || deleteTutor.isPending}
+                                    onPrevious={() => setPage(data.number - 1)}
+                                    onNext={() => setPage(data.number + 1)}
+                                />
+                            ) : null
                         }
                     />
                 )}

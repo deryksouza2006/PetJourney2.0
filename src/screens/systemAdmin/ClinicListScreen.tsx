@@ -1,7 +1,9 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
+import { PaginationControls } from '../../components/PaginationControls';
 import { useDeleteClinic } from '../../hooks/clinics/useDeleteClinic';
 import { useClinics } from '../../hooks/clinics/useClinics';
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
@@ -11,12 +13,17 @@ import { Clinic } from '../../types/clinic';
 type Props = NativeStackScreenProps<SystemAdminStackParamList, 'Clinics'>;
 
 export function ClinicListScreen({ navigation }: Props) {
-    const { data, isPending, isError } = useClinics();
+    const [page, setPage] = useState(0);
+    const { data, isPending, isError, isFetching } = useClinics(page);
     const deleteClinic = useDeleteClinic();
 
     async function deleteSelectedClinic(id: number): Promise<void> {
         try {
             await deleteClinic.mutateAsync(id);
+
+            if (data && data.number > 0 && data.numberOfElements === 1) {
+                setPage(data.number - 1);
+            }
         } catch {
             Alert.alert(
                 'Não foi possível excluir',
@@ -157,6 +164,19 @@ export function ClinicListScreen({ navigation }: Props) {
                                     Cadastre uma clínica para começar.
                                 </Text>
                             </View>
+                        }
+                        ListFooterComponent={
+                            data.totalPages > 0 ? (
+                                <PaginationControls
+                                    page={data.number}
+                                    totalPages={data.totalPages}
+                                    isFirst={data.first}
+                                    isLast={data.last}
+                                    disabled={isFetching || deleteClinic.isPending}
+                                    onPrevious={() => setPage(data.number - 1)}
+                                    onNext={() => setPage(data.number + 1)}
+                                />
+                            ) : null
                         }
                     />
                 )}

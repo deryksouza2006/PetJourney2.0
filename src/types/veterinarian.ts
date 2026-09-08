@@ -1,3 +1,5 @@
+import { PaginatedResponse } from './pagination';
+
 export interface Veterinarian {
     id: number;
     name: string;
@@ -17,6 +19,4 @@ export interface VeterinarianRequest {
     clinicId: number;
 }
 
-export interface VeterinarianPage {
-    content: Veterinarian[];
-}
+export type VeterinarianPage = PaginatedResponse<Veterinarian>;

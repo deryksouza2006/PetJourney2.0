@@ -1,8 +1,10 @@
 import { Pet, PetPage, PetRequest } from '../types/pet';
 import { api } from './api';
 
-export async function getPets(): Promise<PetPage> {
-    const response = await api.get<PetPage>('/pets');
+export async function getPets(page: number, size: number): Promise<PetPage> {
+    const response = await api.get<PetPage>('/pets', {
+        params: { page, size },
+    });
 
     return response.data;
 }

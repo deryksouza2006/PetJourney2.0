@@ -1,7 +1,9 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
+import { PaginationControls } from '../../components/PaginationControls';
 import { useDeleteVeterinarian } from '../../hooks/veterinarians/useDeleteVeterinarian';
 import { useVeterinarians } from '../../hooks/veterinarians/useVeterinarians';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
@@ -11,12 +13,17 @@ import { Veterinarian } from '../../types/veterinarian';
 type Props = NativeStackScreenProps<ClinicAdminStackParamList, 'Veterinarians'>;
 
 export function VeterinarianListScreen({ navigation }: Props) {
-    const { data, isPending, isError } = useVeterinarians();
+    const [page, setPage] = useState(0);
+    const { data, isPending, isError, isFetching } = useVeterinarians(page);
     const deleteVeterinarian = useDeleteVeterinarian();
 
     async function deleteSelectedVeterinarian(id: number): Promise<void> {
         try {
             await deleteVeterinarian.mutateAsync(id);
+
+            if (data && data.number > 0 && data.numberOfElements === 1) {
+                setPage(data.number - 1);
+            }
         } catch {
             Alert.alert(
                 'Não foi possível excluir',
@@ -153,6 +160,19 @@ export function VeterinarianListScreen({ navigation }: Props) {
                                     Cadastre um veterinário para começar.
                                 </Text>
                             </View>
+                        }
+                        ListFooterComponent={
+                            data.totalPages > 0 ? (
+                                <PaginationControls
+                                    page={data.number}
+                                    totalPages={data.totalPages}
+                                    isFirst={data.first}
+                                    isLast={data.last}
+                                    disabled={isFetching || deleteVeterinarian.isPending}
+                                    onPrevious={() => setPage(data.number - 1)}
+                                    onNext={() => setPage(data.number + 1)}
+                                />
+                            ) : null
                         }
                     />
                 )}

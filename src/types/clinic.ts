@@ -1,3 +1,5 @@
+import { PaginatedResponse } from './pagination';
+
 export interface Clinic {
     id: number;
     name: string;
@@ -15,6 +17,4 @@ export interface ClinicRequest {
     address?: string;
 }
 
-export interface ClinicPage {
-    content: Clinic[];
-}
+export type ClinicPage = PaginatedResponse<Clinic>;

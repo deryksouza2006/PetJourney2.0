@@ -1,8 +1,10 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import axios from 'axios';
+import { useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
+import { PaginationControls } from '../../components/PaginationControls';
 import { useDeletePet } from '../../hooks/pets/useDeletePet';
 import { usePets } from '../../hooks/pets/usePets';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
@@ -12,12 +14,17 @@ import { Pet } from '../../types/pet';
 type Props = NativeStackScreenProps<ClinicAdminStackParamList, 'Pets'>;
 
 export function PetListScreen({ navigation }: Props) {
-    const { data, isPending, isError } = usePets();
+    const [page, setPage] = useState(0);
+    const { data, isPending, isError, isFetching } = usePets(page);
     const deletePet = useDeletePet();
 
     async function deleteSelectedPet(id: number): Promise<void> {
         try {
             await deletePet.mutateAsync(id);
+
+            if (data && data.number > 0 && data.numberOfElements === 1) {
+                setPage(data.number - 1);
+            }
         } catch (error: unknown) {
             if (axios.isAxiosError(error) && error.response?.status === 409) {
                 Alert.alert(
@@ -161,6 +168,19 @@ export function PetListScreen({ navigation }: Props) {
                                     Cadastre um pet para começar.
                                 </Text>
                             </View>
+                        }
+                        ListFooterComponent={
+                            data.totalPages > 0 ? (
+                                <PaginationControls
+                                    page={data.number}
+                                    totalPages={data.totalPages}
+                                    isFirst={data.first}
+                                    isLast={data.last}
+                                    disabled={isFetching || deletePet.isPending}
+                                    onPrevious={() => setPage(data.number - 1)}
+                                    onNext={() => setPage(data.number + 1)}
+                                />
+                            ) : null
                         }
                     />
                 )}

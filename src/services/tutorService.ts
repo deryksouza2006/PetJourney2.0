@@ -1,8 +1,10 @@
 import { Tutor, TutorPage, TutorRequest } from '../types/tutor';
 import { api } from './api';
 
-export async function getTutors(): Promise<TutorPage> {
-    const response = await api.get<TutorPage>('/tutors');
+export async function getTutors(page: number, size: number): Promise<TutorPage> {
+    const response = await api.get<TutorPage>('/tutors', {
+        params: { page, size },
+    });
 
     return response.data;
 }

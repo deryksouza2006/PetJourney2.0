@@ -1,3 +1,5 @@
+import { PaginatedResponse } from './pagination';
+
 export interface Tutor {
     id: number;
     name: string;
@@ -15,6 +17,4 @@ export interface TutorRequest {
     email?: string;
 }
 
-export interface TutorPage {
-    content: Tutor[];
-}
+export type TutorPage = PaginatedResponse<Tutor>;
