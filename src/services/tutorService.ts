@@ -21,3 +21,7 @@ export async function updateTutor(
 
     return response.data;
 }
+
+export async function deleteTutor(id: number): Promise<void> {
+    await api.delete<void>(`/tutors/${id}`);
+}

@@ -1,12 +1,15 @@
 import {
     ActivityIndicator,
+    Alert,
     Button,
     FlatList,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
+import axios from 'axios';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useDeleteTutor } from '../../hooks/tutors/useDeleteTutor';
 import { useTutors } from '../../hooks/tutors/useTutors';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
 import { Tutor } from '../../types/tutor';
@@ -15,6 +18,48 @@ type Props = NativeStackScreenProps<ClinicAdminStackParamList, 'Tutors'>;
 
 export function TutorListScreen({ navigation }: Props) {
     const { data, isPending, isError } = useTutors();
+    const deleteTutor = useDeleteTutor();
+
+    async function deleteSelectedTutor(id: number): Promise<void> {
+        try {
+            await deleteTutor.mutateAsync(id);
+        } catch (error: unknown) {
+            if (
+                axios.isAxiosError(error) &&
+                error.response?.status === 409
+            ) {
+                Alert.alert(
+                    'N\u00e3o foi poss\u00edvel excluir',
+                    'O tutor possui dados vinculados e n\u00e3o pode ser exclu\u00eddo.',
+                );
+                return;
+            }
+
+            Alert.alert(
+                'N\u00e3o foi poss\u00edvel excluir',
+                'O tutor n\u00e3o p\u00f4de ser exclu\u00eddo.',
+            );
+        }
+    }
+
+    function confirmDelete(tutor: Tutor): void {
+        if (deleteTutor.isPending) {
+            return;
+        }
+
+        Alert.alert(
+            `Excluir ${tutor.name}?`,
+            'Essa a\u00e7\u00e3o n\u00e3o pode ser desfeita.',
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                    text: 'Excluir',
+                    style: 'destructive',
+                    onPress: () => void deleteSelectedTutor(tutor.id),
+                },
+            ],
+        );
+    }
 
     function renderTutor({ item }: { item: Tutor }) {
         return (
@@ -37,6 +82,17 @@ export function TutorListScreen({ navigation }: Props) {
                             navigation.navigate('EditTutor', { tutor: item })
                         }
                         color="#2f7d6d"
+                    />
+                    <Button
+                        title={
+                            deleteTutor.isPending &&
+                            deleteTutor.variables === item.id
+                                ? 'Excluindo...'
+                                : 'Excluir'
+                        }
+                        onPress={() => confirmDelete(item)}
+                        disabled={deleteTutor.isPending}
+                        color="#b42318"
                     />
                 </View>
             </View>
@@ -120,6 +176,8 @@ const styles = StyleSheet.create({
         fontSize: 15,
     },
     cardActions: {
+        flexDirection: 'row',
+        gap: 8,
         marginTop: 8,
         alignSelf: 'flex-start',
     },
