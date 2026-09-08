@@ -1,8 +1,10 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    KeyboardAvoidingView,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -10,10 +12,14 @@ import {
     TextInput,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppButton } from '../../components/AppButton';
+import { AppInput } from '../../components/AppInput';
 import { useCreatePet } from '../../hooks/pets/useCreatePet';
 import { useUpdatePet } from '../../hooks/pets/useUpdatePet';
 import { useTutors } from '../../hooks/tutors/useTutors';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
+import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { PetRequest, PetSex, PetSpecies } from '../../types/pet';
 
 type Props =
@@ -38,10 +44,11 @@ export function PetFormScreen(props: Props) {
     const createPet = useCreatePet();
     const updatePet = useUpdatePet();
     const tutors = useTutors();
+    const breedInputRef = useRef<TextInput>(null);
+    const birthDateInputRef = useRef<TextInput>(null);
+    const weightInputRef = useRef<TextInput>(null);
     const [name, setName] = useState(pet?.name ?? '');
-    const [species, setSpecies] = useState<PetSpecies | null>(
-        pet?.species ?? null,
-    );
+    const [species, setSpecies] = useState<PetSpecies | null>(pet?.species ?? null);
     const [breed, setBreed] = useState(pet?.breed ?? '');
     const [sex, setSex] = useState<PetSex | null>(pet?.sex ?? null);
     const [birthDate, setBirthDate] = useState(pet?.birthDate ?? '');
@@ -50,9 +57,7 @@ export function PetFormScreen(props: Props) {
             ? pet.weight.toString()
             : '',
     );
-    const [tutorId, setTutorId] = useState<number | null>(
-        pet?.tutorId ?? null,
-    );
+    const [tutorId, setTutorId] = useState<number | null>(pet?.tutorId ?? null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const isPending = createPet.isPending || updatePet.isPending;
 
@@ -126,264 +131,355 @@ export function PetFormScreen(props: Props) {
     }
 
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-        >
-            <Text style={styles.title}>
-                {isEditing ? 'Editar Pet' : 'Cadastrar Pet'}
-            </Text>
-
-            <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder="Nome"
-                editable={!isPending}
-            />
-
-            <Text style={styles.label}>Espécie</Text>
-            <View style={styles.options}>
-                {SPECIES_OPTIONS.map((option) => (
-                    <Pressable
-                        key={option}
-                        style={[
-                            styles.option,
-                            species === option && styles.optionSelected,
-                        ]}
-                        onPress={() => setSpecies(option)}
-                        disabled={isPending}
-                    >
-                        <Text
-                            style={[
-                                styles.optionText,
-                                species === option && styles.optionTextSelected,
-                            ]}
-                        >
-                            {option}
-                        </Text>
-                    </Pressable>
-                ))}
-            </View>
-
-            <TextInput
-                style={styles.input}
-                value={breed}
-                onChangeText={setBreed}
-                placeholder="Raça (opcional)"
-                editable={!isPending}
-            />
-
-            <Text style={styles.label}>Sexo (opcional)</Text>
-            <View style={styles.options}>
-                {SEX_OPTIONS.map((option) => (
-                    <Pressable
-                        key={option}
-                        style={[
-                            styles.option,
-                            sex === option && styles.optionSelected,
-                        ]}
-                        onPress={() => setSex(option)}
-                        disabled={isPending}
-                    >
-                        <Text
-                            style={[
-                                styles.optionText,
-                                sex === option && styles.optionTextSelected,
-                            ]}
-                        >
-                            {option}
-                        </Text>
-                    </Pressable>
-                ))}
-                <Pressable
-                    style={[
-                        styles.option,
-                        sex === null && styles.optionSelected,
-                    ]}
-                    onPress={() => setSex(null)}
-                    disabled={isPending}
-                >
-                    <Text
-                        style={[
-                            styles.optionText,
-                            sex === null && styles.optionTextSelected,
-                        ]}
-                    >
-                        Não informar
-                    </Text>
-                </Pressable>
-            </View>
-
-            <TextInput
-                style={styles.input}
-                value={birthDate}
-                onChangeText={setBirthDate}
-                placeholder="Nascimento (AAAA-MM-DD, opcional)"
-                editable={!isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={weight}
-                onChangeText={setWeight}
-                placeholder="Peso (opcional)"
-                keyboardType="decimal-pad"
-                editable={!isPending}
-            />
-
-            <Text style={styles.label}>Tutor</Text>
-            {tutors.isPending ? (
-                <ActivityIndicator color="#2f7d6d" />
-            ) : tutors.isError ? (
-                <Text style={styles.error}>
-                    Não foi possível carregar os Tutores.
-                </Text>
-            ) : tutors.data.content.length === 0 ? (
-                <Text style={styles.message}>Nenhum Tutor disponível.</Text>
-            ) : (
-                <View style={styles.tutors}>
-                    {tutors.data.content.map((tutor) => (
-                        <Pressable
-                            key={tutor.id}
-                            style={[
-                                styles.tutorOption,
-                                tutorId === tutor.id && styles.optionSelected,
-                            ]}
-                            onPress={() => setTutorId(tutor.id)}
-                            disabled={isPending}
-                        >
-                            <Text
-                                style={[
-                                    styles.optionText,
-                                    tutorId === tutor.id &&
-                                        styles.optionTextSelected,
-                                ]}
-                            >
-                                {tutor.name}
-                            </Text>
-                        </Pressable>
-                    ))}
-                </View>
-            )}
-
-            {errorMessage ? (
-                <Text style={styles.error}>{errorMessage}</Text>
-            ) : null}
-
-            <Pressable
-                style={({ pressed }) => [
-                    styles.button,
-                    pressed && styles.buttonPressed,
-                    isPending && styles.buttonDisabled,
-                ]}
-                onPress={() => void handleSubmit()}
-                disabled={isPending}
+        <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
+            <KeyboardAvoidingView
+                style={styles.keyboardView}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-                {isPending ? (
-                    <ActivityIndicator color="#ffffff" />
-                ) : (
-                    <Text style={styles.buttonText}>
-                        {isEditing ? 'Salvar alterações' : 'Cadastrar'}
-                    </Text>
-                )}
-            </Pressable>
-        </ScrollView>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.content}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.wrapper}>
+                        <Text style={styles.eyebrow}>
+                            {isEditing ? 'EDIÇÃO' : 'NOVO CADASTRO'}
+                        </Text>
+                        <Text style={styles.title}>
+                            {isEditing ? 'Editar pet' : 'Cadastrar pet'}
+                        </Text>
+                        <Text style={styles.description}>
+                            {isEditing
+                                ? 'Atualize os dados cadastrais do pet.'
+                                : 'Informe os dados do pet para adicioná-lo à clínica.'}
+                        </Text>
+
+                        <View style={styles.card}>
+                            <Text style={styles.sectionTitle}>Dados do pet</Text>
+                            <Text style={styles.requiredHint}>
+                                Nome, espécie e Tutor são obrigatórios.
+                            </Text>
+
+                            <View style={styles.fields}>
+                                <AppInput
+                                    label="Nome *"
+                                    value={name}
+                                    onChangeText={setName}
+                                    placeholder="Nome do pet"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => breedInputRef.current?.focus()}
+                                />
+
+                                <View style={styles.fieldGroup}>
+                                    <Text style={styles.label}>Espécie *</Text>
+                                    <View style={styles.options}>
+                                        {SPECIES_OPTIONS.map((option) => (
+                                            <Pressable
+                                                key={option}
+                                                accessibilityRole="button"
+                                                accessibilityState={{
+                                                    selected: species === option,
+                                                    disabled: isPending,
+                                                }}
+                                                style={({ pressed }) => [
+                                                    styles.option,
+                                                    species === option && styles.optionSelected,
+                                                    pressed && !isPending && styles.optionPressed,
+                                                    isPending && styles.optionDisabled,
+                                                ]}
+                                                onPress={() => setSpecies(option)}
+                                                disabled={isPending}
+                                            >
+                                                <Text
+                                                    style={[
+                                                        styles.optionText,
+                                                        species === option && styles.optionTextSelected,
+                                                    ]}
+                                                >
+                                                    {option}
+                                                </Text>
+                                            </Pressable>
+                                        ))}
+                                    </View>
+                                </View>
+
+                                <AppInput
+                                    ref={breedInputRef}
+                                    label="Raça"
+                                    value={breed}
+                                    onChangeText={setBreed}
+                                    placeholder="Raça (opcional)"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => birthDateInputRef.current?.focus()}
+                                />
+
+                                <View style={styles.fieldGroup}>
+                                    <Text style={styles.label}>Sexo (opcional)</Text>
+                                    <View style={styles.options}>
+                                        {SEX_OPTIONS.map((option) => (
+                                            <Pressable
+                                                key={option}
+                                                accessibilityRole="button"
+                                                accessibilityState={{
+                                                    selected: sex === option,
+                                                    disabled: isPending,
+                                                }}
+                                                style={({ pressed }) => [
+                                                    styles.option,
+                                                    sex === option && styles.optionSelected,
+                                                    pressed && !isPending && styles.optionPressed,
+                                                    isPending && styles.optionDisabled,
+                                                ]}
+                                                onPress={() => setSex(option)}
+                                                disabled={isPending}
+                                            >
+                                                <Text
+                                                    style={[
+                                                        styles.optionText,
+                                                        sex === option && styles.optionTextSelected,
+                                                    ]}
+                                                >
+                                                    {option}
+                                                </Text>
+                                            </Pressable>
+                                        ))}
+                                        <Pressable
+                                            accessibilityRole="button"
+                                            accessibilityState={{
+                                                selected: sex === null,
+                                                disabled: isPending,
+                                            }}
+                                            style={({ pressed }) => [
+                                                styles.option,
+                                                sex === null && styles.optionSelected,
+                                                pressed && !isPending && styles.optionPressed,
+                                                isPending && styles.optionDisabled,
+                                            ]}
+                                            onPress={() => setSex(null)}
+                                            disabled={isPending}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.optionText,
+                                                    sex === null && styles.optionTextSelected,
+                                                ]}
+                                            >
+                                                Não informar
+                                            </Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
+
+                                <AppInput
+                                    ref={birthDateInputRef}
+                                    label="Nascimento"
+                                    value={birthDate}
+                                    onChangeText={setBirthDate}
+                                    placeholder="AAAA-MM-DD (opcional)"
+                                    autoCapitalize="none"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => weightInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={weightInputRef}
+                                    label="Peso"
+                                    value={weight}
+                                    onChangeText={setWeight}
+                                    placeholder="Peso em kg (opcional)"
+                                    keyboardType="decimal-pad"
+                                    editable={!isPending}
+                                />
+
+                                <View style={styles.fieldGroup}>
+                                    <Text style={styles.label}>Tutor *</Text>
+                                    {tutors.isPending ? (
+                                        <View style={styles.tutorState}>
+                                            <ActivityIndicator color={colors.primary} />
+                                            <Text style={styles.message}>Carregando Tutores...</Text>
+                                        </View>
+                                    ) : tutors.isError ? (
+                                        <View style={styles.selectionError}>
+                                            <Text style={styles.error}>
+                                                Não foi possível carregar os Tutores.
+                                            </Text>
+                                        </View>
+                                    ) : tutors.data.content.length === 0 ? (
+                                        <View style={styles.emptyTutors}>
+                                            <Text style={styles.message}>Nenhum Tutor disponível.</Text>
+                                        </View>
+                                    ) : (
+                                        <View style={styles.tutors}>
+                                            {tutors.data.content.map((tutor) => (
+                                                <Pressable
+                                                    key={tutor.id}
+                                                    accessibilityRole="button"
+                                                    accessibilityState={{
+                                                        selected: tutorId === tutor.id,
+                                                        disabled: isPending,
+                                                    }}
+                                                    style={({ pressed }) => [
+                                                        styles.tutorOption,
+                                                        tutorId === tutor.id && styles.optionSelected,
+                                                        pressed && !isPending && styles.optionPressed,
+                                                        isPending && styles.optionDisabled,
+                                                    ]}
+                                                    onPress={() => setTutorId(tutor.id)}
+                                                    disabled={isPending}
+                                                >
+                                                    <Text
+                                                        style={[
+                                                            styles.optionText,
+                                                            tutorId === tutor.id &&
+                                                                styles.optionTextSelected,
+                                                        ]}
+                                                    >
+                                                        {tutor.name}
+                                                    </Text>
+                                                </Pressable>
+                                            ))}
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
+
+                            {errorMessage ? (
+                                <View style={styles.errorContainer} accessibilityLiveRegion="polite">
+                                    <Text style={styles.error}>{errorMessage}</Text>
+                                </View>
+                            ) : null}
+
+                            <AppButton
+                                label={isEditing ? 'Salvar alterações' : 'Cadastrar pet'}
+                                onPress={() => void handleSubmit()}
+                                loading={isPending}
+                            />
+                        </View>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f4f8f7',
-    },
-    content: {
-        padding: 20,
+    safeArea: { flex: 1, backgroundColor: colors.background },
+    keyboardView: { flex: 1 },
+    scrollView: { flex: 1, backgroundColor: colors.background },
+    content: { flexGrow: 1, padding: spacing.xl },
+    wrapper: { width: '100%', maxWidth: 640, alignSelf: 'center' },
+    eyebrow: {
+        marginBottom: spacing.sm,
+        color: colors.primary,
+        fontSize: typography.small,
+        fontWeight: '800',
+        letterSpacing: 1.4,
     },
     title: {
-        marginBottom: 20,
-        color: '#173f37',
-        fontSize: 28,
-        fontWeight: '700',
+        color: colors.text,
+        fontSize: typography.title,
+        fontWeight: '800',
+        letterSpacing: -0.5,
     },
-    input: {
-        height: 48,
-        marginBottom: 14,
-        paddingHorizontal: 14,
+    description: {
+        marginTop: spacing.sm,
+        color: colors.textSecondary,
+        fontSize: typography.body,
+        lineHeight: 23,
+    },
+    card: {
+        marginTop: spacing.xl,
+        padding: spacing.xl,
         borderWidth: 1,
-        borderColor: '#b8c9c5',
-        borderRadius: 8,
-        backgroundColor: '#ffffff',
-        fontSize: 16,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+        ...shadows.card,
     },
+    sectionTitle: {
+        color: colors.text,
+        fontSize: typography.heading,
+        fontWeight: '800',
+    },
+    requiredHint: {
+        marginTop: spacing.xs,
+        color: colors.textSecondary,
+        fontSize: typography.caption,
+    },
+    fields: { gap: spacing.xl, marginVertical: spacing.xl },
+    fieldGroup: { gap: spacing.sm },
     label: {
-        marginBottom: 8,
-        color: '#173f37',
-        fontSize: 16,
+        color: colors.text,
+        fontSize: typography.caption,
         fontWeight: '700',
     },
-    options: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-        marginBottom: 14,
-    },
+    options: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     option: {
-        paddingHorizontal: 12,
-        paddingVertical: 10,
+        minHeight: 44,
+        justifyContent: 'center',
+        paddingHorizontal: spacing.md,
         borderWidth: 1,
-        borderColor: '#b8c9c5',
-        borderRadius: 8,
-        backgroundColor: '#ffffff',
+        borderColor: colors.border,
+        borderRadius: radii.sm,
+        backgroundColor: colors.surface,
     },
     tutorOption: {
-        padding: 12,
+        minHeight: 48,
+        justifyContent: 'center',
+        paddingHorizontal: spacing.lg,
         borderWidth: 1,
-        borderColor: '#b8c9c5',
-        borderRadius: 8,
-        backgroundColor: '#ffffff',
+        borderColor: colors.border,
+        borderRadius: radii.md,
+        backgroundColor: colors.surface,
     },
     optionSelected: {
-        borderColor: '#2f7d6d',
-        backgroundColor: '#2f7d6d',
+        borderColor: colors.primary,
+        backgroundColor: colors.primary,
     },
+    optionPressed: { opacity: 0.75 },
+    optionDisabled: { opacity: 0.6 },
     optionText: {
-        color: '#173f37',
-        fontSize: 15,
-    },
-    optionTextSelected: {
-        color: '#ffffff',
-    },
-    tutors: {
-        gap: 8,
-        marginBottom: 14,
-    },
-    message: {
-        marginBottom: 14,
-        color: '#4b625d',
-        textAlign: 'center',
-    },
-    error: {
-        marginBottom: 14,
-        color: '#b42318',
-        textAlign: 'center',
-    },
-    button: {
-        minHeight: 48,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 8,
-        backgroundColor: '#2f7d6d',
-    },
-    buttonPressed: {
-        opacity: 0.85,
-    },
-    buttonDisabled: {
-        opacity: 0.65,
-    },
-    buttonText: {
-        color: '#ffffff',
-        fontSize: 16,
+        color: colors.text,
+        fontSize: typography.caption,
         fontWeight: '700',
     },
+    optionTextSelected: { color: colors.white },
+    tutors: { gap: spacing.sm },
+    tutorState: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.md,
+        padding: spacing.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.md,
+        backgroundColor: colors.background,
+    },
+    emptyTutors: {
+        padding: spacing.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.md,
+        backgroundColor: colors.background,
+    },
+    selectionError: {
+        padding: spacing.md,
+        borderLeftWidth: 3,
+        borderLeftColor: colors.danger,
+        borderRadius: radii.sm,
+        backgroundColor: '#FDF0F0',
+    },
+    message: { color: colors.textSecondary, fontSize: typography.caption, lineHeight: 20 },
+    errorContainer: {
+        marginBottom: spacing.lg,
+        padding: spacing.md,
+        borderLeftWidth: 3,
+        borderLeftColor: colors.danger,
+        borderRadius: radii.sm,
+        backgroundColor: '#FDF0F0',
+    },
+    error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
 });

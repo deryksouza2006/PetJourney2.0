@@ -1,17 +1,12 @@
-import {
-    ActivityIndicator,
-    Alert,
-    Button,
-    FlatList,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
-import axios from 'axios';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import axios from 'axios';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppButton } from '../../components/AppButton';
 import { useDeleteTutor } from '../../hooks/tutors/useDeleteTutor';
 import { useTutors } from '../../hooks/tutors/useTutors';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
+import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { Tutor } from '../../types/tutor';
 
 type Props = NativeStackScreenProps<ClinicAdminStackParamList, 'Tutors'>;
@@ -24,20 +19,17 @@ export function TutorListScreen({ navigation }: Props) {
         try {
             await deleteTutor.mutateAsync(id);
         } catch (error: unknown) {
-            if (
-                axios.isAxiosError(error) &&
-                error.response?.status === 409
-            ) {
+            if (axios.isAxiosError(error) && error.response?.status === 409) {
                 Alert.alert(
-                    'N\u00e3o foi poss\u00edvel excluir',
-                    'O tutor possui dados vinculados e n\u00e3o pode ser exclu\u00eddo.',
+                    'Não foi possível excluir',
+                    'O tutor possui dados vinculados e não pode ser excluído.',
                 );
                 return;
             }
 
             Alert.alert(
-                'N\u00e3o foi poss\u00edvel excluir',
-                'O tutor n\u00e3o p\u00f4de ser exclu\u00eddo.',
+                'Não foi possível excluir',
+                'O tutor não pôde ser excluído.',
             );
         }
     }
@@ -49,7 +41,7 @@ export function TutorListScreen({ navigation }: Props) {
 
         Alert.alert(
             `Excluir ${tutor.name}?`,
-            'Essa a\u00e7\u00e3o n\u00e3o pode ser desfeita.',
+            'Essa ação não pode ser desfeita.',
             [
                 { text: 'Cancelar', style: 'cancel' },
                 {
@@ -62,37 +54,52 @@ export function TutorListScreen({ navigation }: Props) {
     }
 
     function renderTutor({ item }: { item: Tutor }) {
+        const isDeleting = deleteTutor.isPending && deleteTutor.variables === item.id;
+
         return (
             <View style={styles.card}>
-                <Text style={styles.tutorName}>{item.name}</Text>
-                <Text style={styles.detail}>CPF: {item.cpf}</Text>
-                <Text style={styles.detail}>
-                    Telefone: {item.phone ?? 'N\u00e3o informado'}
-                </Text>
-                <Text style={styles.detail}>
-                    E-mail: {item.email ?? 'N\u00e3o informado'}
-                </Text>
-                <Text style={styles.detail}>
-                    Cl\u00ednica: {item.clinicName ?? 'N\u00e3o informada'}
-                </Text>
+                <View style={styles.cardHeader}>
+                    <View style={styles.tutorIcon}>
+                        <Text style={styles.tutorIconText}>TU</Text>
+                    </View>
+                    <View style={styles.cardHeaderCopy}>
+                        <Text style={styles.tutorName}>{item.name}</Text>
+                        <Text style={styles.cpf}>CPF {item.cpf}</Text>
+                    </View>
+                </View>
+
+                <View style={styles.details}>
+                    <View style={styles.detailBlock}>
+                        <Text style={styles.detailLabel}>Telefone</Text>
+                        <Text style={styles.detailValue}>{item.phone ?? 'Não informado'}</Text>
+                    </View>
+                    <View style={styles.detailBlock}>
+                        <Text style={styles.detailLabel}>E-mail</Text>
+                        <Text style={styles.detailValue}>{item.email ?? 'Não informado'}</Text>
+                    </View>
+                    <View style={styles.detailBlockWide}>
+                        <Text style={styles.detailLabel}>Clínica</Text>
+                        <Text style={styles.detailValue}>{item.clinicName ?? 'Não informada'}</Text>
+                    </View>
+                </View>
+
                 <View style={styles.cardActions}>
-                    <Button
-                        title="Editar"
-                        onPress={() =>
-                            navigation.navigate('EditTutor', { tutor: item })
-                        }
-                        color="#2f7d6d"
+                    <AppButton
+                        label="Editar"
+                        variant="secondary"
+                        size="small"
+                        style={styles.cardAction}
+                        onPress={() => navigation.navigate('EditTutor', { tutor: item })}
+                        disabled={deleteTutor.isPending}
                     />
-                    <Button
-                        title={
-                            deleteTutor.isPending &&
-                            deleteTutor.variables === item.id
-                                ? 'Excluindo...'
-                                : 'Excluir'
-                        }
+                    <AppButton
+                        label="Excluir"
+                        variant="danger"
+                        size="small"
+                        style={styles.cardAction}
                         onPress={() => confirmDelete(item)}
                         disabled={deleteTutor.isPending}
-                        color="#b42318"
+                        loading={isDeleting}
                     />
                 </View>
             </View>
@@ -100,90 +107,184 @@ export function TutorListScreen({ navigation }: Props) {
     }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Tutores</Text>
-            <View style={styles.action}>
-                <Button
-                    title="Cadastrar Tutor"
-                    onPress={() => navigation.navigate('CreateTutor')}
-                    color="#2f7d6d"
-                />
-            </View>
+        <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
+            <View style={styles.container}>
+                <View style={styles.heading}>
+                    <Text style={styles.eyebrow}>ATENDIMENTO</Text>
+                    <Text style={styles.title}>Tutores</Text>
+                    <Text style={styles.description}>
+                        Gerencie os responsáveis pelos pets da clínica.
+                    </Text>
+                    <AppButton
+                        label="Cadastrar tutor"
+                        onPress={() => navigation.navigate('CreateTutor')}
+                        style={styles.createButton}
+                    />
+                </View>
 
-            {isPending ? (
-                <ActivityIndicator size="large" color="#2f7d6d" />
-            ) : isError ? (
-                <Text style={styles.message}>
-                    N\u00e3o foi poss\u00edvel carregar os tutores.
-                </Text>
-            ) : (
-                <FlatList
-                    data={data.content}
-                    keyExtractor={(tutor) => tutor.id.toString()}
-                    renderItem={renderTutor}
-                    contentContainerStyle={
-                        data.content.length === 0 ? styles.emptyList : styles.list
-                    }
-                    ListEmptyComponent={
-                        <Text style={styles.message}>
-                            Nenhum tutor encontrado.
+                {isPending ? (
+                    <View style={styles.stateContainer}>
+                        <ActivityIndicator size="large" color={colors.primary} />
+                        <Text style={styles.stateMessage}>Carregando tutores...</Text>
+                    </View>
+                ) : isError ? (
+                    <View style={styles.stateCard}>
+                        <Text style={styles.stateTitle}>Não foi possível carregar</Text>
+                        <Text style={styles.stateMessage}>
+                            Não foi possível carregar os tutores.
                         </Text>
-                    }
-                />
-            )}
-        </View>
+                    </View>
+                ) : (
+                    <FlatList
+                        style={styles.listContainer}
+                        data={data.content}
+                        keyExtractor={(tutor) => tutor.id.toString()}
+                        renderItem={renderTutor}
+                        contentContainerStyle={
+                            data.content.length === 0 ? styles.emptyList : styles.list
+                        }
+                        showsVerticalScrollIndicator={false}
+                        ListEmptyComponent={
+                            <View style={styles.stateCard}>
+                                <Text style={styles.stateTitle}>Nenhum tutor encontrado.</Text>
+                                <Text style={styles.stateMessage}>
+                                    Cadastre um tutor para começar.
+                                </Text>
+                            </View>
+                        }
+                    />
+                )}
+            </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    safeArea: { flex: 1, backgroundColor: colors.background },
     container: {
         flex: 1,
-        padding: 20,
-        backgroundColor: '#f4f8f7',
+        paddingHorizontal: spacing.xl,
+        backgroundColor: colors.background,
+    },
+    heading: {
+        width: '100%',
+        maxWidth: 760,
+        alignSelf: 'center',
+        paddingVertical: spacing.xl,
+    },
+    eyebrow: {
+        marginBottom: spacing.sm,
+        color: colors.primary,
+        fontSize: typography.small,
+        fontWeight: '800',
+        letterSpacing: 1.4,
     },
     title: {
-        marginBottom: 12,
-        color: '#173f37',
-        fontSize: 28,
-        fontWeight: '700',
+        color: colors.text,
+        fontSize: typography.title,
+        fontWeight: '800',
+        letterSpacing: -0.5,
     },
-    action: {
-        marginBottom: 16,
-        alignItems: 'flex-start',
+    description: {
+        marginTop: spacing.sm,
+        color: colors.textSecondary,
+        fontSize: typography.body,
+        lineHeight: 23,
     },
-    list: {
-        paddingBottom: 20,
-    },
-    emptyList: {
-        flexGrow: 1,
-        justifyContent: 'center',
-    },
+    createButton: { alignSelf: 'flex-start', marginTop: spacing.xl },
+    listContainer: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center' },
+    list: { paddingBottom: spacing.xxl },
+    emptyList: { flexGrow: 1, justifyContent: 'center', paddingBottom: spacing.xxl },
     card: {
-        marginBottom: 12,
-        padding: 16,
-        borderRadius: 10,
-        backgroundColor: '#ffffff',
+        marginBottom: spacing.lg,
+        padding: spacing.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+        ...shadows.card,
     },
+    cardHeader: { flexDirection: 'row', alignItems: 'center' },
+    tutorIcon: {
+        width: 46,
+        height: 46,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: radii.md,
+        backgroundColor: colors.primarySoft,
+    },
+    tutorIconText: {
+        color: colors.primary,
+        fontSize: typography.small,
+        fontWeight: '800',
+    },
+    cardHeaderCopy: { flex: 1, marginLeft: spacing.md },
     tutorName: {
-        marginBottom: 8,
-        color: '#173f37',
-        fontSize: 18,
+        color: colors.text,
+        fontSize: typography.heading,
+        fontWeight: '800',
+    },
+    cpf: {
+        marginTop: spacing.xs,
+        color: colors.textSecondary,
+        fontSize: typography.caption,
+    },
+    details: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: spacing.lg,
+        marginTop: spacing.xl,
+        paddingTop: spacing.lg,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+    },
+    detailBlock: { flexGrow: 1, flexBasis: 180 },
+    detailBlockWide: { width: '100%' },
+    detailLabel: {
+        marginBottom: spacing.xs,
+        color: colors.textSecondary,
+        fontSize: typography.small,
         fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
-    detail: {
-        marginBottom: 4,
-        color: '#4b625d',
-        fontSize: 15,
-    },
+    detailValue: { color: colors.text, fontSize: typography.caption, lineHeight: 20 },
     cardActions: {
         flexDirection: 'row',
-        gap: 8,
-        marginTop: 8,
-        alignSelf: 'flex-start',
+        gap: spacing.md,
+        marginTop: spacing.xl,
+        paddingTop: spacing.lg,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
     },
-    message: {
-        color: '#4b625d',
-        fontSize: 16,
+    cardAction: { flex: 1 },
+    stateContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: spacing.md,
+    },
+    stateCard: {
+        width: '100%',
+        maxWidth: 760,
+        alignSelf: 'center',
+        padding: spacing.xl,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+    },
+    stateTitle: {
+        color: colors.text,
+        fontSize: typography.body,
+        fontWeight: '800',
+        textAlign: 'center',
+    },
+    stateMessage: {
+        marginTop: spacing.sm,
+        color: colors.textSecondary,
+        fontSize: typography.caption,
+        lineHeight: 20,
         textAlign: 'center',
     },
 });

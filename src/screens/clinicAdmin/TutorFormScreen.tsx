@@ -1,18 +1,23 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import axios from 'axios';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
-    Pressable,
+    KeyboardAvoidingView,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
     TextInput,
+    View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppButton } from '../../components/AppButton';
+import { AppInput } from '../../components/AppInput';
 import { useCreateTutor } from '../../hooks/tutors/useCreateTutor';
 import { useUpdateTutor } from '../../hooks/tutors/useUpdateTutor';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
+import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { TutorRequest } from '../../types/tutor';
 
 type Props =
@@ -29,6 +34,9 @@ export function TutorFormScreen(props: Props) {
     const isEditing = tutor !== undefined;
     const createTutor = useCreateTutor();
     const updateTutor = useUpdateTutor();
+    const cpfInputRef = useRef<TextInput>(null);
+    const phoneInputRef = useRef<TextInput>(null);
+    const emailInputRef = useRef<TextInput>(null);
     const [name, setName] = useState(tutor?.name ?? '');
     const [cpf, setCpf] = useState(tutor?.cpf ?? '');
     const [phone, setPhone] = useState(tutor?.phone ?? '');
@@ -42,17 +50,17 @@ export function TutorFormScreen(props: Props) {
         const trimmedEmail = email.trim();
 
         if (!trimmedName || !trimmedCpf) {
-            setErrorMessage('Nome e CPF s\u00e3o obrigat\u00f3rios.');
+            setErrorMessage('Nome e CPF são obrigatórios.');
             return;
         }
 
         if (!/^\d{11}$/.test(trimmedCpf)) {
-            setErrorMessage('O CPF deve conter 11 d\u00edgitos.');
+            setErrorMessage('O CPF deve conter 11 dígitos.');
             return;
         }
 
         if (trimmedEmail && !/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
-            setErrorMessage('Informe um e-mail v\u00e1lido.');
+            setErrorMessage('Informe um e-mail válido.');
             return;
         }
 
@@ -79,7 +87,7 @@ export function TutorFormScreen(props: Props) {
             }
 
             Alert.alert(
-                isEditing ? 'Altera\u00e7\u00f5es salvas' : 'Cadastro conclu\u00eddo',
+                isEditing ? 'Alterações salvas' : 'Cadastro concluído',
                 isEditing
                     ? 'Tutor atualizado com sucesso.'
                     : 'Tutor cadastrado com sucesso.',
@@ -98,128 +106,160 @@ export function TutorFormScreen(props: Props) {
 
             setErrorMessage(
                 isEditing
-                    ? 'N\u00e3o foi poss\u00edvel atualizar o tutor. Verifique os dados.'
-                    : 'N\u00e3o foi poss\u00edvel cadastrar o tutor. Verifique os dados.',
+                    ? 'Não foi possível atualizar o tutor. Verifique os dados.'
+                    : 'Não foi possível cadastrar o tutor. Verifique os dados.',
             );
         }
     }
 
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-        >
-            <Text style={styles.title}>
-                {isEditing ? 'Editar Tutor' : 'Cadastrar Tutor'}
-            </Text>
-
-            <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder="Nome"
-                editable={!isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={cpf}
-                onChangeText={setCpf}
-                placeholder="CPF (11 d\u00edgitos)"
-                keyboardType="number-pad"
-                maxLength={11}
-                editable={!isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="Telefone"
-                keyboardType="phone-pad"
-                editable={!isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="E-mail"
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                editable={!isPending}
-                onSubmitEditing={() => void handleSubmit()}
-            />
-
-            {errorMessage ? (
-                <Text style={styles.error}>{errorMessage}</Text>
-            ) : null}
-
-            <Pressable
-                style={({ pressed }) => [
-                    styles.button,
-                    pressed && styles.buttonPressed,
-                    isPending && styles.buttonDisabled,
-                ]}
-                onPress={() => void handleSubmit()}
-                disabled={isPending}
+        <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
+            <KeyboardAvoidingView
+                style={styles.keyboardView}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-                {isPending ? (
-                    <ActivityIndicator color="#ffffff" />
-                ) : (
-                    <Text style={styles.buttonText}>
-                        {isEditing ? 'Salvar altera\u00e7\u00f5es' : 'Cadastrar'}
-                    </Text>
-                )}
-            </Pressable>
-        </ScrollView>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.content}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.wrapper}>
+                        <Text style={styles.eyebrow}>
+                            {isEditing ? 'EDIÇÃO' : 'NOVO CADASTRO'}
+                        </Text>
+                        <Text style={styles.title}>
+                            {isEditing ? 'Editar tutor' : 'Cadastrar tutor'}
+                        </Text>
+                        <Text style={styles.description}>
+                            {isEditing
+                                ? 'Atualize os dados cadastrais do tutor.'
+                                : 'Informe os dados do responsável para adicioná-lo à clínica.'}
+                        </Text>
+
+                        <View style={styles.card}>
+                            <Text style={styles.sectionTitle}>Dados do tutor</Text>
+                            <Text style={styles.requiredHint}>Nome e CPF são obrigatórios.</Text>
+
+                            <View style={styles.fields}>
+                                <AppInput
+                                    label="Nome *"
+                                    value={name}
+                                    onChangeText={setName}
+                                    placeholder="Nome do tutor"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => cpfInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={cpfInputRef}
+                                    label="CPF *"
+                                    value={cpf}
+                                    onChangeText={setCpf}
+                                    placeholder="CPF (11 dígitos)"
+                                    keyboardType="number-pad"
+                                    maxLength={11}
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => phoneInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={phoneInputRef}
+                                    label="Telefone"
+                                    value={phone}
+                                    onChangeText={setPhone}
+                                    placeholder="Telefone"
+                                    keyboardType="phone-pad"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => emailInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={emailInputRef}
+                                    label="E-mail"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    placeholder="nome@exemplo.com"
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    keyboardType="email-address"
+                                    editable={!isPending}
+                                    returnKeyType="done"
+                                    onSubmitEditing={() => void handleSubmit()}
+                                />
+                            </View>
+
+                            {errorMessage ? (
+                                <View style={styles.errorContainer} accessibilityLiveRegion="polite">
+                                    <Text style={styles.error}>{errorMessage}</Text>
+                                </View>
+                            ) : null}
+
+                            <AppButton
+                                label={isEditing ? 'Salvar alterações' : 'Cadastrar tutor'}
+                                onPress={() => void handleSubmit()}
+                                loading={isPending}
+                            />
+                        </View>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f4f8f7',
-    },
-    content: {
-        padding: 20,
+    safeArea: { flex: 1, backgroundColor: colors.background },
+    keyboardView: { flex: 1 },
+    scrollView: { flex: 1, backgroundColor: colors.background },
+    content: { flexGrow: 1, padding: spacing.xl },
+    wrapper: { width: '100%', maxWidth: 640, alignSelf: 'center' },
+    eyebrow: {
+        marginBottom: spacing.sm,
+        color: colors.primary,
+        fontSize: typography.small,
+        fontWeight: '800',
+        letterSpacing: 1.4,
     },
     title: {
-        marginBottom: 20,
-        color: '#173f37',
-        fontSize: 28,
-        fontWeight: '700',
+        color: colors.text,
+        fontSize: typography.title,
+        fontWeight: '800',
+        letterSpacing: -0.5,
     },
-    input: {
-        height: 48,
-        marginBottom: 14,
-        paddingHorizontal: 14,
+    description: {
+        marginTop: spacing.sm,
+        color: colors.textSecondary,
+        fontSize: typography.body,
+        lineHeight: 23,
+    },
+    card: {
+        marginTop: spacing.xl,
+        padding: spacing.xl,
         borderWidth: 1,
-        borderColor: '#b8c9c5',
-        borderRadius: 8,
-        backgroundColor: '#ffffff',
-        fontSize: 16,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+        ...shadows.card,
     },
-    error: {
-        marginBottom: 14,
-        color: '#b42318',
-        textAlign: 'center',
+    sectionTitle: {
+        color: colors.text,
+        fontSize: typography.heading,
+        fontWeight: '800',
     },
-    button: {
-        minHeight: 48,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 8,
-        backgroundColor: '#2f7d6d',
+    requiredHint: {
+        marginTop: spacing.xs,
+        color: colors.textSecondary,
+        fontSize: typography.caption,
     },
-    buttonPressed: {
-        opacity: 0.85,
+    fields: { gap: spacing.lg, marginVertical: spacing.xl },
+    errorContainer: {
+        marginBottom: spacing.lg,
+        padding: spacing.md,
+        borderLeftWidth: 3,
+        borderLeftColor: colors.danger,
+        borderRadius: radii.sm,
+        backgroundColor: '#FDF0F0',
     },
-    buttonDisabled: {
-        opacity: 0.65,
-    },
-    buttonText: {
-        color: '#ffffff',
-        fontSize: 16,
-        fontWeight: '700',
-    },
+    error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
 });
