@@ -1,18 +1,23 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
-    Pressable,
+    KeyboardAvoidingView,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
     TextInput,
+    View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppButton } from '../../components/AppButton';
+import { AppInput } from '../../components/AppInput';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCreateVeterinarian } from '../../hooks/veterinarians/useCreateVeterinarian';
 import { useUpdateVeterinarian } from '../../hooks/veterinarians/useUpdateVeterinarian';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
+import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { VeterinarianRequest } from '../../types/veterinarian';
 
 type Props =
@@ -22,35 +27,34 @@ type Props =
 export function VeterinarianFormScreen(props: Props) {
     const { navigation, route } = props;
     const veterinarian =
-        route.name === 'EditVeterinarian'
-            ? route.params.veterinarian
-            : undefined;
+        route.name === 'EditVeterinarian' ? route.params.veterinarian : undefined;
     const isEditing = veterinarian !== undefined;
     const { user } = useAuth();
     const createVeterinarian = useCreateVeterinarian();
     const updateVeterinarian = useUpdateVeterinarian();
+    const crmvInputRef = useRef<TextInput>(null);
+    const phoneInputRef = useRef<TextInput>(null);
+    const emailInputRef = useRef<TextInput>(null);
+    const specialtyInputRef = useRef<TextInput>(null);
     const [name, setName] = useState(veterinarian?.name ?? '');
     const [crmv, setCrmv] = useState(veterinarian?.crmv ?? '');
     const [phone, setPhone] = useState(veterinarian?.phone ?? '');
     const [email, setEmail] = useState(veterinarian?.email ?? '');
-    const [specialty, setSpecialty] = useState(
-        veterinarian?.specialty ?? '',
-    );
+    const [specialty, setSpecialty] = useState(veterinarian?.specialty ?? '');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const isPending =
-        createVeterinarian.isPending || updateVeterinarian.isPending;
+    const isPending = createVeterinarian.isPending || updateVeterinarian.isPending;
 
     async function handleSubmit(): Promise<void> {
         const trimmedName = name.trim();
         const trimmedCrmv = crmv.trim();
 
         if (!trimmedName || !trimmedCrmv) {
-            setErrorMessage('Nome e CRMV s\u00e3o obrigat\u00f3rios.');
+            setErrorMessage('Nome e CRMV são obrigatórios.');
             return;
         }
 
         if (user?.clinicId == null) {
-            setErrorMessage('N\u00e3o foi poss\u00edvel identificar a cl\u00ednica da sess\u00e3o.');
+            setErrorMessage('Não foi possível identificar a clínica da sessão.');
             return;
         }
 
@@ -87,143 +91,197 @@ export function VeterinarianFormScreen(props: Props) {
             }
 
             Alert.alert(
-                isEditing ? 'Altera\u00e7\u00f5es salvas' : 'Cadastro conclu\u00eddo',
+                isEditing ? 'Alterações salvas' : 'Cadastro concluído',
                 isEditing
-                    ? 'Veterin\u00e1rio atualizado com sucesso.'
-                    : 'Veterin\u00e1rio cadastrado com sucesso.',
+                    ? 'Veterinário atualizado com sucesso.'
+                    : 'Veterinário cadastrado com sucesso.',
                 [{ text: 'OK', onPress: () => navigation.goBack() }],
             );
         } catch {
             setErrorMessage(
                 isEditing
-                    ? 'N\u00e3o foi poss\u00edvel atualizar o veterin\u00e1rio. Verifique os dados.'
-                    : 'N\u00e3o foi poss\u00edvel cadastrar o veterin\u00e1rio. Verifique os dados.',
+                    ? 'Não foi possível atualizar o veterinário. Verifique os dados.'
+                    : 'Não foi possível cadastrar o veterinário. Verifique os dados.',
             );
         }
     }
 
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-        >
-            <Text style={styles.title}>
-                {isEditing ? 'Editar Veterin\u00e1rio' : 'Cadastrar Veterin\u00e1rio'}
-            </Text>
-
-            <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder="Nome"
-                editable={!isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={crmv}
-                onChangeText={setCrmv}
-                placeholder="CRMV"
-                autoCapitalize="characters"
-                editable={!isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="Telefone"
-                keyboardType="phone-pad"
-                editable={!isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="E-mail"
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                editable={!isEditing && !isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={specialty}
-                onChangeText={setSpecialty}
-                placeholder="Especialidade"
-                editable={!isPending}
-                onSubmitEditing={() => void handleSubmit()}
-            />
-
-            {errorMessage ? (
-                <Text style={styles.error}>{errorMessage}</Text>
-            ) : null}
-
-            <Pressable
-                style={({ pressed }) => [
-                    styles.button,
-                    pressed && styles.buttonPressed,
-                    isPending && styles.buttonDisabled,
-                ]}
-                onPress={() => void handleSubmit()}
-                disabled={isPending}
+        <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
+            <KeyboardAvoidingView
+                style={styles.keyboardView}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-                {isPending ? (
-                    <ActivityIndicator color="#ffffff" />
-                ) : (
-                    <Text style={styles.buttonText}>
-                        {isEditing ? 'Salvar altera\u00e7\u00f5es' : 'Cadastrar'}
-                    </Text>
-                )}
-            </Pressable>
-        </ScrollView>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.content}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.wrapper}>
+                        <Text style={styles.eyebrow}>
+                            {isEditing ? 'EDIÇÃO' : 'NOVO CADASTRO'}
+                        </Text>
+                        <Text style={styles.title}>
+                            {isEditing ? 'Editar veterinário' : 'Cadastrar veterinário'}
+                        </Text>
+                        <Text style={styles.description}>
+                            {isEditing
+                                ? 'Atualize os dados profissionais do veterinário.'
+                                : 'Informe os dados do profissional para adicioná-lo à clínica.'}
+                        </Text>
+
+                        <View style={styles.card}>
+                            <Text style={styles.sectionTitle}>Dados do veterinário</Text>
+                            <Text style={styles.requiredHint}>Nome e CRMV são obrigatórios.</Text>
+
+                            <View style={styles.fields}>
+                                <AppInput
+                                    label="Nome *"
+                                    value={name}
+                                    onChangeText={setName}
+                                    placeholder="Nome do veterinário"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => crmvInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={crmvInputRef}
+                                    label="CRMV *"
+                                    value={crmv}
+                                    onChangeText={setCrmv}
+                                    placeholder="CRMV"
+                                    autoCapitalize="characters"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => phoneInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={phoneInputRef}
+                                    label="Telefone"
+                                    value={phone}
+                                    onChangeText={setPhone}
+                                    placeholder="Telefone"
+                                    keyboardType="phone-pad"
+                                    editable={!isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() =>
+                                        isEditing
+                                            ? specialtyInputRef.current?.focus()
+                                            : emailInputRef.current?.focus()
+                                    }
+                                />
+                                <View style={styles.emailField}>
+                                    <AppInput
+                                        ref={emailInputRef}
+                                        label="E-mail"
+                                        value={email}
+                                        onChangeText={setEmail}
+                                        placeholder="nome@exemplo.com"
+                                        autoCapitalize="none"
+                                        autoCorrect={false}
+                                        keyboardType="email-address"
+                                        editable={!isEditing && !isPending}
+                                        returnKeyType="next"
+                                        style={isEditing ? styles.readOnlyInput : undefined}
+                                        onSubmitEditing={() => specialtyInputRef.current?.focus()}
+                                    />
+                                    {isEditing ? (
+                                        <Text style={styles.readOnlyHint}>
+                                            O e-mail não pode ser alterado na edição.
+                                        </Text>
+                                    ) : null}
+                                </View>
+                                <AppInput
+                                    ref={specialtyInputRef}
+                                    label="Especialidade"
+                                    value={specialty}
+                                    onChangeText={setSpecialty}
+                                    placeholder="Especialidade"
+                                    editable={!isPending}
+                                    returnKeyType="done"
+                                    onSubmitEditing={() => void handleSubmit()}
+                                />
+                            </View>
+
+                            {errorMessage ? (
+                                <View style={styles.errorContainer} accessibilityLiveRegion="polite">
+                                    <Text style={styles.error}>{errorMessage}</Text>
+                                </View>
+                            ) : null}
+
+                            <AppButton
+                                label={isEditing ? 'Salvar alterações' : 'Cadastrar veterinário'}
+                                onPress={() => void handleSubmit()}
+                                loading={isPending}
+                            />
+                        </View>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f4f8f7',
-    },
-    content: {
-        padding: 20,
+    safeArea: { flex: 1, backgroundColor: colors.background },
+    keyboardView: { flex: 1 },
+    scrollView: { flex: 1, backgroundColor: colors.background },
+    content: { flexGrow: 1, padding: spacing.xl },
+    wrapper: { width: '100%', maxWidth: 640, alignSelf: 'center' },
+    eyebrow: {
+        marginBottom: spacing.sm,
+        color: colors.primary,
+        fontSize: typography.small,
+        fontWeight: '800',
+        letterSpacing: 1.4,
     },
     title: {
-        marginBottom: 20,
-        color: '#173f37',
-        fontSize: 28,
-        fontWeight: '700',
+        color: colors.text,
+        fontSize: typography.title,
+        fontWeight: '800',
+        letterSpacing: -0.5,
     },
-    input: {
-        height: 48,
-        marginBottom: 14,
-        paddingHorizontal: 14,
+    description: {
+        marginTop: spacing.sm,
+        color: colors.textSecondary,
+        fontSize: typography.body,
+        lineHeight: 23,
+    },
+    card: {
+        marginTop: spacing.xl,
+        padding: spacing.xl,
         borderWidth: 1,
-        borderColor: '#b8c9c5',
-        borderRadius: 8,
-        backgroundColor: '#ffffff',
-        fontSize: 16,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+        ...shadows.card,
     },
-    error: {
-        marginBottom: 14,
-        color: '#b42318',
-        textAlign: 'center',
+    sectionTitle: {
+        color: colors.text,
+        fontSize: typography.heading,
+        fontWeight: '800',
     },
-    button: {
-        minHeight: 48,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 8,
-        backgroundColor: '#2f7d6d',
+    requiredHint: {
+        marginTop: spacing.xs,
+        color: colors.textSecondary,
+        fontSize: typography.caption,
     },
-    buttonPressed: {
-        opacity: 0.85,
+    fields: { gap: spacing.lg, marginVertical: spacing.xl },
+    emailField: { gap: spacing.sm },
+    readOnlyInput: { backgroundColor: colors.background, color: colors.textSecondary },
+    readOnlyHint: {
+        color: colors.textSecondary,
+        fontSize: typography.small,
+        lineHeight: 18,
     },
-    buttonDisabled: {
-        opacity: 0.65,
+    errorContainer: {
+        marginBottom: spacing.lg,
+        padding: spacing.md,
+        borderLeftWidth: 3,
+        borderLeftColor: colors.danger,
+        borderRadius: radii.sm,
+        backgroundColor: '#FDF0F0',
     },
-    buttonText: {
-        color: '#ffffff',
-        fontSize: 16,
-        fontWeight: '700',
-    },
+    error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
 });
