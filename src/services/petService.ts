@@ -7,6 +7,12 @@ export async function getPets(): Promise<PetPage> {
     return response.data;
 }
 
+export async function getPetById(id: number): Promise<Pet> {
+    const response = await api.get<Pet>(`/pets/${id}`);
+
+    return response.data;
+}
+
 export async function createPet(request: PetRequest): Promise<Pet> {
     const response = await api.post<Pet>('/pets', request);
 

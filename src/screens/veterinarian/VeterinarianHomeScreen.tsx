@@ -17,6 +17,11 @@ export function VeterinarianHomeScreen({ navigation }: Props) {
             <Text style={styles.description}>Perfil autenticado: VETERINARIO</Text>
             <View style={styles.actions}>
                 <Button
+                    title="Pacientes"
+                    onPress={() => navigation.navigate('Patients')}
+                    color="#2f7d6d"
+                />
+                <Button
                     title="Cadastrar Tutor + Pet"
                     onPress={() => navigation.navigate('RegisterTutorWithPet')}
                     color="#2f7d6d"

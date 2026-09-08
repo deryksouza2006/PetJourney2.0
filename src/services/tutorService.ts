@@ -7,6 +7,12 @@ export async function getTutors(): Promise<TutorPage> {
     return response.data;
 }
 
+export async function getTutorById(id: number): Promise<Tutor> {
+    const response = await api.get<Tutor>(`/tutors/${id}`);
+
+    return response.data;
+}
+
 export async function createTutor(request: TutorRequest): Promise<Tutor> {
     const response = await api.post<Tutor>('/tutors', request);
 
