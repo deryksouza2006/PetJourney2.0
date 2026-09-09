@@ -19,6 +19,7 @@ import { VeterinarianStackParamList } from '../../navigation/VeterinarianNavigat
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { PetSex, PetSpecies } from '../../types/pet';
 import { RegisterTutorWithPetRequest } from '../../types/workflow';
+import { isValidIsoDate } from '../../utils/dateValidation';
 
 type Props = NativeStackScreenProps<VeterinarianStackParamList, 'RegisterTutorWithPet'>;
 
@@ -82,8 +83,8 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
 
         const trimmedBirthDate = birthDate.trim();
 
-        if (trimmedBirthDate && !/^\d{4}-\d{2}-\d{2}$/.test(trimmedBirthDate)) {
-            setErrorMessage('Use o formato AAAA-MM-DD para o nascimento.');
+        if (trimmedBirthDate && !isValidIsoDate(trimmedBirthDate)) {
+            setErrorMessage('Informe uma data de nascimento válida no formato AAAA-MM-DD.');
             return;
         }
 

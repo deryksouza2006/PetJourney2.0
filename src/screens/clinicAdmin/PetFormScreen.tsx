@@ -23,6 +23,7 @@ import { useTutors } from '../../hooks/tutors/useTutors';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { PetRequest, PetSex, PetSpecies } from '../../types/pet';
+import { isValidIsoDate } from '../../utils/dateValidation';
 
 type Props =
     | NativeStackScreenProps<ClinicAdminStackParamList, 'CreatePet'>
@@ -96,8 +97,8 @@ export function PetFormScreen(props: Props) {
         const trimmedBirthDate = birthDate.trim();
 
         if (trimmedBirthDate) {
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmedBirthDate)) {
-                setErrorMessage('Use o formato AAAA-MM-DD para o nascimento.');
+            if (!isValidIsoDate(trimmedBirthDate)) {
+                setErrorMessage('Informe uma data de nascimento válida no formato AAAA-MM-DD.');
                 return;
             }
 
