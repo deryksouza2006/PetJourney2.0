@@ -19,6 +19,7 @@ import { useFirstAccess } from '../../hooks/auth/useFirstAccess';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { FirstAccessRequest } from '../../types/auth';
+import { isValidEmail } from '../../utils/formValidation';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'FirstAccess'>;
 
@@ -37,6 +38,16 @@ export function FirstAccessScreen({ navigation }: Props) {
 
         if (!username || !trimmedCode || !password.trim()) {
             setErrorMessage('E-mail, código e nova senha são obrigatórios.');
+            return;
+        }
+
+        if (!isValidEmail(username)) {
+            setErrorMessage('Informe um e-mail válido.');
+            return;
+        }
+
+        if (!/^\d{6}$/.test(trimmedCode)) {
+            setErrorMessage('O código de primeiro acesso deve conter exatamente 6 dígitos.');
             return;
         }
 
@@ -114,6 +125,7 @@ export function FirstAccessScreen({ navigation }: Props) {
                                     onChangeText={setCode}
                                     placeholder="Digite o código recebido"
                                     keyboardType="numeric"
+                                    maxLength={6}
                                     returnKeyType="next"
                                     editable={!firstAccess.isPending}
                                     onSubmitEditing={() => passwordInputRef.current?.focus()}

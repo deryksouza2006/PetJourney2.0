@@ -17,6 +17,7 @@ import { useCreateClinicAdmin } from '../../hooks/clinicAdmins/useCreateClinicAd
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { ClinicAdminRequest } from '../../types/clinicAdmin';
+import { isValidEmail } from '../../utils/formValidation';
 
 type Props = NativeStackScreenProps<
     SystemAdminStackParamList,
@@ -35,6 +36,11 @@ export function ClinicAdminFormScreen({ navigation, route }: Props) {
 
         if (!username || !password.trim()) {
             setErrorMessage('E-mail e senha s\u00e3o obrigat\u00f3rios.');
+            return;
+        }
+
+        if (!isValidEmail(username)) {
+            setErrorMessage('Informe um e-mail v\u00e1lido.');
             return;
         }
 

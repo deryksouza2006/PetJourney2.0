@@ -9,6 +9,7 @@ import { useUpdateClinic } from '../../hooks/clinics/useUpdateClinic';
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { ClinicRequest } from '../../types/clinic';
+import { isValidCnpj, isValidEmail } from '../../utils/formValidation';
 
 type Props =
     | NativeStackScreenProps<SystemAdminStackParamList, 'CreateClinic'>
@@ -35,9 +36,20 @@ export function ClinicFormScreen(props: Props) {
     async function handleSubmit(): Promise<void> {
         const trimmedName = name.trim();
         const trimmedCnpj = cnpj.trim();
+        const trimmedEmail = email.trim();
 
         if (!trimmedName || !trimmedCnpj) {
             setErrorMessage('Nome e CNPJ são obrigatórios.');
+            return;
+        }
+
+        if (!isValidCnpj(trimmedCnpj)) {
+            setErrorMessage('Informe um CNPJ válido.');
+            return;
+        }
+
+        if (trimmedEmail && !isValidEmail(trimmedEmail)) {
+            setErrorMessage('Informe um e-mail válido.');
             return;
         }
 
@@ -47,8 +59,8 @@ export function ClinicFormScreen(props: Props) {
             request.phone = phone.trim();
         }
 
-        if (email.trim()) {
-            request.email = email.trim();
+        if (trimmedEmail) {
+            request.email = trimmedEmail;
         }
 
         if (address.trim()) {

@@ -19,6 +19,7 @@ import { useUpdateVeterinarian } from '../../hooks/veterinarians/useUpdateVeteri
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { VeterinarianRequest } from '../../types/veterinarian';
+import { isValidEmail } from '../../utils/formValidation';
 
 type Props =
     | NativeStackScreenProps<ClinicAdminStackParamList, 'CreateVeterinarian'>
@@ -47,9 +48,15 @@ export function VeterinarianFormScreen(props: Props) {
     async function handleSubmit(): Promise<void> {
         const trimmedName = name.trim();
         const trimmedCrmv = crmv.trim();
+        const trimmedEmail = email.trim();
 
         if (!trimmedName || !trimmedCrmv) {
             setErrorMessage('Nome e CRMV são obrigatórios.');
+            return;
+        }
+
+        if (trimmedEmail && !isValidEmail(trimmedEmail)) {
+            setErrorMessage('Informe um e-mail válido.');
             return;
         }
 
@@ -70,8 +77,8 @@ export function VeterinarianFormScreen(props: Props) {
 
         if (isEditing && veterinarian.email !== null) {
             request.email = veterinarian.email;
-        } else if (!isEditing && email.trim()) {
-            request.email = email.trim();
+        } else if (!isEditing && trimmedEmail) {
+            request.email = trimmedEmail;
         }
 
         if (specialty.trim()) {
