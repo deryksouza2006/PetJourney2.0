@@ -1,16 +1,21 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
-    Pressable,
+    KeyboardAvoidingView,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
     TextInput,
+    View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppButton } from '../../components/AppButton';
+import { AppInput } from '../../components/AppInput';
 import { useCreateClinicAdmin } from '../../hooks/clinicAdmins/useCreateClinicAdmin';
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
+import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { ClinicAdminRequest } from '../../types/clinicAdmin';
 
 type Props = NativeStackScreenProps<
@@ -20,6 +25,7 @@ type Props = NativeStackScreenProps<
 
 export function ClinicAdminFormScreen({ navigation, route }: Props) {
     const createClinicAdmin = useCreateClinicAdmin();
+    const passwordInputRef = useRef<TextInput>(null);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -62,107 +68,156 @@ export function ClinicAdminFormScreen({ navigation, route }: Props) {
     }
 
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-        >
-            <Text style={styles.title}>Criar administrador</Text>
-            <Text style={styles.clinicName}>{route.params.clinicName}</Text>
-
-            <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="E-mail"
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                editable={!createClinicAdmin.isPending}
-            />
-            <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Senha"
-                secureTextEntry
-                editable={!createClinicAdmin.isPending}
-                onSubmitEditing={() => void handleSubmit()}
-            />
-
-            {errorMessage ? (
-                <Text style={styles.error}>{errorMessage}</Text>
-            ) : null}
-
-            <Pressable
-                style={({ pressed }) => [
-                    styles.button,
-                    pressed && styles.buttonPressed,
-                    createClinicAdmin.isPending && styles.buttonDisabled,
-                ]}
-                onPress={() => void handleSubmit()}
-                disabled={createClinicAdmin.isPending}
+        <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
+            <KeyboardAvoidingView
+                style={styles.keyboardView}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-                {createClinicAdmin.isPending ? (
-                    <ActivityIndicator color="#ffffff" />
-                ) : (
-                    <Text style={styles.buttonText}>Criar administrador</Text>
-                )}
-            </Pressable>
-        </ScrollView>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.content}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.wrapper}>
+                        <Text style={styles.eyebrow}>NOVO ACESSO</Text>
+                        <Text style={styles.title}>Criar administrador</Text>
+                        <Text style={styles.description}>
+                            Defina as credenciais do administrador responsável pela clínica.
+                        </Text>
+
+                        <View style={styles.card}>
+                            <Text style={styles.sectionTitle}>Dados de acesso</Text>
+                            <Text style={styles.requiredHint}>
+                                E-mail e senha são obrigatórios.
+                            </Text>
+
+                            <View style={styles.clinicSummary}>
+                                <Text style={styles.clinicLabel}>Clínica selecionada</Text>
+                                <Text style={styles.clinicName}>{route.params.clinicName}</Text>
+                            </View>
+
+                            <View style={styles.fields}>
+                                <AppInput
+                                    label="E-mail *"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    placeholder="nome@exemplo.com"
+                                    autoCapitalize="none"
+                                    autoComplete="email"
+                                    autoCorrect={false}
+                                    keyboardType="email-address"
+                                    returnKeyType="next"
+                                    editable={!createClinicAdmin.isPending}
+                                    onSubmitEditing={() => passwordInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={passwordInputRef}
+                                    label="Senha *"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    placeholder="Mínimo de 6 caracteres"
+                                    autoCapitalize="none"
+                                    autoComplete="new-password"
+                                    secureTextEntry
+                                    returnKeyType="done"
+                                    editable={!createClinicAdmin.isPending}
+                                    onSubmitEditing={() => void handleSubmit()}
+                                />
+                            </View>
+
+                            {errorMessage ? (
+                                <View style={styles.errorContainer} accessibilityLiveRegion="polite">
+                                    <Text style={styles.error}>{errorMessage}</Text>
+                                </View>
+                            ) : null}
+
+                            <AppButton
+                                label="Criar administrador"
+                                onPress={() => void handleSubmit()}
+                                loading={createClinicAdmin.isPending}
+                            />
+                        </View>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f4f8f7',
-    },
-    content: {
-        padding: 20,
+    safeArea: { flex: 1, backgroundColor: colors.background },
+    keyboardView: { flex: 1 },
+    scrollView: { flex: 1, backgroundColor: colors.background },
+    content: { flexGrow: 1, padding: spacing.xl },
+    wrapper: { width: '100%', maxWidth: 640, alignSelf: 'center' },
+    eyebrow: {
+        marginBottom: spacing.sm,
+        color: colors.primary,
+        fontSize: typography.small,
+        fontWeight: '800',
+        letterSpacing: 1.4,
     },
     title: {
-        color: '#173f37',
-        fontSize: 28,
+        color: colors.text,
+        fontSize: typography.title,
+        fontWeight: '800',
+        letterSpacing: -0.5,
+    },
+    description: {
+        marginTop: spacing.sm,
+        color: colors.textSecondary,
+        fontSize: typography.body,
+        lineHeight: 23,
+    },
+    card: {
+        marginTop: spacing.xl,
+        padding: spacing.xl,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+        ...shadows.card,
+    },
+    sectionTitle: {
+        color: colors.text,
+        fontSize: typography.heading,
+        fontWeight: '800',
+    },
+    requiredHint: {
+        marginTop: spacing.xs,
+        color: colors.textSecondary,
+        fontSize: typography.caption,
+    },
+    clinicSummary: {
+        marginTop: spacing.xl,
+        padding: spacing.lg,
+        borderWidth: 1,
+        borderColor: colors.primary,
+        borderRadius: radii.md,
+        backgroundColor: colors.primarySoft,
+    },
+    clinicLabel: {
+        color: colors.textSecondary,
+        fontSize: typography.small,
         fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     clinicName: {
-        marginTop: 6,
-        marginBottom: 20,
-        color: '#4b625d',
-        fontSize: 16,
+        marginTop: spacing.xs,
+        color: colors.text,
+        fontSize: typography.body,
+        fontWeight: '800',
     },
-    input: {
-        height: 48,
-        marginBottom: 14,
-        paddingHorizontal: 14,
-        borderWidth: 1,
-        borderColor: '#b8c9c5',
-        borderRadius: 8,
-        backgroundColor: '#ffffff',
-        fontSize: 16,
+    fields: { gap: spacing.lg, marginVertical: spacing.xl },
+    errorContainer: {
+        marginBottom: spacing.lg,
+        padding: spacing.md,
+        borderLeftWidth: 3,
+        borderLeftColor: colors.danger,
+        borderRadius: radii.sm,
+        backgroundColor: '#FDF0F0',
     },
-    error: {
-        marginBottom: 14,
-        color: '#b42318',
-        textAlign: 'center',
-    },
-    button: {
-        minHeight: 48,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 8,
-        backgroundColor: '#2f7d6d',
-    },
-    buttonPressed: {
-        opacity: 0.85,
-    },
-    buttonDisabled: {
-        opacity: 0.65,
-    },
-    buttonText: {
-        color: '#ffffff',
-        fontSize: 16,
-        fontWeight: '700',
-    },
+    error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
 });
