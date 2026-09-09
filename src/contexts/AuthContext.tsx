@@ -17,6 +17,8 @@ interface AuthContextValue {
     user: AuthUser | null;
     session: AuthSession | null;
     isLoading: boolean;
+    hasSessionRestoreError: boolean;
+    retrySessionRestore: () => void;
     signIn: (credentials: LoginRequest) => Promise<void>;
     signOut: () => Promise<void>;
 }
@@ -35,6 +37,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const queryClient = useQueryClient();
     const [session, setSession] = useState<AuthSession | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [hasSessionRestoreError, setHasSessionRestoreError] = useState(false);
+    const [restoreAttempt, setRestoreAttempt] = useState(0);
 
     const clearSessionCache = useCallback(async (): Promise<void> => {
         await queryClient.cancelQueries({}, { silent: true });
@@ -45,6 +49,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
         let isMounted = true;
 
         async function restoreSession(): Promise<void> {
+            setHasSessionRestoreError(false);
+
             try {
                 const token = await getToken();
 
@@ -62,6 +68,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
                     if (isInvalidSessionError(error)) {
                         await clearSessionCache();
                         await removeToken();
+                    } else if (isMounted) {
+                        setHasSessionRestoreError(true);
                     }
                 }
             } catch {
@@ -78,7 +86,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
         return () => {
             isMounted = false;
         };
-    }, [clearSessionCache]);
+    }, [clearSessionCache, restoreAttempt]);
+
+    const retrySessionRestore = useCallback((): void => {
+        setIsLoading(true);
+        setRestoreAttempt((attempt) => attempt + 1);
+    }, []);
 
     const signIn = useCallback(async (credentials: LoginRequest): Promise<void> => {
         const loginResponse = await login(credentials);
@@ -87,6 +100,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         try {
             const user = await getMe();
             await clearSessionCache();
+            setHasSessionRestoreError(false);
             setSession({ token: loginResponse.token, user });
         } catch (error: unknown) {
             if (isInvalidSessionError(error)) {
@@ -99,6 +113,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     const signOut = useCallback(async (): Promise<void> => {
         setSession(null);
+        setHasSessionRestoreError(false);
         await clearSessionCache();
         await removeToken();
     }, [clearSessionCache]);
@@ -107,9 +122,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
         user: session?.user ?? null,
         session,
         isLoading,
+        hasSessionRestoreError,
+        retrySessionRestore,
         signIn,
         signOut,
-    }), [isLoading, session, signIn, signOut]);
+    }), [hasSessionRestoreError, isLoading, retrySessionRestore, session, signIn, signOut]);
 
     return (
         <AuthContext.Provider value={value}>

@@ -11,13 +11,57 @@ import { SystemAdminNavigator } from './SystemAdminNavigator';
 import { VeterinarianNavigator } from './VeterinarianNavigator';
 
 export function RootNavigator() {
-    const { user, isLoading, signOut } = useAuth();
+    const {
+        user,
+        isLoading,
+        hasSessionRestoreError,
+        retrySessionRestore,
+        signOut,
+    } = useAuth();
 
     if (isLoading) {
         return (
             <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#2f7d6d" />
+                <ActivityIndicator size="large" color={colors.primary} />
             </View>
+        );
+    }
+
+    if (hasSessionRestoreError) {
+        return (
+            <SafeAreaView style={styles.restoreSafeArea}>
+                <ScrollView
+                    style={styles.restoreScroll}
+                    contentContainerStyle={styles.restoreContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.restoreLayout}>
+                        <View style={styles.brandContainer}>
+                            <BrandMark />
+                        </View>
+
+                        <View style={styles.restoreCard}>
+                            <Text style={styles.eyebrow}>SESSÃO</Text>
+                            <Text style={styles.restoreTitle}>Não foi possível validar sua sessão</Text>
+                            <Text style={styles.restoreMessage} accessibilityLiveRegion="polite">
+                                Verifique sua conexão ou a disponibilidade da API e tente novamente. Seus dados de
+                                acesso foram preservados.
+                            </Text>
+                            <AppButton
+                                label="Tentar novamente"
+                                onPress={retrySessionRestore}
+                                style={styles.restorePrimaryButton}
+                            />
+                            <AppButton
+                                label="Sair da conta"
+                                onPress={() => void signOut()}
+                                variant="secondary"
+                                style={styles.restoreSecondaryButton}
+                            />
+                        </View>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
         );
     }
 
@@ -79,7 +123,56 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
-        backgroundColor: '#f4f8f7',
+        backgroundColor: colors.background,
+    },
+    restoreSafeArea: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
+    restoreScroll: {
+        flex: 1,
+    },
+    restoreContent: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.xxl,
+    },
+    restoreLayout: {
+        width: '100%',
+        maxWidth: 520,
+        alignSelf: 'center',
+    },
+    restoreCard: {
+        alignItems: 'center',
+        padding: spacing.xl,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+        ...shadows.card,
+    },
+    restoreTitle: {
+        color: colors.text,
+        fontSize: typography.title,
+        fontWeight: '800',
+        letterSpacing: -0.5,
+        textAlign: 'center',
+    },
+    restoreMessage: {
+        marginTop: spacing.md,
+        color: colors.textSecondary,
+        fontSize: typography.body,
+        lineHeight: 24,
+        textAlign: 'center',
+    },
+    restorePrimaryButton: {
+        width: '100%',
+        marginTop: spacing.xl,
+    },
+    restoreSecondaryButton: {
+        width: '100%',
+        marginTop: spacing.md,
     },
     tutorSafeArea: {
         flex: 1,
