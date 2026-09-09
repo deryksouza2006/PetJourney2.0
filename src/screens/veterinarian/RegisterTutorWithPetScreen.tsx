@@ -19,6 +19,7 @@ import { VeterinarianStackParamList } from '../../navigation/VeterinarianNavigat
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { PetSex, PetSpecies } from '../../types/pet';
 import { RegisterTutorWithPetRequest } from '../../types/workflow';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { isValidIsoDate } from '../../utils/dateValidation';
 
 type Props = NativeStackScreenProps<VeterinarianStackParamList, 'RegisterTutorWithPet'>;
@@ -143,9 +144,12 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                 'Tutor e Pet cadastrados com sucesso.',
                 [{ text: 'OK', onPress: () => navigation.goBack() }],
             );
-        } catch {
+        } catch (error: unknown) {
             setErrorMessage(
-                'Não foi possível cadastrar o Tutor e o Pet. Verifique os dados.',
+                getApiErrorMessage(
+                    error,
+                    'Não foi possível cadastrar o Tutor e o Pet. Verifique os dados.',
+                ),
             );
         }
     }

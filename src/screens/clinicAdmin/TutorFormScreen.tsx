@@ -1,5 +1,4 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import axios from 'axios';
 import { useRef, useState } from 'react';
 import {
     Alert,
@@ -19,14 +18,11 @@ import { useUpdateTutor } from '../../hooks/tutors/useUpdateTutor';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { TutorRequest } from '../../types/tutor';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 type Props =
     | NativeStackScreenProps<ClinicAdminStackParamList, 'CreateTutor'>
     | NativeStackScreenProps<ClinicAdminStackParamList, 'EditTutor'>;
-
-interface BackendErrorResponse {
-    message?: string;
-}
 
 export function TutorFormScreen(props: Props) {
     const { navigation, route } = props;
@@ -94,21 +90,12 @@ export function TutorFormScreen(props: Props) {
                 [{ text: 'OK', onPress: () => navigation.goBack() }],
             );
         } catch (error: unknown) {
-            if (
-                isEditing &&
-                axios.isAxiosError<BackendErrorResponse>(error) &&
-                error.response?.status === 403 &&
-                error.response.data?.message
-            ) {
-                setErrorMessage(error.response.data.message);
-                return;
-            }
-
-            setErrorMessage(
+            const fallback =
                 isEditing
                     ? 'Não foi possível atualizar o tutor. Verifique os dados.'
-                    : 'Não foi possível cadastrar o tutor. Verifique os dados.',
-            );
+                    : 'Não foi possível cadastrar o tutor. Verifique os dados.';
+
+            setErrorMessage(getApiErrorMessage(error, fallback));
         }
     }
 

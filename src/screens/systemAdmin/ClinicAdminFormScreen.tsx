@@ -17,6 +17,7 @@ import { useCreateClinicAdmin } from '../../hooks/clinicAdmins/useCreateClinicAd
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { ClinicAdminRequest } from '../../types/clinicAdmin';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { isValidEmail } from '../../utils/formValidation';
 
 type Props = NativeStackScreenProps<
@@ -66,9 +67,12 @@ export function ClinicAdminFormScreen({ navigation, route }: Props) {
                 'Administrador da cl\u00ednica criado com sucesso.',
                 [{ text: 'OK', onPress: () => navigation.goBack() }],
             );
-        } catch {
+        } catch (error: unknown) {
             setErrorMessage(
-                'N\u00e3o foi poss\u00edvel criar o administrador. Verifique os dados e se o e-mail j\u00e1 est\u00e1 cadastrado.',
+                getApiErrorMessage(
+                    error,
+                    'N\u00e3o foi poss\u00edvel criar o administrador. Verifique os dados informados.',
+                ),
             );
         }
     }

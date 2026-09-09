@@ -23,6 +23,7 @@ import { useTutors } from '../../hooks/tutors/useTutors';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { PetRequest, PetSex, PetSpecies } from '../../types/pet';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { isValidIsoDate } from '../../utils/dateValidation';
 
 type Props =
@@ -132,12 +133,13 @@ export function PetFormScreen(props: Props) {
                     : 'Pet cadastrado com sucesso.',
                 [{ text: 'OK', onPress: () => navigation.goBack() }],
             );
-        } catch {
-            setErrorMessage(
+        } catch (error: unknown) {
+            const fallback =
                 isEditing
                     ? 'Não foi possível atualizar o Pet. Verifique os dados.'
-                    : 'Não foi possível cadastrar o Pet. Verifique os dados.',
-            );
+                    : 'Não foi possível cadastrar o Pet. Verifique os dados.';
+
+            setErrorMessage(getApiErrorMessage(error, fallback));
         }
     }
 

@@ -9,6 +9,7 @@ import { useUpdateClinic } from '../../hooks/clinics/useUpdateClinic';
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { ClinicRequest } from '../../types/clinic';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { isValidCnpj, isValidEmail } from '../../utils/formValidation';
 
 type Props =
@@ -83,12 +84,13 @@ export function ClinicFormScreen(props: Props) {
                     : 'Clínica cadastrada com sucesso.',
                 [{ text: 'OK', onPress: () => navigation.goBack() }],
             );
-        } catch {
-            setErrorMessage(
+        } catch (error: unknown) {
+            const fallback =
                 isEditing
                     ? 'Não foi possível atualizar a clínica. Verifique os dados.'
-                    : 'Não foi possível cadastrar a clínica. Verifique os dados.',
-            );
+                    : 'Não foi possível cadastrar a clínica. Verifique os dados.';
+
+            setErrorMessage(getApiErrorMessage(error, fallback));
         }
     }
 

@@ -17,6 +17,7 @@ import { BrandMark } from '../../components/BrandMark';
 import { useAuth } from '../../contexts/AuthContext';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -39,8 +40,13 @@ export function LoginScreen({ navigation }: Props) {
 
         try {
             await signIn({ username: email.trim(), password });
-        } catch {
-            setErrorMessage('Não foi possível entrar. Verifique suas credenciais.');
+        } catch (error: unknown) {
+            setErrorMessage(
+                getApiErrorMessage(
+                    error,
+                    'Não foi possível entrar. Verifique suas credenciais.',
+                ),
+            );
         } finally {
             setIsSubmitting(false);
         }

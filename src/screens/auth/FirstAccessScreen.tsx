@@ -19,6 +19,7 @@ import { useFirstAccess } from '../../hooks/auth/useFirstAccess';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { FirstAccessRequest } from '../../types/auth';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { isValidEmail } from '../../utils/formValidation';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'FirstAccess'>;
@@ -71,9 +72,12 @@ export function FirstAccessScreen({ navigation }: Props) {
                 'Primeiro acesso concluído. Entre com seu e-mail e a nova senha.',
                 [{ text: 'OK', onPress: () => navigation.goBack() }],
             );
-        } catch {
+        } catch (error: unknown) {
             setErrorMessage(
-                'Não foi possível ativar a conta. Verifique o e-mail, o código e a nova senha.',
+                getApiErrorMessage(
+                    error,
+                    'Não foi possível ativar a conta. Verifique o e-mail, o código e a nova senha.',
+                ),
             );
         }
     }

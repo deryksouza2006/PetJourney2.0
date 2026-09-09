@@ -19,6 +19,7 @@ import { useUpdateVeterinarian } from '../../hooks/veterinarians/useUpdateVeteri
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { VeterinarianRequest } from '../../types/veterinarian';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { isValidEmail } from '../../utils/formValidation';
 
 type Props =
@@ -104,12 +105,13 @@ export function VeterinarianFormScreen(props: Props) {
                     : 'Veterinário cadastrado com sucesso.',
                 [{ text: 'OK', onPress: () => navigation.goBack() }],
             );
-        } catch {
-            setErrorMessage(
+        } catch (error: unknown) {
+            const fallback =
                 isEditing
                     ? 'Não foi possível atualizar o veterinário. Verifique os dados.'
-                    : 'Não foi possível cadastrar o veterinário. Verifique os dados.',
-            );
+                    : 'Não foi possível cadastrar o veterinário. Verifique os dados.';
+
+            setErrorMessage(getApiErrorMessage(error, fallback));
         }
     }
 
