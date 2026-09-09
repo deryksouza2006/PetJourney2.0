@@ -15,8 +15,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
 import { AppInput } from '../../components/AppInput';
+import { PaginationControls } from '../../components/PaginationControls';
 import { useCreatePet } from '../../hooks/pets/useCreatePet';
 import { useUpdatePet } from '../../hooks/pets/useUpdatePet';
+import { useTutor } from '../../hooks/tutors/useTutor';
 import { useTutors } from '../../hooks/tutors/useTutors';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
@@ -43,7 +45,9 @@ export function PetFormScreen(props: Props) {
     const isEditing = pet !== undefined;
     const createPet = useCreatePet();
     const updatePet = useUpdatePet();
-    const tutors = useTutors();
+    const [tutorPage, setTutorPage] = useState(0);
+    const tutors = useTutors(tutorPage);
+    const linkedTutor = useTutor(pet?.tutorId ?? null);
     const breedInputRef = useRef<TextInput>(null);
     const birthDateInputRef = useRef<TextInput>(null);
     const weightInputRef = useRef<TextInput>(null);
@@ -58,8 +62,14 @@ export function PetFormScreen(props: Props) {
             : '',
     );
     const [tutorId, setTutorId] = useState<number | null>(pet?.tutorId ?? null);
+    const [selectedTutorName, setSelectedTutorName] = useState<string | null>(
+        pet?.tutorName ?? null,
+    );
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const isPending = createPet.isPending || updatePet.isPending;
+    const displayedTutorName = tutorId === pet?.tutorId
+        ? linkedTutor.data?.name ?? selectedTutorName
+        : selectedTutorName;
 
     async function handleSubmit(): Promise<void> {
         const trimmedName = name.trim();
@@ -296,6 +306,28 @@ export function PetFormScreen(props: Props) {
 
                                 <View style={styles.fieldGroup}>
                                     <Text style={styles.label}>Tutor *</Text>
+                                    {tutorId !== null ? (
+                                        <View style={styles.selectedTutor}>
+                                            <Text style={styles.selectedTutorLabel}>
+                                                Tutor selecionado
+                                            </Text>
+                                            {linkedTutor.isPending && !displayedTutorName ? (
+                                                <View style={styles.selectedTutorLoading}>
+                                                    <ActivityIndicator
+                                                        size="small"
+                                                        color={colors.primary}
+                                                    />
+                                                    <Text style={styles.message}>
+                                                        Carregando responsável...
+                                                    </Text>
+                                                </View>
+                                            ) : (
+                                                <Text style={styles.selectedTutorName}>
+                                                    {displayedTutorName ?? `Tutor #${tutorId}`}
+                                                </Text>
+                                            )}
+                                        </View>
+                                    ) : null}
                                     {tutors.isPending ? (
                                         <View style={styles.tutorState}>
                                             <ActivityIndicator color={colors.primary} />
@@ -307,41 +339,66 @@ export function PetFormScreen(props: Props) {
                                                 Não foi possível carregar os Tutores.
                                             </Text>
                                         </View>
-                                    ) : tutors.data.content.length === 0 ? (
-                                        <View style={styles.emptyTutors}>
-                                            <Text style={styles.message}>Nenhum Tutor disponível.</Text>
-                                        </View>
                                     ) : (
-                                        <View style={styles.tutors}>
-                                            {tutors.data.content.map((tutor) => (
-                                                <Pressable
-                                                    key={tutor.id}
-                                                    accessibilityRole="button"
-                                                    accessibilityState={{
-                                                        selected: tutorId === tutor.id,
-                                                        disabled: isPending,
-                                                    }}
-                                                    style={({ pressed }) => [
-                                                        styles.tutorOption,
-                                                        tutorId === tutor.id && styles.optionSelected,
-                                                        pressed && !isPending && styles.optionPressed,
-                                                        isPending && styles.optionDisabled,
-                                                    ]}
-                                                    onPress={() => setTutorId(tutor.id)}
-                                                    disabled={isPending}
-                                                >
-                                                    <Text
-                                                        style={[
-                                                            styles.optionText,
-                                                            tutorId === tutor.id &&
-                                                                styles.optionTextSelected,
-                                                        ]}
-                                                    >
-                                                        {tutor.name}
+                                        <>
+                                            {tutors.data.content.length === 0 ? (
+                                                <View style={styles.emptyTutors}>
+                                                    <Text style={styles.message}>
+                                                        Nenhum Tutor disponível.
                                                     </Text>
-                                                </Pressable>
-                                            ))}
-                                        </View>
+                                                </View>
+                                            ) : (
+                                                <View style={styles.tutors}>
+                                                    {tutors.data.content.map((tutor) => (
+                                                        <Pressable
+                                                            key={tutor.id}
+                                                            accessibilityRole="button"
+                                                            accessibilityState={{
+                                                                selected: tutorId === tutor.id,
+                                                                disabled: isPending,
+                                                            }}
+                                                            style={({ pressed }) => [
+                                                                styles.tutorOption,
+                                                                tutorId === tutor.id &&
+                                                                    styles.optionSelected,
+                                                                pressed &&
+                                                                    !isPending &&
+                                                                    styles.optionPressed,
+                                                                isPending && styles.optionDisabled,
+                                                            ]}
+                                                            onPress={() => {
+                                                                setTutorId(tutor.id);
+                                                                setSelectedTutorName(tutor.name);
+                                                            }}
+                                                            disabled={isPending}
+                                                        >
+                                                            <Text
+                                                                style={[
+                                                                    styles.optionText,
+                                                                    tutorId === tutor.id &&
+                                                                        styles.optionTextSelected,
+                                                                ]}
+                                                            >
+                                                                {tutor.name}
+                                                            </Text>
+                                                        </Pressable>
+                                                    ))}
+                                                </View>
+                                            )}
+                                            <PaginationControls
+                                                page={tutors.data.number}
+                                                totalPages={tutors.data.totalPages}
+                                                isFirst={tutors.data.first}
+                                                isLast={tutors.data.last}
+                                                disabled={tutors.isFetching || isPending}
+                                                onPrevious={() =>
+                                                    setTutorPage(tutors.data.number - 1)
+                                                }
+                                                onNext={() =>
+                                                    setTutorPage(tutors.data.number + 1)
+                                                }
+                                            />
+                                        </>
                                     )}
                                 </View>
                             </View>
@@ -448,6 +505,32 @@ const styles = StyleSheet.create({
     },
     optionTextSelected: { color: colors.white },
     tutors: { gap: spacing.sm },
+    selectedTutor: {
+        padding: spacing.md,
+        borderWidth: 1,
+        borderColor: colors.primary,
+        borderRadius: radii.md,
+        backgroundColor: colors.primarySoft,
+    },
+    selectedTutorLabel: {
+        color: colors.textSecondary,
+        fontSize: typography.small,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    selectedTutorName: {
+        marginTop: spacing.xs,
+        color: colors.text,
+        fontSize: typography.caption,
+        fontWeight: '800',
+    },
+    selectedTutorLoading: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        marginTop: spacing.sm,
+    },
     tutorState: {
         flexDirection: 'row',
         alignItems: 'center',

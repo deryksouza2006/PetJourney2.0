@@ -21,51 +21,60 @@ export function PaginationControls({
     onPrevious,
     onNext,
 }: PaginationControlsProps) {
-    if (totalPages === 0) {
+    if (totalPages <= 1) {
         return null;
     }
 
     return (
         <View style={styles.container}>
-            <AppButton
-                label="Anterior"
-                variant="secondary"
-                size="small"
-                style={styles.button}
-                onPress={onPrevious}
-                disabled={disabled || isFirst}
-            />
             <View style={styles.pageInfo} accessibilityLiveRegion="polite">
-                <Text style={styles.pageLabel}>Página</Text>
-                <Text style={styles.pageValue}>
-                    {page + 1} de {totalPages}
-                </Text>
+                <Text style={styles.pageLabel}>Página atual</Text>
+                <Text style={styles.pageValue}>{page + 1} de {totalPages}</Text>
             </View>
-            <AppButton
-                label="Próxima"
-                variant="secondary"
-                size="small"
-                style={styles.button}
-                onPress={onNext}
-                disabled={disabled || isLast}
-            />
+            <View style={styles.actions}>
+                <AppButton
+                    label="Anterior"
+                    variant="secondary"
+                    size="small"
+                    style={styles.button}
+                    onPress={onPrevious}
+                    disabled={disabled || isFirst}
+                />
+                <AppButton
+                    label="Próxima"
+                    variant="secondary"
+                    size="small"
+                    style={styles.button}
+                    onPress={onNext}
+                    disabled={disabled || isLast}
+                />
+            </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.md,
+        width: '100%',
+        gap: spacing.sm,
         paddingTop: spacing.sm,
         paddingBottom: spacing.xxl,
     },
-    button: { flex: 1 },
-    pageInfo: { minWidth: 72, alignItems: 'center' },
+    actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+    button: {
+        flexGrow: 1,
+        flexBasis: 104,
+        minWidth: 96,
+        paddingHorizontal: spacing.sm,
+    },
+    pageInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: spacing.xs,
+    },
     pageLabel: { color: colors.textSecondary, fontSize: typography.small },
     pageValue: {
-        marginTop: spacing.xs,
         color: colors.text,
         fontSize: typography.caption,
         fontWeight: '800',
