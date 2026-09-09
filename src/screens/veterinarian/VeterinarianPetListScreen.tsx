@@ -1,15 +1,19 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { PaginationControls } from '../../components/PaginationControls';
 import { usePets } from '../../hooks/pets/usePets';
 import { VeterinarianStackParamList } from '../../navigation/VeterinarianNavigator';
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { DEFAULT_PAGE_SIZE } from '../../types/pagination';
 import { Pet } from '../../types/pet';
 
 type Props = NativeStackScreenProps<VeterinarianStackParamList, 'Patients'>;
 
 export function VeterinarianPetListScreen({ navigation }: Props) {
-    const { data, isPending, isError } = usePets();
+    const [page, setPage] = useState(0);
+    const { data, isPending, isError, isFetching } = usePets(page, DEFAULT_PAGE_SIZE);
 
     function renderPet({ item }: { item: Pet }) {
         return (
@@ -88,6 +92,17 @@ export function VeterinarianPetListScreen({ navigation }: Props) {
                                     Não há pacientes disponíveis no momento.
                                 </Text>
                             </View>
+                        }
+                        ListFooterComponent={
+                            <PaginationControls
+                                page={data.number}
+                                totalPages={data.totalPages}
+                                isFirst={data.first}
+                                isLast={data.last}
+                                disabled={isFetching}
+                                onPrevious={() => setPage(data.number - 1)}
+                                onNext={() => setPage(data.number + 1)}
+                            />
                         }
                     />
                 )}
