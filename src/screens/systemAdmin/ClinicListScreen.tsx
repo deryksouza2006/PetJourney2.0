@@ -25,10 +25,7 @@ export function ClinicListScreen({ navigation }: Props) {
                 setPage(data.number - 1);
             }
         } catch {
-            Alert.alert(
-                'Não foi possível excluir',
-                'A clínica não pôde ser excluída. Ela pode possuir dados vinculados.',
-            );
+            Alert.alert('Não foi possível excluir. Tente novamente.');
         }
     }
 

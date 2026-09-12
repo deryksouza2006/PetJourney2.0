@@ -4,7 +4,7 @@ Aplicativo mobile desenvolvido como parte da Sprint 3 do projeto acadêmico PetJ
 
 O PetJourney busca apoiar a organização da rotina de clínicas veterinárias. Nesta evolução, o projeto assume um modelo B2B: a clínica é a cliente da plataforma e utiliza o sistema para gerenciar seus usuários, responsáveis pelos animais e pacientes. O acesso é controlado por perfil, e a API mantém os dados operacionais separados por unidade clínica.
 
-Este repositório contém apenas a aplicação cliente em React Native. A API Spring Boot está disponível no [repositório oficial do backend](https://github.com/LucasViana130/api-java-petjourney).
+Este repositório contém apenas a aplicação cliente em React Native. A API Spring Boot está disponível no [repositório oficial do backend](https://github.com/LucasViana130/api-java-petjourney) e possui uma versão publicada no Railway utilizada pela aplicação entregue.
 
 ## Perfis e regras de acesso
 
@@ -106,10 +106,19 @@ As telas cuidam da interação com o usuário. Os hooks coordenam consultas, mut
 - Node.js `20.19.x` ou superior compatível com o Expo SDK 54.
 - npm.
 - Expo Go em um dispositivo compatível ou um ambiente configurado para Android, iOS ou Web.
-- Backend PetJourney em execução.
-- PostgreSQL configurado e acessível pelo backend.
+- Conexão com a internet.
 
-O Mobile não contém nem acessa diretamente o banco de dados. Toda persistência ocorre por meio da API Java.
+O Mobile não acessa diretamente o banco de dados. Toda persistência ocorre por meio da API Spring Boot publicada.
+
+### API utilizada na entrega
+
+A versão entregue do aplicativo utiliza a API PetJourney publicada no Railway:
+
+```text
+https://api-java-petjourney-production.up.railway.app
+```
+
+Não é necessário executar localmente a API Java, PostgreSQL ou Docker para utilizar o aplicativo entregue.
 
 ### Instalação
 
@@ -119,21 +128,15 @@ Na raiz deste projeto, instale as dependências:
 npm install
 ```
 
-Crie um arquivo `.env` local e configure a URL base da API:
+Crie um arquivo `.env` na raiz do projeto com a URL base da API publicada:
 
 ```env
-EXPO_PUBLIC_API_URL=http://10.0.2.2:8080
+EXPO_PUBLIC_API_URL=https://api-java-petjourney-production.up.railway.app
 ```
-
-Escolha o endereço de acordo com o ambiente em que o aplicativo será executado:
-
-- Emulador Android no mesmo computador da API: `http://10.0.2.2:8080`.
-- Celular físico: use o IP local do computador que executa a API, por exemplo `http://192.168.0.10:8080`. O celular e o computador devem estar em uma rede que permita essa comunicação.
-- Navegador no mesmo computador da API: `http://localhost:8080`.
 
 O arquivo `.env` está ignorado pelo Git. Não publique senhas, tokens, chaves privadas ou outras credenciais nesse arquivo ou no repositório.
 
-Com o backend e o PostgreSQL em funcionamento, inicie o Expo:
+Depois, inicie o Expo:
 
 ```bash
 npm start
@@ -153,44 +156,53 @@ Depois de alterar `EXPO_PUBLIC_API_URL`, encerre o processo anterior e, se o end
 npx expo start -c
 ```
 
-As instruções de configuração, banco de dados e chaves necessárias para iniciar a API estão no [README do backend](https://github.com/LucasViana130/api-java-petjourney#readme).
+### Desenvolvimento local
+
+Durante o desenvolvimento, caso seja necessário executar o backend localmente, a URL pode ser alterada no `.env`:
+
+- Emulador Android no mesmo computador da API: `http://10.0.2.2:8080`.
+- Celular físico: use o IP local do computador que executa a API, por exemplo `http://192.168.0.10:8080`.
+- Navegador no mesmo computador da API: `http://localhost:8080`.
+
+Esses endereços são utilizados somente para desenvolvimento local. A versão utilizada na entrega aponta para a API publicada no Railway.
+
+As instruções para executar o backend localmente estão disponíveis no [README do backend](https://github.com/LucasViana130/api-java-petjourney#readme).
 
 ## Como testar os fluxos principais
 
-O roteiro abaixo serve como guia de demonstração manual. Ele não representa uma afirmação de que todos os cenários foram executados em um ambiente específico.
+O roteiro abaixo pode ser utilizado para demonstrar as principais funcionalidades da Sprint 3 utilizando a API publicada.
 
-1. Inicie o PostgreSQL, a API e o Mobile com `EXPO_PUBLIC_API_URL` apontando para o endereço correto.
-2. Entre com uma conta de cada perfil preparada no ambiente de desenvolvimento e confirme o direcionamento para sua respectiva área.
-3. Como `ADMIN_SISTEMA`, cadastre, edite e exclua uma Clínica; em seguida, crie um administrador para uma clínica selecionada e navegue pelas páginas da listagem.
-4. Como `ADMIN_CLINICA`, execute cadastro, edição e exclusão de Veterinários, Tutores e Pets; valide também a paginação e a associação de um Pet ao Tutor responsável.
-5. Cadastre um Veterinário ou Tutor com e-mail, obtenha o código pelo mecanismo configurado no backend de desenvolvimento e conclua o fluxo de primeiro acesso, definindo uma senha.
-6. Como `VETERINARIO`, cadastre um Tutor junto com seu Pet e consulte a lista e os detalhes dos pacientes disponíveis para a clínica.
-7. Use a ação de logout e confirme o retorno ao Login.
+1. Configure o `.env` com:
 
-Credenciais de ambientes pessoais não devem ser incluídas neste documento.
+   ```env
+   EXPO_PUBLIC_API_URL=https://api-java-petjourney-production.up.railway.app
+   ```
 
-## Limitações da Sprint 3
+2. Inicie o Mobile com `npm start`.
+3. Entre com uma conta de cada perfil disponível para teste e confirme o direcionamento para sua respectiva área.
+4. Como `ADMIN_SISTEMA`, cadastre, edite e exclua uma Clínica; em seguida, crie um administrador para uma clínica selecionada e navegue pelas páginas da listagem.
+5. Como `ADMIN_CLINICA`, execute cadastro, edição e exclusão de Veterinários, Tutores e Pets; valide também a paginação e a associação de um Pet ao Tutor responsável.
+6. Cadastre um Veterinário ou Tutor com e-mail, receba o código de primeiro acesso e conclua a ativação da conta definindo uma senha.
+7. Como `VETERINARIO`, cadastre um Tutor junto com seu Pet e consulte a lista e os detalhes dos pacientes da clínica.
+8. Use a ação de logout e confirme o retorno ao Login.
 
-Nesta entrega, o módulo interno do `TUTOR` ainda não possui funcionalidades disponíveis. Agenda, prontuário, medicamentos e outros recursos não representados nas rotas e telas atuais do Mobile também estão fora do escopo da Sprint 3.
+Credenciais de teste não devem ser incluídas neste documento.
 
-O aplicativo não implementa recuperação de senha, reenvio de código de primeiro acesso, busca, filtros ou ordenação nas listagens.
+## Próxima Sprint
+
+O módulo interno do `TUTOR` e outras funcionalidades complementares do PetJourney serão implementados e evoluídos na Sprint 4, dando continuidade ao desenvolvimento da aplicação.
 
 ## Entrega e vídeo
 
+**Turma:** 2TDSPX  
+**Disciplina:** Mobile Application Development  
+**Professor:** Pietro Rischi Nunes
+
 ### Integrantes
 
-| Nome | RM |
-| --- | --- |
-| Lucas Gonçalves Viana | RM563254 |
-| Deryk de Souza Queiroz | RM563412 |
-| Vinicius Paschoeto da Silva | RM563089 |
-| Felipe Wiclif Leal da Silva | RM563901 |
+- Felipe Wiclif Leal da Silva — RM563901
+- Deryk de Souza Queiroz — RM563412
+- Lucas Gonçalves Viana — RM563254
+- Vinicius Paschoeto da Silva — RM563089
 
-### Informações da entrega
-
-- Link do vídeo no YouTube: **[inserir link]**
-- Turma: **[inserir turma]**
-- Disciplina: **[inserir disciplina]**
-- Professor(a): **[inserir nome]**
-- Data de entrega da Sprint 3: **12/09/2026**
-- Outras informações exigidas pelo professor: **[inserir informações]**
+Vídeo de apresentação: **[inserir link do YouTube]**

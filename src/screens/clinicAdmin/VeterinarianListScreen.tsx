@@ -25,10 +25,7 @@ export function VeterinarianListScreen({ navigation }: Props) {
                 setPage(data.number - 1);
             }
         } catch {
-            Alert.alert(
-                'Não foi possível excluir',
-                'O veterinário não pôde ser excluído. Ele pode possuir dados vinculados.',
-            );
+            Alert.alert('Não foi possível excluir. Tente novamente.');
         }
     }
 

@@ -170,7 +170,7 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                 >
                     <View style={styles.wrapper}>
                         <Text style={styles.eyebrow}>NOVO CADASTRO</Text>
-                        <Text style={styles.title}>Cadastrar Tutor + Pet</Text>
+                        <Text style={styles.title}>Cadastrar Paciente</Text>
                         <Text style={styles.description}>
                             Registre o responsável e o paciente em um único cadastro.
                         </Text>
@@ -207,7 +207,7 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                     label="Telefone"
                                     value={phone}
                                     onChangeText={setPhone}
-                                    placeholder="Telefone (opcional)"
+                                    placeholder="Telefone"
                                     keyboardType="phone-pad"
                                     editable={!isPending}
                                     returnKeyType="next"
@@ -284,7 +284,7 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                     label="Raça"
                                     value={breed}
                                     onChangeText={setBreed}
-                                    placeholder="Raça (opcional)"
+                                    placeholder="Raça"
                                     editable={!isPending}
                                     returnKeyType="next"
                                     onSubmitEditing={() => birthDateInputRef.current?.focus()}
@@ -352,7 +352,7 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                     label="Nascimento"
                                     value={birthDate}
                                     onChangeText={setBirthDate}
-                                    placeholder="AAAA-MM-DD (opcional)"
+                                    placeholder="AAAA-MM-DD"
                                     autoCapitalize="none"
                                     editable={!isPending}
                                     returnKeyType="next"
@@ -363,7 +363,7 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                     label="Peso"
                                     value={weight}
                                     onChangeText={setWeight}
-                                    placeholder="Peso em kg (opcional)"
+                                    placeholder="Peso em kg"
                                     keyboardType="decimal-pad"
                                     editable={!isPending}
                                     returnKeyType="done"
@@ -379,7 +379,7 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                         ) : null}
 
                         <AppButton
-                            label="Cadastrar Tutor + Pet"
+                            label="Cadastrar Paciente"
                             onPress={() => void handleSubmit()}
                             loading={isPending}
                         />

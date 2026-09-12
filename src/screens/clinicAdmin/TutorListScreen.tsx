@@ -1,5 +1,4 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import axios from 'axios';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,19 +24,8 @@ export function TutorListScreen({ navigation }: Props) {
             if (data && data.number > 0 && data.numberOfElements === 1) {
                 setPage(data.number - 1);
             }
-        } catch (error: unknown) {
-            if (axios.isAxiosError(error) && error.response?.status === 409) {
-                Alert.alert(
-                    'Não foi possível excluir',
-                    'O tutor possui dados vinculados e não pode ser excluído.',
-                );
-                return;
-            }
-
-            Alert.alert(
-                'Não foi possível excluir',
-                'O tutor não pôde ser excluído.',
-            );
+        } catch {
+            Alert.alert('Não foi possível excluir. Tente novamente.');
         }
     }
 

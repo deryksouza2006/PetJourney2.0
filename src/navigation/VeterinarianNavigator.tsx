@@ -24,7 +24,7 @@ export function VeterinarianNavigator() {
             <Stack.Screen
                 name="RegisterTutorWithPet"
                 component={RegisterTutorWithPetScreen}
-                options={{ title: 'Cadastrar Tutor + Pet' }}
+                options={{ title: 'Cadastrar Paciente' }}
             />
             <Stack.Screen
                 name="Patients"

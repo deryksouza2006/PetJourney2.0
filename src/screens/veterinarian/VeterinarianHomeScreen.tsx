@@ -22,7 +22,7 @@ export function VeterinarianHomeScreen({ navigation }: Props) {
             />
             <HomeActionCard
                 icon="+"
-                title="Cadastrar tutor + pet"
+                title="Cadastrar Paciente"
                 description="Registre um novo tutor junto com os dados do pet."
                 onPress={() => navigation.navigate('RegisterTutorWithPet')}
             />
