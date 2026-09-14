@@ -73,7 +73,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
                     }
                 }
             } catch {
-                // Keep the app usable if secure storage is temporarily unavailable.
             } finally {
                 if (isMounted) {
                     setIsLoading(false);

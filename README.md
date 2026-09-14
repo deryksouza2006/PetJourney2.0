@@ -205,4 +205,4 @@ O módulo interno do `TUTOR` e outras funcionalidades complementares do PetJourn
 - Lucas Gonçalves Viana — RM563254
 - Vinicius Paschoeto da Silva — RM563089
 
-Vídeo de apresentação: **[inserir link do YouTube]**
+Vídeo de apresentação: **[(https://youtu.be/RPXFHvYIEKs)]**
