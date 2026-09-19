@@ -206,3 +206,21 @@ O módulo interno do `TUTOR` e outras funcionalidades complementares do PetJourn
 - Vinicius Paschoeto da Silva — RM563089
 
 Vídeo de apresentação: **https://youtu.be/RPXFHvYIEKs**
+
+## CONTAS DE ACESSO
+
+**Admin do Sistema**
+
+usuario: admin.sistema@petjourney.com
+senha: 123456
+
+
+**Admin da clinica**
+
+usuario: admin.petfeliz@petjourney.com
+senha: 123456
+
+**Veterinario**
+
+usuario: dekusouza2006@gmail.com
+senha: 123456
