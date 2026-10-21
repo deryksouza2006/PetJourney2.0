@@ -26,6 +26,12 @@ export function VeterinarianHomeScreen({ navigation }: Props) {
                 description="Registre um novo tutor junto com os dados do pet."
                 onPress={() => navigation.navigate('RegisterTutorWithPet')}
             />
+            <HomeActionCard
+                icon="HR"
+                title="Minha disponibilidade"
+                description="Cadastre e gerencie seus horários disponíveis."
+                onPress={() => navigation.navigate('VeterinarianAvailability')}
+            />
         </HomeScreenLayout>
     );
 }

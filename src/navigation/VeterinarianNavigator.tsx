@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RegisterTutorWithPetScreen } from '../screens/veterinarian/RegisterTutorWithPetScreen';
+import { VeterinarianAvailabilityScreen } from '../screens/veterinarian/VeterinarianAvailabilityScreen';
 import { VeterinarianHomeScreen } from '../screens/veterinarian/VeterinarianHomeScreen';
 import { VeterinarianPetDetailsScreen } from '../screens/veterinarian/VeterinarianPetDetailsScreen';
 import { VeterinarianPetListScreen } from '../screens/veterinarian/VeterinarianPetListScreen';
@@ -7,6 +8,7 @@ import { VeterinarianPetListScreen } from '../screens/veterinarian/VeterinarianP
 export type VeterinarianStackParamList = {
     VeterinarianHome: undefined;
     RegisterTutorWithPet: undefined;
+    VeterinarianAvailability: undefined;
     Patients: undefined;
     PetDetails: { petId: number };
 };
@@ -25,6 +27,11 @@ export function VeterinarianNavigator() {
                 name="RegisterTutorWithPet"
                 component={RegisterTutorWithPetScreen}
                 options={{ title: 'Cadastrar Paciente' }}
+            />
+            <Stack.Screen
+                name="VeterinarianAvailability"
+                component={VeterinarianAvailabilityScreen}
+                options={{ title: 'Minha disponibilidade' }}
             />
             <Stack.Screen
                 name="Patients"

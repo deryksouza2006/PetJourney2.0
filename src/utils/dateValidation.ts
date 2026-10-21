@@ -18,3 +18,28 @@ export function isValidIsoDate(value: string): boolean {
 
     return day >= 1 && day <= daysInMonth[month - 1];
 }
+
+export function dateInputToIsoDate(value: string): string | null {
+    const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+
+    if (!match) {
+        return null;
+    }
+
+    const isoDate = `${match[3]}-${match[2]}-${match[1]}`;
+    return isValidIsoDate(isoDate) ? isoDate : null;
+}
+
+export function isoDateToDateInput(value: string | null | undefined): string {
+    if (!value) {
+        return '';
+    }
+
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+    if (!match || !isValidIsoDate(value)) {
+        return value;
+    }
+
+    return `${match[3]}/${match[2]}/${match[1]}`;
+}

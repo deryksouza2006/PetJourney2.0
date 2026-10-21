@@ -24,7 +24,8 @@ import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator
 import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { PetRequest, PetSex, PetSpecies } from '../../types/pet';
 import { getApiErrorMessage } from '../../utils/apiError';
-import { isValidIsoDate } from '../../utils/dateValidation';
+import { dateInputToIsoDate, isoDateToDateInput } from '../../utils/dateValidation';
+import { formatDateInput } from '../../utils/inputMasks';
 
 type Props =
     | NativeStackScreenProps<ClinicAdminStackParamList, 'CreatePet'>
@@ -57,7 +58,9 @@ export function PetFormScreen(props: Props) {
     const [species, setSpecies] = useState<PetSpecies | null>(pet?.species ?? null);
     const [breed, setBreed] = useState(pet?.breed ?? '');
     const [sex, setSex] = useState<PetSex | null>(pet?.sex ?? null);
-    const [birthDate, setBirthDate] = useState(pet?.birthDate ?? '');
+    const [birthDate, setBirthDate] = useState(
+        isoDateToDateInput(pet?.birthDate),
+    );
     const [weight, setWeight] = useState(
         pet?.weight !== null && pet?.weight !== undefined
             ? pet.weight.toString()
@@ -98,12 +101,14 @@ export function PetFormScreen(props: Props) {
         const trimmedBirthDate = birthDate.trim();
 
         if (trimmedBirthDate) {
-            if (!isValidIsoDate(trimmedBirthDate)) {
-                setErrorMessage('Informe uma data de nascimento válida no formato AAAA-MM-DD.');
+            const isoBirthDate = dateInputToIsoDate(trimmedBirthDate);
+
+            if (!isoBirthDate) {
+                setErrorMessage('Informe uma data de nascimento válida no formato DD/MM/AAAA.');
                 return;
             }
 
-            request.birthDate = trimmedBirthDate;
+            request.birthDate = isoBirthDate;
         }
 
         if (weight.trim()) {
@@ -290,9 +295,11 @@ export function PetFormScreen(props: Props) {
                                     ref={birthDateInputRef}
                                     label="Nascimento"
                                     value={birthDate}
-                                    onChangeText={setBirthDate}
-                                    placeholder="AAAA-MM-DD (opcional)"
+                                    onChangeText={(text) => setBirthDate(formatDateInput(text))}
+                                    placeholder="DD/MM/AAAA (opcional)"
+                                    keyboardType="numeric"
                                     autoCapitalize="none"
+                                    maxLength={10}
                                     editable={!isPending}
                                     returnKeyType="next"
                                     onSubmitEditing={() => weightInputRef.current?.focus()}

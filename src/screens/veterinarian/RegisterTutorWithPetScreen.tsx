@@ -20,7 +20,8 @@ import { colors, radii, shadows, spacing, typography } from '../../theme/tokens'
 import { PetSex, PetSpecies } from '../../types/pet';
 import { RegisterTutorWithPetRequest } from '../../types/workflow';
 import { getApiErrorMessage } from '../../utils/apiError';
-import { isValidIsoDate } from '../../utils/dateValidation';
+import { dateInputToIsoDate } from '../../utils/dateValidation';
+import { formatDateInput } from '../../utils/inputMasks';
 
 type Props = NativeStackScreenProps<VeterinarianStackParamList, 'RegisterTutorWithPet'>;
 
@@ -83,9 +84,12 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
         }
 
         const trimmedBirthDate = birthDate.trim();
+        const isoBirthDate = trimmedBirthDate
+            ? dateInputToIsoDate(trimmedBirthDate)
+            : null;
 
-        if (trimmedBirthDate && !isValidIsoDate(trimmedBirthDate)) {
-            setErrorMessage('Informe uma data de nascimento válida no formato AAAA-MM-DD.');
+        if (trimmedBirthDate && !isoBirthDate) {
+            setErrorMessage('Informe uma data de nascimento válida no formato DD/MM/AAAA.');
             return;
         }
 
@@ -127,8 +131,8 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
             request.pet.sex = sex;
         }
 
-        if (trimmedBirthDate) {
-            request.pet.birthDate = trimmedBirthDate;
+        if (isoBirthDate) {
+            request.pet.birthDate = isoBirthDate;
         }
 
         if (parsedWeight !== undefined) {
@@ -351,9 +355,11 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                     ref={birthDateInputRef}
                                     label="Nascimento"
                                     value={birthDate}
-                                    onChangeText={setBirthDate}
-                                    placeholder="AAAA-MM-DD"
+                                    onChangeText={(text) => setBirthDate(formatDateInput(text))}
+                                    placeholder="DD/MM/AAAA"
+                                    keyboardType="numeric"
                                     autoCapitalize="none"
+                                    maxLength={10}
                                     editable={!isPending}
                                     returnKeyType="next"
                                     onSubmitEditing={() => weightInputRef.current?.focus()}
