@@ -112,7 +112,7 @@ export function TutorHomeScreen({ navigation }: Props) {
 
                     <Text style={[styles.sectionTitle, styles.accessTitle]}>Acesso rápido</Text>
                     <Text style={styles.sectionDescription}>
-                        Consulte seus pets, sua agenda e os horários disponíveis.
+                        Consulte seus pets, sua agenda e os registros de saúde.
                     </Text>
                     <AppButton
                         label="Ver meus pets"
@@ -128,6 +128,18 @@ export function TutorHomeScreen({ navigation }: Props) {
                     <AppButton
                         label="Agendar consulta"
                         onPress={() => navigation.navigate('TutorAppointment')}
+                        variant="secondary"
+                        style={styles.quickAccessButton}
+                    />
+                    <AppButton
+                        label="Prontuário"
+                        onPress={() => navigation.navigate('TutorMedicalRecords')}
+                        variant="secondary"
+                        style={styles.quickAccessButton}
+                    />
+                    <AppButton
+                        label="Medicamentos"
+                        onPress={() => navigation.navigate('TutorMedications')}
                         variant="secondary"
                         style={styles.quickAccessButton}
                     />

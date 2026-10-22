@@ -8,6 +8,16 @@ export function formatLocalDateTime(dateTime: string): string {
     return `${match[3]}/${match[2]}/${match[1]} às ${match[4]}:${match[5]}`;
 }
 
+export function formatLocalDate(date: string): string {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date);
+
+    if (!match) {
+        return date;
+    }
+
+    return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
 const CANCELLATION_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export function localDateTimeToDate(dateTime: string): Date | null {

@@ -2,6 +2,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { TutorAgendaScreen } from '../screens/tutor/TutorAgendaScreen';
 import { TutorAppointmentScreen } from '../screens/tutor/TutorAppointmentScreen';
 import { TutorHomeScreen } from '../screens/tutor/TutorHomeScreen';
+import { TutorMedicalRecordsScreen } from '../screens/tutor/TutorMedicalRecordsScreen';
+import { TutorMedicationsScreen } from '../screens/tutor/TutorMedicationsScreen';
 import { TutorPetDetailsScreen } from '../screens/tutor/TutorPetDetailsScreen';
 import { TutorPetListScreen } from '../screens/tutor/TutorPetListScreen';
 
@@ -9,6 +11,8 @@ export type TutorStackParamList = {
     TutorHome: undefined;
     TutorAgenda: undefined;
     TutorAppointment: undefined;
+    TutorMedicalRecords: undefined;
+    TutorMedications: undefined;
     TutorPets: undefined;
     TutorPetDetails: { petId: number };
 };
@@ -32,6 +36,16 @@ export function TutorNavigator() {
                 name="TutorAppointment"
                 component={TutorAppointmentScreen}
                 options={{ title: 'Agendar consulta' }}
+            />
+            <Stack.Screen
+                name="TutorMedicalRecords"
+                component={TutorMedicalRecordsScreen}
+                options={{ title: 'Prontuário' }}
+            />
+            <Stack.Screen
+                name="TutorMedications"
+                component={TutorMedicationsScreen}
+                options={{ title: 'Medicamentos' }}
             />
             <Stack.Screen
                 name="TutorPets"
