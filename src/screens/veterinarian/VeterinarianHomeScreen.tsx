@@ -32,6 +32,12 @@ export function VeterinarianHomeScreen({ navigation }: Props) {
                 description="Cadastre e gerencie seus horários disponíveis."
                 onPress={() => navigation.navigate('VeterinarianAvailability')}
             />
+            <HomeActionCard
+                icon="SC"
+                title="SmartCare"
+                description="Analise a prioridade de acompanhamento dos seus pacientes."
+                onPress={() => navigation.navigate('SmartCare')}
+            />
         </HomeScreenLayout>
     );
 }

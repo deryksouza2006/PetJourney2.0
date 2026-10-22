@@ -32,6 +32,12 @@ export function ClinicAdminHomeScreen({ navigation }: Props) {
                 description="Consulte e gerencie os pets cadastrados."
                 onPress={() => navigation.navigate('Pets')}
             />
+            <HomeActionCard
+                icon="SC"
+                title="SmartCare"
+                description="Analise a prioridade de acompanhamento dos pets da clínica."
+                onPress={() => navigation.navigate('SmartCare')}
+            />
         </HomeScreenLayout>
     );
 }

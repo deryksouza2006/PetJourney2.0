@@ -4,6 +4,7 @@ import { VeterinarianAvailabilityScreen } from '../screens/veterinarian/Veterina
 import { VeterinarianHomeScreen } from '../screens/veterinarian/VeterinarianHomeScreen';
 import { VeterinarianPetDetailsScreen } from '../screens/veterinarian/VeterinarianPetDetailsScreen';
 import { VeterinarianPetListScreen } from '../screens/veterinarian/VeterinarianPetListScreen';
+import { SmartCareScreen } from '../screens/smartcare/SmartCareScreen';
 
 export type VeterinarianStackParamList = {
     VeterinarianHome: undefined;
@@ -11,6 +12,7 @@ export type VeterinarianStackParamList = {
     VeterinarianAvailability: undefined;
     Patients: undefined;
     PetDetails: { petId: number };
+    SmartCare: undefined;
 };
 
 const Stack = createNativeStackNavigator<VeterinarianStackParamList>();
@@ -42,6 +44,11 @@ export function VeterinarianNavigator() {
                 name="PetDetails"
                 component={VeterinarianPetDetailsScreen}
                 options={{ title: 'Detalhes do Pet' }}
+            />
+            <Stack.Screen
+                name="SmartCare"
+                component={SmartCareScreen}
+                options={{ title: 'SmartCare' }}
             />
         </Stack.Navigator>
     );
