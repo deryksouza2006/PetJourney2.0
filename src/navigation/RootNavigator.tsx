@@ -10,6 +10,10 @@ import { ClinicAdminNavigator } from './ClinicAdminNavigator';
 import { SystemAdminNavigator } from './SystemAdminNavigator';
 import { TutorNavigator } from './TutorNavigator';
 import { VeterinarianNavigator } from './VeterinarianNavigator';
+import {
+    flushPendingNotificationNavigation,
+    navigationRef,
+} from './navigationRef';
 
 export function RootNavigator() {
     const {
@@ -84,7 +88,10 @@ export function RootNavigator() {
     }
 
     return (
-        <NavigationContainer>
+        <NavigationContainer
+            ref={navigationRef}
+            onReady={flushPendingNotificationNavigation}
+        >
             {renderNavigator()}
         </NavigationContainer>
     );

@@ -112,12 +112,24 @@ export function TutorHomeScreen({ navigation }: Props) {
 
                     <Text style={[styles.sectionTitle, styles.accessTitle]}>Acesso rápido</Text>
                     <Text style={styles.sectionDescription}>
-                        Consulte todos os pets vinculados à sua conta.
+                        Consulte seus pets, sua agenda e os horários disponíveis.
                     </Text>
                     <AppButton
                         label="Ver meus pets"
                         onPress={() => navigation.navigate('TutorPets')}
                         style={styles.petsButton}
+                    />
+                    <AppButton
+                        label="Agenda"
+                        onPress={() => navigation.navigate('TutorAgenda')}
+                        variant="secondary"
+                        style={styles.quickAccessButton}
+                    />
+                    <AppButton
+                        label="Agendar consulta"
+                        onPress={() => navigation.navigate('TutorAppointment')}
+                        variant="secondary"
+                        style={styles.quickAccessButton}
                     />
                 </View>
             </ScrollView>
@@ -251,4 +263,5 @@ const styles = StyleSheet.create({
     retryButton: { marginTop: spacing.lg },
     accessTitle: { marginTop: spacing.xxxl },
     petsButton: { marginTop: spacing.xl },
+    quickAccessButton: { marginTop: spacing.md },
 });

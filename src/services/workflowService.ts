@@ -1,6 +1,8 @@
 import {
+    AppointmentResponse,
     RegisterTutorWithPetRequest,
     RegisterTutorWithPetResponse,
+    ScheduleAppointmentRequest,
 } from '../types/workflow';
 import { api } from './api';
 
@@ -11,4 +13,15 @@ export async function registerTutorWithPet(
         '/workflows/tutors/register-with-pet',
         request,
     );
+}
+
+export async function scheduleAppointment(
+    request: ScheduleAppointmentRequest,
+): Promise<AppointmentResponse> {
+    const response = await api.post<AppointmentResponse>(
+        '/workflows/appointments/schedule',
+        request,
+    );
+
+    return response.data;
 }

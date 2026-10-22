@@ -28,6 +28,30 @@ export async function getVeterinarianAvailabilities(
     return response.data;
 }
 
+export async function getAvailableVeterinarianSlots(
+    veterinarianId: number | null,
+    start: string,
+    end: string,
+    page = 0,
+    size = 100,
+): Promise<VeterinarianAvailabilityPage> {
+    const response = await api.get<VeterinarianAvailabilityPage>(
+        '/veterinarian-availabilities/available',
+        {
+            params: {
+                veterinarianId: veterinarianId ?? undefined,
+                start,
+                end,
+                page,
+                size,
+                sort: 'startTime,asc',
+            },
+        },
+    );
+
+    return response.data;
+}
+
 export async function createVeterinarianAvailability(
     request: VeterinarianAvailabilityRequest,
 ): Promise<VeterinarianAvailability> {
