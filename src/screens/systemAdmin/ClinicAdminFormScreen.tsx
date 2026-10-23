@@ -15,7 +15,7 @@ import { AppButton } from '../../components/AppButton';
 import { AppInput } from '../../components/AppInput';
 import { useCreateClinicAdmin } from '../../hooks/clinicAdmins/useCreateClinicAdmin';
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { ClinicAdminRequest } from '../../types/clinicAdmin';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { isValidEmail } from '../../utils/formValidation';
@@ -155,7 +155,7 @@ export function ClinicAdminFormScreen({ navigation, route }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     keyboardView: { flex: 1 },
     scrollView: { flex: 1, backgroundColor: colors.background },
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: 3,
         borderLeftColor: colors.danger,
         borderRadius: radii.sm,
-        backgroundColor: '#FDF0F0',
+        backgroundColor: colors.errorSurface,
     },
     error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
-});
+}));

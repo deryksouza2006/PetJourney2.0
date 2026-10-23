@@ -7,6 +7,7 @@ import { TutorListScreen } from '../screens/clinicAdmin/TutorListScreen';
 import { VeterinarianFormScreen } from '../screens/clinicAdmin/VeterinarianFormScreen';
 import { VeterinarianListScreen } from '../screens/clinicAdmin/VeterinarianListScreen';
 import { SmartCareScreen } from '../screens/smartcare/SmartCareScreen';
+import { AppearanceScreen } from '../screens/settings/AppearanceScreen';
 import { Tutor } from '../types/tutor';
 import { Pet } from '../types/pet';
 import { Veterinarian } from '../types/veterinarian';
@@ -23,6 +24,7 @@ export type ClinicAdminStackParamList = {
     CreateTutor: undefined;
     EditTutor: { tutor: Tutor };
     SmartCare: undefined;
+    Appearance: undefined;
 };
 
 const Stack = createNativeStackNavigator<ClinicAdminStackParamList>();
@@ -84,6 +86,11 @@ export function ClinicAdminNavigator() {
                 name="SmartCare"
                 component={SmartCareScreen}
                 options={{ title: 'SmartCare' }}
+            />
+            <Stack.Screen
+                name="Appearance"
+                component={AppearanceScreen}
+                options={{ title: 'Aparência' }}
             />
         </Stack.Navigator>
     );

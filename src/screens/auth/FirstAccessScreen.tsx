@@ -17,7 +17,7 @@ import { AppInput } from '../../components/AppInput';
 import { BrandMark } from '../../components/BrandMark';
 import { useFirstAccess } from '../../hooks/auth/useFirstAccess';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { FirstAccessRequest } from '../../types/auth';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { isValidEmail } from '../../utils/formValidation';
@@ -183,7 +183,7 @@ export function FirstAccessScreen({ navigation }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     keyboardView: { flex: 1 },
     content: {
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: 3,
         borderLeftColor: colors.danger,
         borderRadius: radii.sm,
-        backgroundColor: '#FDF0F0',
+        backgroundColor: colors.errorSurface,
     },
     error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
     backArea: { alignItems: 'center', marginTop: spacing.xl },
@@ -242,4 +242,4 @@ const styles = StyleSheet.create({
     },
     backButtonPressed: { opacity: 0.65 },
     backButtonText: { color: colors.primary, fontSize: typography.caption, fontWeight: '800' },
-});
+}));

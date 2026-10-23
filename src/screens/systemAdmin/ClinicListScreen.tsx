@@ -7,7 +7,7 @@ import { PaginationControls } from '../../components/PaginationControls';
 import { useDeleteClinic } from '../../hooks/clinics/useDeleteClinic';
 import { useClinics } from '../../hooks/clinics/useClinics';
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { Clinic } from '../../types/clinic';
 
 type Props = NativeStackScreenProps<SystemAdminStackParamList, 'Clinics'>;
@@ -182,7 +182,7 @@ export function ClinicListScreen({ navigation }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     container: { flex: 1, paddingHorizontal: spacing.xl, backgroundColor: colors.background },
     heading: { width: '100%', maxWidth: 760, alignSelf: 'center', paddingVertical: spacing.xl },
@@ -285,4 +285,4 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         textAlign: 'center',
     },
-});
+}));

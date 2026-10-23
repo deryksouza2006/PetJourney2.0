@@ -1,10 +1,12 @@
-import { NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { useMemo } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../components/AppButton';
 import { BrandMark } from '../components/BrandMark';
 import { useAuth } from '../contexts/AuthContext';
-import { colors, radii, shadows, spacing, typography } from '../theme/tokens';
+import { useTheme } from '../contexts/ThemeContext';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../theme/tokens';
 import { AuthNavigator } from './AuthNavigator';
 import { ClinicAdminNavigator } from './ClinicAdminNavigator';
 import { SystemAdminNavigator } from './SystemAdminNavigator';
@@ -16,6 +18,23 @@ import {
 } from './navigationRef';
 
 export function RootNavigator() {
+    const { colors: themeColors, isDark } = useTheme();
+    const navigationTheme = useMemo(() => {
+        const baseTheme = isDark ? DarkTheme : DefaultTheme;
+
+        return {
+            ...baseTheme,
+            colors: {
+                ...baseTheme.colors,
+                primary: themeColors.primary,
+                background: themeColors.background,
+                card: themeColors.surface,
+                text: themeColors.text,
+                border: themeColors.border,
+                notification: themeColors.danger,
+            },
+        };
+    }, [isDark, themeColors]);
     const {
         user,
         isLoading,
@@ -90,6 +109,7 @@ export function RootNavigator() {
     return (
         <NavigationContainer
             ref={navigationRef}
+            theme={navigationTheme}
             onReady={flushPendingNotificationNavigation}
         >
             {renderNavigator()}
@@ -97,7 +117,7 @@ export function RootNavigator() {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     centered: {
         flex: 1,
         alignItems: 'center',
@@ -166,4 +186,4 @@ const styles = StyleSheet.create({
         letterSpacing: 1.4,
         textAlign: 'center',
     },
-});
+}));

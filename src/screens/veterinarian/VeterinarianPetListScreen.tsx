@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PaginationControls } from '../../components/PaginationControls';
 import { usePets } from '../../hooks/pets/usePets';
 import { VeterinarianStackParamList } from '../../navigation/VeterinarianNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { DEFAULT_PAGE_SIZE } from '../../types/pagination';
 import { Pet } from '../../types/pet';
 
@@ -111,7 +111,7 @@ export function VeterinarianPetListScreen({ navigation }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     container: {
         flex: 1,
@@ -227,4 +227,4 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         textAlign: 'center',
     },
-});
+}));

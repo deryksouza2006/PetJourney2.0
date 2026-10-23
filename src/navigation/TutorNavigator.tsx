@@ -6,6 +6,7 @@ import { TutorMedicalRecordsScreen } from '../screens/tutor/TutorMedicalRecordsS
 import { TutorMedicationsScreen } from '../screens/tutor/TutorMedicationsScreen';
 import { TutorPetDetailsScreen } from '../screens/tutor/TutorPetDetailsScreen';
 import { TutorPetListScreen } from '../screens/tutor/TutorPetListScreen';
+import { AppearanceScreen } from '../screens/settings/AppearanceScreen';
 
 export type TutorStackParamList = {
     TutorHome: undefined;
@@ -15,6 +16,7 @@ export type TutorStackParamList = {
     TutorMedications: undefined;
     TutorPets: undefined;
     TutorPetDetails: { petId: number };
+    Appearance: undefined;
 };
 
 const Stack = createNativeStackNavigator<TutorStackParamList>();
@@ -56,6 +58,11 @@ export function TutorNavigator() {
                 name="TutorPetDetails"
                 component={TutorPetDetailsScreen}
                 options={{ title: 'Detalhes do Pet' }}
+            />
+            <Stack.Screen
+                name="Appearance"
+                component={AppearanceScreen}
+                options={{ title: 'Aparência' }}
             />
         </Stack.Navigator>
     );

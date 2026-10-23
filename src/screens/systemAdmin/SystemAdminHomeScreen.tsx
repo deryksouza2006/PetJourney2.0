@@ -20,6 +20,12 @@ export function SystemAdminHomeScreen({ navigation }: Props) {
                 description="Consulte, cadastre e gerencie clínicas e seus administradores."
                 onPress={() => navigation.navigate('Clinics')}
             />
+            <HomeActionCard
+                icon="AP"
+                title="Aparência"
+                description="Escolha entre tema do sistema, claro ou escuro."
+                onPress={() => navigation.navigate('Appearance')}
+            />
         </HomeScreenLayout>
     );
 }

@@ -8,7 +8,7 @@ import { TutorPetSelector } from '../../components/TutorPetSelector';
 import { useMedicalRecordsByPet } from '../../hooks/medicalRecords/useMedicalRecordsByPet';
 import { usePets } from '../../hooks/pets/usePets';
 import { TutorStackParamList } from '../../navigation/TutorNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { MedicalRecord } from '../../types/medicalRecord';
 import { DEFAULT_PAGE_SIZE } from '../../types/pagination';
 import { getApiErrorMessage } from '../../utils/apiError';
@@ -162,7 +162,7 @@ function StateMessage({ title, text }: { title?: string; text?: string }) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     scrollView: { flex: 1, backgroundColor: colors.background },
     content: { flexGrow: 1, padding: spacing.xl },
@@ -258,4 +258,4 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     retryButton: { marginTop: spacing.lg },
-});
+}));

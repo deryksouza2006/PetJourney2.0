@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { colors, createThemedStyles, radii, spacing, typography } from '../theme/tokens';
 
 interface AppInputProps extends TextInputProps { label: string; }
 
@@ -19,7 +19,7 @@ export const AppInput = forwardRef<TextInput, AppInputProps>(({ label, style, ..
 
 AppInput.displayName = 'AppInput';
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     container: { gap: spacing.sm },
     label: { color: colors.text, fontSize: typography.caption, fontWeight: '700' },
     input: {
@@ -28,8 +28,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.border,
         borderRadius: radii.md,
-        backgroundColor: colors.surface,
+        backgroundColor: colors.inputBackground,
         color: colors.text,
         fontSize: typography.body,
     },
-});
+}));

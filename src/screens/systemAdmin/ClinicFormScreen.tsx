@@ -7,7 +7,7 @@ import { AppInput } from '../../components/AppInput';
 import { useCreateClinic } from '../../hooks/clinics/useCreateClinic';
 import { useUpdateClinic } from '../../hooks/clinics/useUpdateClinic';
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { ClinicRequest } from '../../types/clinic';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { isValidCnpj, isValidEmail } from '../../utils/formValidation';
@@ -197,7 +197,7 @@ export function ClinicFormScreen(props: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     keyboardView: { flex: 1 },
     scrollView: { flex: 1, backgroundColor: colors.background },
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: 3,
         borderLeftColor: colors.danger,
         borderRadius: radii.sm,
-        backgroundColor: '#FDF0F0',
+        backgroundColor: colors.errorSurface,
     },
     error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
-});
+}));

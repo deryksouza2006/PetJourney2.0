@@ -7,7 +7,7 @@ import { PaginationControls } from '../../components/PaginationControls';
 import { useDeleteTutor } from '../../hooks/tutors/useDeleteTutor';
 import { useTutors } from '../../hooks/tutors/useTutors';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { Tutor } from '../../types/tutor';
 
 type Props = NativeStackScreenProps<ClinicAdminStackParamList, 'Tutors'>;
@@ -167,7 +167,7 @@ export function TutorListScreen({ navigation }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     container: {
         flex: 1,
@@ -295,4 +295,4 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         textAlign: 'center',
     },
-});
+}));

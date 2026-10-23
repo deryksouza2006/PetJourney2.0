@@ -19,7 +19,7 @@ import { useScheduleAppointment } from '../../hooks/appointments/useScheduleAppo
 import { useFutureAvailableSlots } from '../../hooks/availability/useFutureAvailableSlots';
 import { usePets } from '../../hooks/pets/usePets';
 import { TutorStackParamList } from '../../navigation/TutorNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { VeterinarianAvailability } from '../../types/veterinarianAvailability';
 import { getApiErrorMessage } from '../../utils/apiError';
 
@@ -507,7 +507,7 @@ function StateMessage({ title, text }: { title?: string; text?: string }) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     keyboardView: { flex: 1 },
     scrollView: { flex: 1, backgroundColor: colors.background },
@@ -674,4 +674,4 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     submitButton: { marginTop: spacing.xl },
-});
+}));

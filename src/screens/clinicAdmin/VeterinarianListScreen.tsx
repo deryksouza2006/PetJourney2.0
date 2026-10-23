@@ -7,7 +7,7 @@ import { PaginationControls } from '../../components/PaginationControls';
 import { useDeleteVeterinarian } from '../../hooks/veterinarians/useDeleteVeterinarian';
 import { useVeterinarians } from '../../hooks/veterinarians/useVeterinarians';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { Veterinarian } from '../../types/veterinarian';
 
 type Props = NativeStackScreenProps<ClinicAdminStackParamList, 'Veterinarians'>;
@@ -178,7 +178,7 @@ export function VeterinarianListScreen({ navigation }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     container: {
         flex: 1,
@@ -305,4 +305,4 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         textAlign: 'center',
     },
-});
+}));

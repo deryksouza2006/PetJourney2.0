@@ -16,7 +16,7 @@ import { AppButton } from '../../components/AppButton';
 import { AppInput } from '../../components/AppInput';
 import { useRegisterTutorWithPet } from '../../hooks/workflows/useRegisterTutorWithPet';
 import { VeterinarianStackParamList } from '../../navigation/VeterinarianNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { PetSex, PetSpecies } from '../../types/pet';
 import { RegisterTutorWithPetRequest } from '../../types/workflow';
 import { getApiErrorMessage } from '../../utils/apiError';
@@ -396,7 +396,7 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     keyboardView: { flex: 1 },
     scrollView: { flex: 1, backgroundColor: colors.background },
@@ -472,14 +472,14 @@ const styles = StyleSheet.create({
         fontSize: typography.caption,
         fontWeight: '700',
     },
-    optionTextSelected: { color: colors.white },
+    optionTextSelected: { color: colors.onPrimary },
     errorContainer: {
         marginVertical: spacing.lg,
         padding: spacing.md,
         borderLeftWidth: 3,
         borderLeftColor: colors.danger,
         borderRadius: radii.sm,
-        backgroundColor: '#FDF0F0',
+        backgroundColor: colors.errorSurface,
     },
     error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
-});
+}));

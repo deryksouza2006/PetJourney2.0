@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePet } from '../../hooks/pets/usePet';
 import { useTutor } from '../../hooks/tutors/useTutor';
 import { VeterinarianStackParamList } from '../../navigation/VeterinarianNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 
 type Props = NativeStackScreenProps<VeterinarianStackParamList, 'PetDetails'>;
 
@@ -140,7 +140,7 @@ export function VeterinarianPetDetailsScreen({ route }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     scrollView: { flex: 1, backgroundColor: colors.background },
     content: { flexGrow: 1, padding: spacing.xl },
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: 3,
         borderLeftColor: colors.danger,
         borderRadius: radii.sm,
-        backgroundColor: '#FDF0F0',
+        backgroundColor: colors.errorSurface,
     },
     errorMessage: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
     stateCard: {
@@ -264,4 +264,4 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         textAlign: 'center',
     },
-});
+}));

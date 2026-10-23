@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, spacing, typography } from '../theme/tokens';
+import { colors, createThemedStyles, spacing, typography } from '../theme/tokens';
 import { AppButton } from './AppButton';
 
 interface PaginationControlsProps {
@@ -53,7 +53,7 @@ export function PaginationControls({
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     container: {
         width: '100%',
         gap: spacing.sm,
@@ -79,4 +79,4 @@ const styles = StyleSheet.create({
         fontSize: typography.caption,
         fontWeight: '800',
     },
-});
+}));

@@ -38,6 +38,12 @@ export function VeterinarianHomeScreen({ navigation }: Props) {
                 description="Analise a prioridade de acompanhamento dos seus pacientes."
                 onPress={() => navigation.navigate('SmartCare')}
             />
+            <HomeActionCard
+                icon="AP"
+                title="Aparência"
+                description="Escolha entre tema do sistema, claro ou escuro."
+                onPress={() => navigation.navigate('Appearance')}
+            />
         </HomeScreenLayout>
     );
 }

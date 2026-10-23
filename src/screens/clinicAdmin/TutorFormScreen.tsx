@@ -16,7 +16,7 @@ import { AppInput } from '../../components/AppInput';
 import { useCreateTutor } from '../../hooks/tutors/useCreateTutor';
 import { useUpdateTutor } from '../../hooks/tutors/useUpdateTutor';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { TutorRequest } from '../../types/tutor';
 import { getApiErrorMessage } from '../../utils/apiError';
 
@@ -195,7 +195,7 @@ export function TutorFormScreen(props: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     keyboardView: { flex: 1 },
     scrollView: { flex: 1, backgroundColor: colors.background },
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: 3,
         borderLeftColor: colors.danger,
         borderRadius: radii.sm,
-        backgroundColor: '#FDF0F0',
+        backgroundColor: colors.errorSurface,
     },
     error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
-});
+}));

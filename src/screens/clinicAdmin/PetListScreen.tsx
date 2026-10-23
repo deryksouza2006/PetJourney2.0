@@ -7,7 +7,7 @@ import { PaginationControls } from '../../components/PaginationControls';
 import { useDeletePet } from '../../hooks/pets/useDeletePet';
 import { usePets } from '../../hooks/pets/usePets';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { Pet } from '../../types/pet';
 
 type Props = NativeStackScreenProps<ClinicAdminStackParamList, 'Pets'>;
@@ -177,7 +177,7 @@ export function PetListScreen({ navigation }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     container: {
         flex: 1,
@@ -305,4 +305,4 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         textAlign: 'center',
     },
-});
+}));

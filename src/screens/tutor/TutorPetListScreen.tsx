@@ -6,7 +6,7 @@ import { AppButton } from '../../components/AppButton';
 import { PaginationControls } from '../../components/PaginationControls';
 import { usePets } from '../../hooks/pets/usePets';
 import { TutorStackParamList } from '../../navigation/TutorNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { DEFAULT_PAGE_SIZE } from '../../types/pagination';
 import { Pet } from '../../types/pet';
 
@@ -119,7 +119,7 @@ export function TutorPetListScreen({ navigation }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     container: {
         flex: 1,
@@ -236,4 +236,4 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     retryButton: { marginTop: spacing.lg },
-});
+}));

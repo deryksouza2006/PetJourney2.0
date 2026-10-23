@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, shadows, spacing, typography } from '../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../theme/tokens';
 import { Pet } from '../types/pet';
 import { getApiErrorMessage } from '../utils/apiError';
 import { AppButton } from './AppButton';
@@ -83,7 +83,7 @@ export function TutorPetSelector({
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     sectionCard: {
         padding: spacing.xl,
         borderWidth: 1,
@@ -151,4 +151,4 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     retryButton: { marginTop: spacing.lg },
-});
+}));

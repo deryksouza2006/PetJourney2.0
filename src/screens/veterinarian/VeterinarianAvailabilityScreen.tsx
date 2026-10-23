@@ -20,7 +20,7 @@ import { useCreateVeterinarianAvailability } from '../../hooks/availability/useC
 import { useDeleteVeterinarianAvailability } from '../../hooks/availability/useDeleteVeterinarianAvailability';
 import { useVeterinarianAvailability } from '../../hooks/availability/useVeterinarianAvailability';
 import { VeterinarianStackParamList } from '../../navigation/VeterinarianNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { DEFAULT_PAGE_SIZE } from '../../types/pagination';
 import {
     VeterinarianAvailability,
@@ -397,7 +397,7 @@ export function VeterinarianAvailabilityScreen(_props: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     keyboardView: { flex: 1 },
     listContainer: { flex: 1, backgroundColor: colors.background },
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: 3,
         borderLeftColor: colors.danger,
         borderRadius: radii.sm,
-        backgroundColor: '#FDF0F0',
+        backgroundColor: colors.errorSurface,
     },
     error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
     successContainer: {
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: 3,
         borderLeftColor: colors.success,
         borderRadius: radii.sm,
-        backgroundColor: '#EFF9F3',
+        backgroundColor: colors.successSurface,
     },
     success: { color: colors.success, fontSize: typography.caption, lineHeight: 20 },
     listTitle: {
@@ -529,4 +529,4 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     retryButton: { marginTop: spacing.lg },
-});
+}));

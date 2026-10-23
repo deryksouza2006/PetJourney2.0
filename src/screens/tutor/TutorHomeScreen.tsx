@@ -1,29 +1,29 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
 import { BrandMark } from '../../components/BrandMark';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { usePets } from '../../hooks/pets/usePets';
 import { TutorStackParamList } from '../../navigation/TutorNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 
 type Props = NativeStackScreenProps<TutorStackParamList, 'TutorHome'>;
 
 export function TutorHomeScreen({ navigation }: Props) {
     const { user, signOut } = useAuth();
+    const { isDark } = useTheme();
     const pets = usePets();
     const insets = useSafeAreaInsets();
     const firstPet = pets.data?.content[0];
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-            <StatusBar style="light" />
             <View style={styles.header}>
                 <View style={styles.headerInner}>
                     <View style={styles.topBar}>
-                        <BrandMark compact light />
+                        <BrandMark compact light={isDark} />
                         <AppButton
                             label="Sair"
                             onPress={() => void signOut()}
@@ -143,19 +143,25 @@ export function TutorHomeScreen({ navigation }: Props) {
                         variant="secondary"
                         style={styles.quickAccessButton}
                     />
+                    <AppButton
+                        label="Aparência"
+                        onPress={() => navigation.navigate('Appearance')}
+                        variant="secondary"
+                        style={styles.quickAccessButton}
+                    />
                 </View>
             </ScrollView>
         </SafeAreaView>
     );
 }
 
-const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: colors.text },
+const styles = createThemedStyles((colors) => ({
+    safeArea: { flex: 1, backgroundColor: colors.headerBackground },
     header: {
         paddingHorizontal: spacing.xl,
         paddingTop: spacing.md,
         paddingBottom: spacing.xxxl,
-        backgroundColor: colors.text,
+        backgroundColor: colors.headerBackground,
     },
     headerInner: { width: '100%', maxWidth: 720, alignSelf: 'center' },
     topBar: {
@@ -167,18 +173,18 @@ const styles = StyleSheet.create({
     },
     signOutButton: {
         minHeight: 42,
-        borderColor: colors.overlayLight,
-        backgroundColor: colors.overlayLight,
+        borderColor: colors.headerControlBorder,
+        backgroundColor: colors.headerControlBackground,
     },
     eyebrow: {
         marginBottom: spacing.sm,
-        color: '#8FC9F4',
+        color: colors.headerAccent,
         fontSize: typography.small,
         fontWeight: '800',
         letterSpacing: 1.5,
     },
     title: {
-        color: colors.white,
+        color: colors.headerText,
         fontSize: typography.title,
         fontWeight: '800',
         letterSpacing: -0.6,
@@ -186,7 +192,7 @@ const styles = StyleSheet.create({
     description: {
         maxWidth: 560,
         marginTop: spacing.sm,
-        color: '#C7D0D7',
+        color: colors.headerTextSecondary,
         fontSize: typography.body,
         lineHeight: 23,
     },
@@ -276,4 +282,4 @@ const styles = StyleSheet.create({
     accessTitle: { marginTop: spacing.xxxl },
     petsButton: { marginTop: spacing.xl },
     quickAccessButton: { marginTop: spacing.md },
-});
+}));

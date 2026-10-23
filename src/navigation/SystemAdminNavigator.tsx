@@ -3,6 +3,7 @@ import { ClinicAdminFormScreen } from '../screens/systemAdmin/ClinicAdminFormScr
 import { ClinicFormScreen } from '../screens/systemAdmin/ClinicFormScreen';
 import { ClinicListScreen } from '../screens/systemAdmin/ClinicListScreen';
 import { SystemAdminHomeScreen } from '../screens/systemAdmin/SystemAdminHomeScreen';
+import { AppearanceScreen } from '../screens/settings/AppearanceScreen';
 import { Clinic } from '../types/clinic';
 
 export type SystemAdminStackParamList = {
@@ -11,6 +12,7 @@ export type SystemAdminStackParamList = {
     CreateClinic: undefined;
     EditClinic: { clinic: Clinic };
     CreateClinicAdmin: { clinicId: number; clinicName: string };
+    Appearance: undefined;
 };
 
 const Stack = createNativeStackNavigator<SystemAdminStackParamList>();
@@ -42,6 +44,11 @@ export function SystemAdminNavigator() {
                 name="CreateClinicAdmin"
                 component={ClinicAdminFormScreen}
                 options={{ title: 'Criar administrador' }}
+            />
+            <Stack.Screen
+                name="Appearance"
+                component={AppearanceScreen}
+                options={{ title: 'Aparência' }}
             />
         </Stack.Navigator>
     );

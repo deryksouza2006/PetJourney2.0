@@ -6,7 +6,7 @@ import {
     Text,
     ViewStyle,
 } from 'react-native';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { colors, createThemedStyles, radii, spacing, typography } from '../theme/tokens';
 
 type AppButtonVariant = 'primary' | 'secondary' | 'danger';
 type AppButtonSize = 'default' | 'small';
@@ -32,7 +32,7 @@ export function AppButton({
 }: AppButtonProps) {
     const isDisabled = disabled || loading;
     const activityColor = variant === 'primary'
-        ? colors.white
+        ? colors.onPrimary
         : variant === 'danger'
             ? colors.danger
             : colors.primary;
@@ -62,16 +62,16 @@ export function AppButton({
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     button: {
         minHeight: 54,
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: spacing.xl,
         borderRadius: radii.md,
-        backgroundColor: colors.primary,
+        backgroundColor: colors.primaryAction,
     },
-    primary: { backgroundColor: colors.primary },
+    primary: { backgroundColor: colors.primaryAction },
     secondary: {
         borderWidth: 1,
         borderColor: colors.primary,
@@ -83,11 +83,11 @@ const styles = StyleSheet.create({
         backgroundColor: colors.surface,
     },
     buttonSmall: { minHeight: 46, paddingHorizontal: spacing.lg },
-    primaryPressed: { backgroundColor: colors.primaryDark, transform: [{ scale: 0.99 }] },
+    primaryPressed: { backgroundColor: colors.primaryActionPressed, transform: [{ scale: 0.99 }] },
     outlinePressed: { opacity: 0.78, transform: [{ scale: 0.99 }] },
     buttonDisabled: { opacity: 0.6 },
-    label: { color: colors.white, fontSize: typography.body, fontWeight: '700' },
-    primaryLabel: { color: colors.white },
+    label: { color: colors.onPrimary, fontSize: typography.body, fontWeight: '700' },
+    primaryLabel: { color: colors.onPrimary },
     secondaryLabel: { color: colors.primary },
     dangerLabel: { color: colors.danger },
-});
+}));

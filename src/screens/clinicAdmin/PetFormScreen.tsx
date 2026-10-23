@@ -21,7 +21,7 @@ import { useUpdatePet } from '../../hooks/pets/useUpdatePet';
 import { useTutor } from '../../hooks/tutors/useTutor';
 import { useTutors } from '../../hooks/tutors/useTutors';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { PetRequest, PetSex, PetSpecies } from '../../types/pet';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { dateInputToIsoDate, isoDateToDateInput } from '../../utils/dateValidation';
@@ -432,7 +432,7 @@ export function PetFormScreen(props: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     keyboardView: { flex: 1 },
     scrollView: { flex: 1, backgroundColor: colors.background },
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
         fontSize: typography.caption,
         fontWeight: '700',
     },
-    optionTextSelected: { color: colors.white },
+    optionTextSelected: { color: colors.onPrimary },
     tutors: { gap: spacing.sm },
     selectedTutor: {
         padding: spacing.md,
@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: 3,
         borderLeftColor: colors.danger,
         borderRadius: radii.sm,
-        backgroundColor: '#FDF0F0',
+        backgroundColor: colors.errorSurface,
     },
     message: { color: colors.textSecondary, fontSize: typography.caption, lineHeight: 20 },
     errorContainer: {
@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: 3,
         borderLeftColor: colors.danger,
         borderRadius: radii.sm,
-        backgroundColor: '#FDF0F0',
+        backgroundColor: colors.errorSurface,
     },
     error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
-});
+}));

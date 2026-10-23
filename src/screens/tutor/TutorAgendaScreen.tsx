@@ -16,7 +16,7 @@ import { useCancelAppointment } from '../../hooks/appointments/useCancelAppointm
 import { useAppointmentsByPet } from '../../hooks/appointments/useAppointmentsByPet';
 import { usePets } from '../../hooks/pets/usePets';
 import { TutorStackParamList } from '../../navigation/TutorNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { DEFAULT_PAGE_SIZE } from '../../types/pagination';
 import { AppointmentResponse, AppointmentStatus } from '../../types/workflow';
 import { getApiErrorMessage } from '../../utils/apiError';
@@ -320,7 +320,7 @@ function StateMessage({ title, text }: { title?: string; text?: string }) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     scrollView: { flex: 1, backgroundColor: colors.background },
     content: { flexGrow: 1, padding: spacing.xl },
@@ -428,9 +428,9 @@ const styles = StyleSheet.create({
         backgroundColor: colors.primarySoft,
     },
     statusText: { color: colors.primaryDark, fontSize: typography.small, fontWeight: '800' },
-    statusCancelled: { backgroundColor: '#FCECEC' },
+    statusCancelled: { backgroundColor: colors.errorSurface },
     statusCancelledText: { color: colors.danger },
-    statusCompleted: { backgroundColor: '#EAF7F0' },
+    statusCompleted: { backgroundColor: colors.successSurface },
     statusCompletedText: { color: colors.success },
     loadingState: {
         alignItems: 'center',
@@ -467,4 +467,4 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         textAlign: 'center',
     },
-});
+}));

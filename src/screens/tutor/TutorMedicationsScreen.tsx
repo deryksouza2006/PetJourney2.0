@@ -8,7 +8,7 @@ import { TutorPetSelector } from '../../components/TutorPetSelector';
 import { useMedicationsByPet } from '../../hooks/medications/useMedicationsByPet';
 import { usePets } from '../../hooks/pets/usePets';
 import { TutorStackParamList } from '../../navigation/TutorNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { Medication, MedicationStatus } from '../../types/medication';
 import { DEFAULT_PAGE_SIZE } from '../../types/pagination';
 import { getApiErrorMessage } from '../../utils/apiError';
@@ -162,7 +162,7 @@ function StateMessage({ title, text }: { title?: string; text?: string }) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     scrollView: { flex: 1, backgroundColor: colors.background },
     content: { flexGrow: 1, padding: spacing.xl },
@@ -214,10 +214,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
         borderRadius: radii.pill,
-        backgroundColor: '#EAF7F0',
+        backgroundColor: colors.successSurface,
     },
     statusText: { color: colors.success, fontSize: typography.small, fontWeight: '800' },
-    statusCancelled: { backgroundColor: '#FCECEC' },
+    statusCancelled: { backgroundColor: colors.errorSurface },
     statusCancelledText: { color: colors.danger },
     statusCompleted: { backgroundColor: colors.primarySoft },
     statusCompletedText: { color: colors.primaryDark },
@@ -275,4 +275,4 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     retryButton: { marginTop: spacing.lg },
-});
+}));

@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCreateVeterinarian } from '../../hooks/veterinarians/useCreateVeterinarian';
 import { useUpdateVeterinarian } from '../../hooks/veterinarians/useUpdateVeterinarian';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { VeterinarianRequest } from '../../types/veterinarian';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { isValidEmail } from '../../utils/formValidation';
@@ -232,7 +232,7 @@ export function VeterinarianFormScreen(props: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     keyboardView: { flex: 1 },
     scrollView: { flex: 1, backgroundColor: colors.background },
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: 3,
         borderLeftColor: colors.danger,
         borderRadius: radii.sm,
-        backgroundColor: '#FDF0F0',
+        backgroundColor: colors.errorSurface,
     },
     error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
-});
+}));

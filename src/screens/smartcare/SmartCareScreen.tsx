@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
 import { useSmartCareRanking } from '../../hooks/smartCare/useSmartCareRanking';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import {
     SmartCareInsufficientDataPet,
     SmartCarePriority,
@@ -273,7 +273,7 @@ function ErrorState({ message, isRetrying, onRetry }: ErrorStateProps) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     scrollView: { flex: 1, backgroundColor: colors.background },
     content: { flexGrow: 1, padding: spacing.xl, paddingBottom: spacing.xxxl },
@@ -348,12 +348,12 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.sm,
         borderRadius: radii.pill,
     },
-    priorityLow: { backgroundColor: '#EAF7F0' },
-    priorityMedium: { backgroundColor: '#FFF4D6' },
-    priorityHigh: { backgroundColor: '#FCECEC' },
+    priorityLow: { backgroundColor: colors.successSurface },
+    priorityMedium: { backgroundColor: colors.warningSurface },
+    priorityHigh: { backgroundColor: colors.errorSurface },
     priorityText: { fontSize: typography.small, fontWeight: '800' },
     priorityLowText: { color: colors.success },
-    priorityMediumText: { color: '#8A5A00' },
+    priorityMediumText: { color: colors.warningText },
     priorityHighText: { color: colors.danger },
     cardActionRow: {
         flexDirection: 'row',
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
         borderRadius: radii.lg,
         backgroundColor: colors.surface,
     },
-    errorCard: { marginTop: 0, borderColor: '#F1C6C6', backgroundColor: '#FDF0F0' },
+    errorCard: { marginTop: 0, borderColor: colors.errorBorder, backgroundColor: colors.errorSurface },
     stateTitle: {
         color: colors.text,
         fontSize: typography.body,
@@ -445,4 +445,4 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     retryButton: { marginTop: spacing.lg },
-});
+}));

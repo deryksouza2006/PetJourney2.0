@@ -16,7 +16,7 @@ import { AppInput } from '../../components/AppInput';
 import { BrandMark } from '../../components/BrandMark';
 import { useAuth } from '../../contexts/AuthContext';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
-import { colors, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { getApiErrorMessage } from '../../utils/apiError';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
@@ -139,7 +139,7 @@ export function LoginScreen({ navigation }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles((colors) => ({
     safeArea: { flex: 1, backgroundColor: colors.background },
     keyboardView: { flex: 1 },
     content: {
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: 3,
         borderLeftColor: colors.danger,
         borderRadius: radii.sm,
-        backgroundColor: '#FDF0F0',
+        backgroundColor: colors.errorSurface,
     },
     error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
     firstAccessArea: { alignItems: 'center', marginTop: spacing.xl },
@@ -198,4 +198,4 @@ const styles = StyleSheet.create({
     },
     firstAccessButtonPressed: { opacity: 0.65 },
     firstAccessButtonText: { color: colors.primary, fontSize: typography.caption, fontWeight: '800' },
-});
+}));
