@@ -1,163 +1,431 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
+    ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
-import { AppInput } from '../../components/AppInput';
-import { PaginationControls } from '../../components/PaginationControls';
+import {
+    AddAvailabilitySheet,
+    AvailabilityTimeOption,
+} from '../../components/veterinarian/AddAvailabilitySheet';
+import {
+    AvailabilityCalendar,
+    AvailabilityCalendarDay,
+} from '../../components/veterinarian/AvailabilityCalendar';
+import { AvailabilitySlotChip } from '../../components/veterinarian/AvailabilitySlotChip';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useCreateVeterinarianAvailability } from '../../hooks/availability/useCreateVeterinarianAvailability';
 import { useDeleteVeterinarianAvailability } from '../../hooks/availability/useDeleteVeterinarianAvailability';
-import { useVeterinarianAvailability } from '../../hooks/availability/useVeterinarianAvailability';
-import { VeterinarianStackParamList } from '../../navigation/VeterinarianNavigator';
-import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
-import { DEFAULT_PAGE_SIZE } from '../../types/pagination';
+import { useVeterinarianAvailabilityMonth } from '../../hooks/availability/useVeterinarianAvailabilityMonth';
+import { radii, spacing, ThemeColors, typography } from '../../theme/tokens';
 import {
     VeterinarianAvailability,
     VeterinarianAvailabilityRequest,
 } from '../../types/veterinarianAvailability';
 import { getApiErrorMessage } from '../../utils/apiError';
-import { dateInputToIsoDate } from '../../utils/dateValidation';
-import { formatDateInput, formatTimeInput } from '../../utils/inputMasks';
 
-type Props = NativeStackScreenProps<
-    VeterinarianStackParamList,
-    'VeterinarianAvailability'
->;
+const MONTH_NAMES = [
+    'janeiro',
+    'fevereiro',
+    'março',
+    'abril',
+    'maio',
+    'junho',
+    'julho',
+    'agosto',
+    'setembro',
+    'outubro',
+    'novembro',
+    'dezembro',
+] as const;
 
-const AVAILABILITY_RANGE_START = '1900-01-01T00:00:00';
-const AVAILABILITY_RANGE_END = '9999-12-31T23:59:59';
-const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+const WEEKDAY_NAMES = [
+    'domingo',
+    'segunda-feira',
+    'terça-feira',
+    'quarta-feira',
+    'quinta-feira',
+    'sexta-feira',
+    'sábado',
+] as const;
 
-function formatDate(dateTime: string): string {
-    const match = /^(\d{4})-(\d{2})-(\d{2})T/.exec(dateTime);
+const SLOT_INTERVAL_MINUTES = 30;
+const FIRST_SLOT_MINUTES = 8 * 60;
+const LAST_SLOT_MINUTES = 18 * 60;
 
-    return match ? `${match[3]}/${match[2]}/${match[1]}` : dateTime;
+function pad(value: number): string {
+    return String(value).padStart(2, '0');
+}
+
+function toDateKey(date: Date): string {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function parseDateKey(dateKey: string): Date {
+    const [year, month, day] = dateKey.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+function getDateKey(dateTime: string): string {
+    const match = /^(\d{4}-\d{2}-\d{2})/.exec(dateTime);
+    return match?.[1] ?? '';
 }
 
 function formatTime(dateTime: string): string {
     const match = /T(\d{2}:\d{2})/.exec(dateTime);
-
     return match?.[1] ?? dateTime;
 }
 
-export function VeterinarianAvailabilityScreen(_props: Props) {
+function formatMinutes(totalMinutes: number): string {
+    return `${pad(Math.floor(totalMinutes / 60))}:${pad(totalMinutes % 60)}`;
+}
+
+function getTimeMinutes(dateTime: string): number | null {
+    const match = /T(\d{2}):(\d{2})/.exec(dateTime);
+
+    if (!match) {
+        return null;
+    }
+
+    return Number(match[1]) * 60 + Number(match[2]);
+}
+
+const SLOT_TIMES = Array.from(
+    { length: Math.floor((LAST_SLOT_MINUTES - FIRST_SLOT_MINUTES) / SLOT_INTERVAL_MINUTES) + 1 },
+    (_, index) => formatMinutes(FIRST_SLOT_MINUTES + index * SLOT_INTERVAL_MINUTES),
+);
+
+function formatFriendlyDate(dateKey: string): string {
+    const date = parseDateKey(dateKey);
+    const weekday = WEEKDAY_NAMES[date.getDay()];
+    const formatted = `${weekday}, ${date.getDate()} de ${MONTH_NAMES[date.getMonth()]}`;
+
+    return `${formatted.charAt(0).toUpperCase()}${formatted.slice(1)}`;
+}
+
+function formatMonthLabel(month: Date): string {
+    const label = `${MONTH_NAMES[month.getMonth()]} ${month.getFullYear()}`;
+    return `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
+}
+
+function getMonthRange(month: Date): { start: string; end: string } {
+    const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+    const lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+
+    return {
+        start: `${toDateKey(firstDay)}T00:00:00`,
+        end: `${toDateKey(lastDay)}T23:59:59`,
+    };
+}
+
+function buildCalendarDays(
+    month: Date,
+    datesWithAvailability: ReadonlySet<string>,
+    todayKey: string,
+): Array<AvailabilityCalendarDay | null> {
+    const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+    const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+    return Array.from({ length: 42 }, (_, index) => {
+        const day = index - firstDay.getDay() + 1;
+
+        if (day < 1 || day > daysInMonth) {
+            return null;
+        }
+
+        const dateKey = toDateKey(new Date(month.getFullYear(), month.getMonth(), day));
+
+        return {
+            dateKey,
+            day,
+            hasAvailability: datesWithAvailability.has(dateKey),
+            isToday: dateKey === todayKey,
+            isPast: dateKey < todayKey,
+        };
+    });
+}
+
+function isTimeSelectable(dateKey: string, time: string, now: Date): boolean {
+    const todayKey = toDateKey(now);
+
+    if (dateKey > todayKey) {
+        return true;
+    }
+
+    if (dateKey < todayKey) {
+        return false;
+    }
+
+    const [hour, minute] = time.split(':').map(Number);
+    const optionMinutes = hour * 60 + minute;
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    return optionMinutes > currentMinutes;
+}
+
+function overlapsExistingSlot(
+    time: string,
+    existingSlots: VeterinarianAvailability[],
+): boolean {
+    const [hour, minute] = time.split(':').map(Number);
+    const optionStart = hour * 60 + minute;
+    const optionEnd = optionStart + SLOT_INTERVAL_MINUTES;
+
+    return existingSlots.some((slot) => {
+        const existingStart = getTimeMinutes(slot.startTime);
+        const existingEnd = getTimeMinutes(slot.endTime);
+
+        if (existingStart === null || existingEnd === null) {
+            return formatTime(slot.startTime) === time;
+        }
+
+        return optionStart < existingEnd && optionEnd > existingStart;
+    });
+}
+
+export function VeterinarianAvailabilityScreen() {
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
     const { user } = useAuth();
     const veterinarianId = user?.veterinarianId ?? null;
-    const [page, setPage] = useState(0);
-    const [isFormOpen, setIsFormOpen] = useState(false);
-    const [date, setDate] = useState('');
-    const [startTime, setStartTime] = useState('');
-    const [endTime, setEndTime] = useState('');
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [currentTime, setCurrentTime] = useState(() => new Date());
+    const [selectedDate, setSelectedDate] = useState(() => toDateKey(new Date()));
+    const [displayMonth, setDisplayMonth] = useState(() => {
+        const today = new Date();
+        return new Date(today.getFullYear(), today.getMonth(), 1);
+    });
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [selectedTimes, setSelectedTimes] = useState<Set<string>>(() => new Set());
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [creationError, setCreationError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const startTimeInputRef = useRef<TextInput>(null);
-    const endTimeInputRef = useRef<TextInput>(null);
-    const availability = useVeterinarianAvailability(
+    const todayKey = toDateKey(currentTime);
+    const currentMonthStart = new Date(
+        currentTime.getFullYear(),
+        currentTime.getMonth(),
+        1,
+    );
+    const canNavigatePrevious = displayMonth.getTime() > currentMonthStart.getTime();
+    const monthRange = useMemo(() => getMonthRange(displayMonth), [displayMonth]);
+    const availability = useVeterinarianAvailabilityMonth(
         veterinarianId,
-        AVAILABILITY_RANGE_START,
-        AVAILABILITY_RANGE_END,
-        page,
-        DEFAULT_PAGE_SIZE,
+        monthRange.start,
+        monthRange.end,
     );
     const createAvailability = useCreateVeterinarianAvailability();
     const deleteAvailability = useDeleteVeterinarianAvailability();
+    const monthSlots = availability.data ?? [];
+    const datesWithAvailability = useMemo(
+        () => new Set(monthSlots.map((slot) => getDateKey(slot.startTime)).filter(Boolean)),
+        [monthSlots],
+    );
+    const calendarDays = useMemo(
+        () => buildCalendarDays(displayMonth, datesWithAvailability, todayKey),
+        [datesWithAvailability, displayMonth, todayKey],
+    );
+    const selectedDateSlots = useMemo(
+        () => monthSlots
+            .filter((slot) => getDateKey(slot.startTime) === selectedDate)
+            .sort((first, second) => first.startTime.localeCompare(second.startTime)),
+        [monthSlots, selectedDate],
+    );
+    const timeOptions = useMemo<AvailabilityTimeOption[]>(
+        () => SLOT_TIMES
+            .filter((time) => isTimeSelectable(selectedDate, time, currentTime))
+            .map((time) => ({
+                time,
+                isRegistered: overlapsExistingSlot(time, selectedDateSlots),
+            })),
+        [currentTime, selectedDate, selectedDateSlots],
+    );
 
-    function resetForm(): void {
-        setDate('');
-        setStartTime('');
-        setEndTime('');
-        setErrorMessage(null);
-    }
+    useEffect(() => {
+        const interval = setInterval(() => setCurrentTime(new Date()), 60_000);
 
-    function toggleForm(): void {
-        if (isFormOpen) {
-            resetForm();
-            setIsFormOpen(false);
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        if (selectedDate >= todayKey) {
             return;
         }
 
+        const today = parseDateKey(todayKey);
+        setSelectedDate(todayKey);
+        setDisplayMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+        setIsSheetOpen(false);
+        setSelectedTimes(new Set());
+        setCreationError(null);
         setSuccessMessage(null);
-        setIsFormOpen(true);
+    }, [selectedDate, todayKey]);
+
+    function changeMonth(offset: number): void {
+        const nextMonth = new Date(
+            displayMonth.getFullYear(),
+            displayMonth.getMonth() + offset,
+            1,
+        );
+
+        if (nextMonth.getTime() < currentMonthStart.getTime()) {
+            return;
+        }
+
+        const currentSelectedDay = parseDateKey(selectedDate).getDate();
+        const lastDayOfNextMonth = new Date(
+            nextMonth.getFullYear(),
+            nextMonth.getMonth() + 1,
+            0,
+        ).getDate();
+        let nextSelectedDate = new Date(
+            nextMonth.getFullYear(),
+            nextMonth.getMonth(),
+            Math.min(currentSelectedDay, lastDayOfNextMonth),
+        );
+
+        if (toDateKey(nextSelectedDate) < todayKey) {
+            nextSelectedDate = parseDateKey(todayKey);
+        }
+
+        setDisplayMonth(nextMonth);
+        setSelectedDate(toDateKey(nextSelectedDate));
+        setSuccessMessage(null);
+    }
+
+    function selectDate(dateKey: string): void {
+        if (dateKey < todayKey) {
+            return;
+        }
+
+        setSelectedDate(dateKey);
+        setSuccessMessage(null);
+    }
+
+    function openSheet(): void {
+        const now = new Date();
+
+        if (!SLOT_TIMES.some((time) => isTimeSelectable(selectedDate, time, now))) {
+            setCurrentTime(now);
+            return;
+        }
+
+        setCurrentTime(now);
+        setSelectedTimes(new Set());
+        setCreationError(null);
+        setSuccessMessage(null);
+        setIsSheetOpen(true);
+    }
+
+    function closeSheet(): void {
+        if (isSubmitting) {
+            return;
+        }
+
+        setIsSheetOpen(false);
+        setSelectedTimes(new Set());
+        setCreationError(null);
+    }
+
+    function toggleTime(time: string): void {
+        setCreationError(null);
+        setSelectedTimes((current) => {
+            const next = new Set(current);
+
+            if (next.has(time)) {
+                next.delete(time);
+            } else {
+                next.add(time);
+            }
+
+            return next;
+        });
     }
 
     async function handleCreate(): Promise<void> {
-        const trimmedDate = date.trim();
-        const trimmedStartTime = startTime.trim();
-        const trimmedEndTime = endTime.trim();
-
-        if (!trimmedDate || !trimmedStartTime || !trimmedEndTime) {
-            setErrorMessage('Data, início e fim são obrigatórios.');
+        if (veterinarianId === null || selectedTimes.size === 0 || isSubmitting) {
             return;
         }
 
-        const isoDate = dateInputToIsoDate(trimmedDate);
+        const times = [...selectedTimes].sort();
+        const now = new Date();
+        const selectableTimes = times.filter(
+            (time) => isTimeSelectable(selectedDate, time, now),
+        );
 
-        if (!isoDate) {
-            setErrorMessage('Informe uma data válida no formato DD/MM/AAAA.');
+        setCurrentTime(now);
+
+        if (selectableTimes.length !== times.length) {
+            setSelectedTimes(new Set(selectableTimes));
+            setCreationError('Um ou mais horários já passaram. Selecione outro horário.');
             return;
         }
 
-        if (!TIME_PATTERN.test(trimmedStartTime) || !TIME_PATTERN.test(trimmedEndTime)) {
-            setErrorMessage('Informe horários válidos no formato HH:mm.');
-            return;
+        const failedTimes: string[] = [];
+        let firstError: unknown;
+        let createdCount = 0;
+
+        setIsSubmitting(true);
+        setCreationError(null);
+
+        for (const time of times) {
+            const [hour, minute] = time.split(':').map(Number);
+            const endTime = formatMinutes(hour * 60 + minute + SLOT_INTERVAL_MINUTES);
+            const request: VeterinarianAvailabilityRequest = {
+                veterinarianId,
+                startTime: `${selectedDate}T${time}:00`,
+                endTime: `${selectedDate}T${endTime}:00`,
+            };
+
+            try {
+                await createAvailability.mutateAsync(request);
+                createdCount += 1;
+            } catch (error: unknown) {
+                firstError ??= error;
+                failedTimes.push(time);
+            }
         }
 
-        if (trimmedEndTime <= trimmedStartTime) {
-            setErrorMessage('O horário final deve ser maior que o horário inicial.');
-            return;
-        }
+        const refreshedAvailability = await availability.refetch();
 
-        if (veterinarianId === null) {
-            setErrorMessage('Não foi possível identificar o veterinário da sessão.');
-            return;
-        }
+        if (failedTimes.length === 0) {
+            setIsSheetOpen(false);
+            setSelectedTimes(new Set());
+            setSuccessMessage(
+                createdCount === 1
+                    ? 'Horário adicionado com sucesso.'
+                    : `${createdCount} horários adicionados com sucesso.`,
+            );
+        } else {
+            const refreshedDateSlots = (refreshedAvailability.data ?? [])
+                .filter((slot) => getDateKey(slot.startTime) === selectedDate);
+            const retryableFailedTimes = failedTimes.filter(
+                (time) => !overlapsExistingSlot(time, refreshedDateSlots),
+            );
 
-        const request: VeterinarianAvailabilityRequest = {
-            veterinarianId,
-            startTime: `${isoDate}T${trimmedStartTime}:00`,
-            endTime: `${isoDate}T${trimmedEndTime}:00`,
-        };
-
-        setErrorMessage(null);
-
-        try {
-            await createAvailability.mutateAsync(request);
-            resetForm();
-            setIsFormOpen(false);
-            setSuccessMessage('Horário adicionado com sucesso.');
-        } catch (error: unknown) {
-            setErrorMessage(
-                getApiErrorMessage(
-                    error,
-                    'Não foi possível adicionar o horário. Verifique os dados e tente novamente.',
-                ),
+            setSelectedTimes(new Set(retryableFailedTimes));
+            const apiMessage = getApiErrorMessage(
+                firstError,
+                'Não foi possível adicionar um ou mais horários.',
+            );
+            setCreationError(
+                createdCount > 0
+                    ? `${createdCount} de ${times.length} horários foram adicionados. ${apiMessage}`
+                    : apiMessage,
             );
         }
+
+        setIsSubmitting(false);
     }
 
     async function handleDelete(id: number): Promise<void> {
+        setSuccessMessage(null);
+
         try {
             await deleteAvailability.mutateAsync(id);
-
-            if (
-                availability.data &&
-                availability.data.number > 0 &&
-                availability.data.numberOfElements === 1
-            ) {
-                setPage(availability.data.number - 1);
-            }
-
             setSuccessMessage('Horário removido com sucesso.');
         } catch (error: unknown) {
             Alert.alert(
@@ -168,13 +436,13 @@ export function VeterinarianAvailabilityScreen(_props: Props) {
     }
 
     function confirmDelete(item: VeterinarianAvailability): void {
-        if (deleteAvailability.isPending) {
+        if (deleteAvailability.isPending || isSubmitting) {
             return;
         }
 
         Alert.alert(
             'Remover horário?',
-            `${formatDate(item.startTime)}, das ${formatTime(item.startTime)} às ${formatTime(item.endTime)}.`,
+            `${formatFriendlyDate(selectedDate)}, das ${formatTime(item.startTime)} às ${formatTime(item.endTime)}.`,
             [
                 { text: 'Cancelar', style: 'cancel' },
                 {
@@ -186,347 +454,226 @@ export function VeterinarianAvailabilityScreen(_props: Props) {
         );
     }
 
-    function renderAvailability({ item }: { item: VeterinarianAvailability }) {
-        const isRemoving =
-            deleteAvailability.isPending && deleteAvailability.variables === item.id;
-
-        return (
-            <View style={styles.availabilityCard}>
-                <View style={styles.availabilityCopy}>
-                    <Text style={styles.availabilityDate}>{formatDate(item.startTime)}</Text>
-                    <Text style={styles.availabilityTime}>
-                        {formatTime(item.startTime)} - {formatTime(item.endTime)}
-                    </Text>
-                </View>
-                <AppButton
-                    label="Remover"
-                    onPress={() => confirmDelete(item)}
-                    variant="danger"
-                    size="small"
-                    loading={isRemoving}
-                    disabled={deleteAvailability.isPending || createAvailability.isPending}
-                    style={styles.removeButton}
-                />
-            </View>
-        );
-    }
-
-    const listData = availability.data?.content ?? [];
+    const availableCount = selectedDateSlots.length;
+    const countLabel = availableCount === 1 ? '1 disponível' : `${availableCount} disponíveis`;
+    const isTodayClosed = selectedDate === todayKey && timeOptions.length === 0;
+    const canAdd = veterinarianId !== null
+        && !availability.isError
+        && !availability.isPending
+        && selectedDate >= todayKey
+        && timeOptions.length > 0;
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
-            <KeyboardAvoidingView
-                style={styles.keyboardView}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            <ScrollView
+                style={styles.scroll}
+                contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
             >
-                <FlatList
-                    style={styles.listContainer}
-                    data={listData}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={renderAvailability}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.content}
-                    ListHeaderComponent={
-                        <View style={styles.headerWrapper}>
-                            <View style={styles.heading}>
-                                <Text style={styles.eyebrow}>AGENDA PROFISSIONAL</Text>
-                                <Text style={styles.title}>Minha disponibilidade</Text>
-                                <Text style={styles.description}>
-                                    Cadastre e gerencie os horários em que você está disponível.
-                                </Text>
-                                <AppButton
-                                    label={isFormOpen ? 'Cancelar' : '+ Adicionar horário'}
-                                    onPress={toggleForm}
-                                    variant={isFormOpen ? 'secondary' : 'primary'}
-                                    disabled={
-                                        veterinarianId === null ||
-                                        createAvailability.isPending ||
-                                        deleteAvailability.isPending
-                                    }
-                                    style={styles.addButton}
-                                />
-                            </View>
-
-                            {isFormOpen ? (
-                                <View style={styles.formCard}>
-                                    <Text style={styles.sectionTitle}>Novo horário</Text>
-                                    <Text style={styles.requiredHint}>
-                                        Todos os campos são obrigatórios.
-                                    </Text>
-                                    <View style={styles.fields}>
-                                        <AppInput
-                                            label="Data *"
-                                            value={date}
-                                            onChangeText={(text) => setDate(formatDateInput(text))}
-                                            placeholder="DD/MM/AAAA"
-                                            keyboardType="numeric"
-                                            autoCapitalize="none"
-                                            maxLength={10}
-                                            editable={!createAvailability.isPending}
-                                            returnKeyType="next"
-                                            onSubmitEditing={() => startTimeInputRef.current?.focus()}
-                                        />
-                                        <View style={styles.timeFields}>
-                                            <View style={styles.timeField}>
-                                                <AppInput
-                                                    ref={startTimeInputRef}
-                                                    label="Início *"
-                                                    value={startTime}
-                                                    onChangeText={(text) =>
-                                                        setStartTime(formatTimeInput(text))
-                                                    }
-                                                    placeholder="HH:mm"
-                                                    keyboardType="numeric"
-                                                    autoCapitalize="none"
-                                                    maxLength={5}
-                                                    editable={!createAvailability.isPending}
-                                                    returnKeyType="next"
-                                                    onSubmitEditing={() =>
-                                                        endTimeInputRef.current?.focus()
-                                                    }
-                                                />
-                                            </View>
-                                            <View style={styles.timeField}>
-                                                <AppInput
-                                                    ref={endTimeInputRef}
-                                                    label="Fim *"
-                                                    value={endTime}
-                                                    onChangeText={(text) =>
-                                                        setEndTime(formatTimeInput(text))
-                                                    }
-                                                    placeholder="HH:mm"
-                                                    keyboardType="numeric"
-                                                    autoCapitalize="none"
-                                                    maxLength={5}
-                                                    editable={!createAvailability.isPending}
-                                                    returnKeyType="done"
-                                                    onSubmitEditing={() => void handleCreate()}
-                                                />
-                                            </View>
-                                        </View>
-                                    </View>
-
-                                    {errorMessage ? (
-                                        <View
-                                            style={styles.errorContainer}
-                                            accessibilityLiveRegion="polite"
-                                        >
-                                            <Text style={styles.error}>{errorMessage}</Text>
-                                        </View>
-                                    ) : null}
-
-                                    <AppButton
-                                        label="Salvar horário"
-                                        onPress={() => void handleCreate()}
-                                        loading={createAvailability.isPending}
-                                        disabled={deleteAvailability.isPending}
-                                    />
-                                </View>
-                            ) : null}
-
-                            {successMessage ? (
-                                <View
-                                    style={styles.successContainer}
-                                    accessibilityLiveRegion="polite"
-                                >
-                                    <Text style={styles.success}>{successMessage}</Text>
-                                </View>
-                            ) : null}
-
-                            {listData.length > 0 ? (
-                                <Text style={styles.listTitle}>Horários cadastrados</Text>
-                            ) : null}
-                        </View>
-                    }
-                    ListEmptyComponent={
-                        veterinarianId === null ? (
-                            <View style={styles.stateCard}>
-                                <Text style={styles.stateTitle}>Sessão não identificada</Text>
-                                <Text style={styles.stateMessage}>
-                                    Não foi possível identificar o veterinário da sessão.
-                                </Text>
-                            </View>
-                        ) : availability.isPending ? (
-                            <View style={styles.stateContainer}>
-                                <ActivityIndicator size="large" color={colors.primary} />
-                                <Text style={styles.stateMessage}>Carregando horários...</Text>
-                            </View>
-                        ) : availability.isError ? (
-                            <View style={styles.stateCard}>
-                                <Text style={styles.stateTitle}>Não foi possível carregar</Text>
-                                <Text style={styles.stateMessage}>
-                                    Não foi possível carregar sua disponibilidade.
-                                </Text>
-                                <AppButton
-                                    label="Tentar novamente"
-                                    onPress={() => void availability.refetch()}
-                                    variant="secondary"
-                                    size="small"
-                                    style={styles.retryButton}
-                                />
-                            </View>
-                        ) : (
-                            <View style={styles.stateCard}>
-                                <Text style={styles.stateTitle}>
-                                    Nenhum horário disponível cadastrado.
-                                </Text>
-                            </View>
-                        )
-                    }
-                    ListFooterComponent={
-                        availability.data && availability.data.totalPages > 0 ? (
-                            <PaginationControls
-                                page={availability.data.number}
-                                totalPages={availability.data.totalPages}
-                                isFirst={availability.data.first}
-                                isLast={availability.data.last}
-                                disabled={
-                                    availability.isFetching ||
-                                    createAvailability.isPending ||
-                                    deleteAvailability.isPending
-                                }
-                                onPrevious={() => setPage(availability.data.number - 1)}
-                                onNext={() => setPage(availability.data.number + 1)}
-                            />
-                        ) : null
-                    }
+                <AvailabilityCalendar
+                    monthLabel={formatMonthLabel(displayMonth)}
+                    days={calendarDays}
+                    selectedDate={selectedDate}
+                    isLoading={availability.isFetching}
+                    canNavigatePrevious={canNavigatePrevious}
+                    onPreviousMonth={() => changeMonth(-1)}
+                    onNextMonth={() => changeMonth(1)}
+                    onSelectDate={selectDate}
                 />
-            </KeyboardAvoidingView>
+
+                <View style={styles.scheduleSection}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>HORÁRIOS</Text>
+                        {!availability.isPending && !availability.isError ? (
+                            <Text style={styles.count}>{countLabel}</Text>
+                        ) : null}
+                    </View>
+                    <Text style={styles.selectedDate}>{formatFriendlyDate(selectedDate)}</Text>
+
+                    {successMessage ? (
+                        <View style={styles.successContainer} accessibilityLiveRegion="polite">
+                            <Text style={styles.successText}>{successMessage}</Text>
+                        </View>
+                    ) : null}
+
+                    {veterinarianId === null ? (
+                        <View style={styles.stateCard}>
+                            <Text style={styles.stateTitle}>Sessão não identificada</Text>
+                            <Text style={styles.stateMessage}>
+                                Não foi possível identificar o veterinário da sessão.
+                            </Text>
+                        </View>
+                    ) : availability.isPending ? (
+                        <View style={styles.loadingState}>
+                            <ActivityIndicator color={colors.primary} />
+                            <Text style={styles.stateMessage}>Carregando horários...</Text>
+                        </View>
+                    ) : availability.isError ? (
+                        <View style={styles.stateCard}>
+                            <Text style={styles.stateTitle}>Não foi possível carregar</Text>
+                            <Text style={styles.stateMessage}>
+                                Não foi possível carregar sua disponibilidade deste mês.
+                            </Text>
+                            <AppButton
+                                label="Tentar novamente"
+                                onPress={() => void availability.refetch()}
+                                variant="secondary"
+                                size="small"
+                                style={styles.retryButton}
+                            />
+                        </View>
+                    ) : selectedDateSlots.length === 0 ? (
+                        <View style={styles.emptyState}>
+                            <Text style={styles.stateMessage}>
+                                {isTodayClosed
+                                    ? 'O horário de atendimento de hoje já foi encerrado.'
+                                    : 'Nenhum horário disponível neste dia.'}
+                            </Text>
+                        </View>
+                    ) : (
+                        <View style={styles.slotGrid}>
+                            {selectedDateSlots.map((slot) => {
+                                const isRemoving = deleteAvailability.isPending
+                                    && deleteAvailability.variables === slot.id;
+
+                                return (
+                                    <AvailabilitySlotChip
+                                        key={slot.id}
+                                        time={formatTime(slot.startTime)}
+                                        isRemoving={isRemoving}
+                                        disabled={deleteAvailability.isPending || isSubmitting}
+                                        onRemove={() => confirmDelete(slot)}
+                                    />
+                                );
+                            })}
+                        </View>
+                    )}
+
+                    {isTodayClosed && selectedDateSlots.length > 0 ? (
+                        <View style={styles.closedState}>
+                            <Text style={styles.stateMessage}>
+                                O horário de atendimento de hoje já foi encerrado.
+                            </Text>
+                        </View>
+                    ) : null}
+
+                    {canAdd ? (
+                        <AppButton
+                            label="Adicionar horário"
+                            onPress={openSheet}
+                            disabled={deleteAvailability.isPending}
+                            style={styles.addButton}
+                        />
+                    ) : null}
+                </View>
+            </ScrollView>
+
+            <AddAvailabilitySheet
+                visible={isSheetOpen}
+                dateLabel={formatFriendlyDate(selectedDate)}
+                options={timeOptions}
+                selectedTimes={selectedTimes}
+                isSubmitting={isSubmitting}
+                errorMessage={creationError}
+                onToggleTime={toggleTime}
+                onConfirm={() => void handleCreate()}
+                onCancel={closeSheet}
+            />
         </SafeAreaView>
     );
 }
 
-const styles = createThemedStyles((colors) => ({
-    safeArea: { flex: 1, backgroundColor: colors.background },
-    keyboardView: { flex: 1 },
-    listContainer: { flex: 1, backgroundColor: colors.background },
-    content: {
-        flexGrow: 1,
-        width: '100%',
-        maxWidth: 760,
-        alignSelf: 'center',
-        paddingHorizontal: spacing.xl,
-        paddingBottom: spacing.xxl,
-    },
-    headerWrapper: { width: '100%' },
-    heading: { paddingVertical: spacing.xl },
-    eyebrow: {
-        marginBottom: spacing.sm,
-        color: colors.primary,
-        fontSize: typography.small,
-        fontWeight: '800',
-        letterSpacing: 1.4,
-    },
-    title: {
-        color: colors.text,
-        fontSize: typography.title,
-        fontWeight: '800',
-        letterSpacing: -0.5,
-    },
-    description: {
-        marginTop: spacing.sm,
-        color: colors.textSecondary,
-        fontSize: typography.body,
-        lineHeight: 23,
-    },
-    addButton: { alignSelf: 'flex-start', marginTop: spacing.xl },
-    formCard: {
-        marginBottom: spacing.xl,
-        padding: spacing.xl,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radii.lg,
-        backgroundColor: colors.surface,
-        ...shadows.card,
-    },
-    sectionTitle: { color: colors.text, fontSize: typography.heading, fontWeight: '800' },
-    requiredHint: {
-        marginTop: spacing.xs,
-        color: colors.textSecondary,
-        fontSize: typography.caption,
-    },
-    fields: { gap: spacing.lg, marginVertical: spacing.xl },
-    timeFields: { flexDirection: 'row', gap: spacing.md },
-    timeField: { flex: 1 },
-    errorContainer: {
-        marginBottom: spacing.lg,
-        padding: spacing.md,
-        borderLeftWidth: 3,
-        borderLeftColor: colors.danger,
-        borderRadius: radii.sm,
-        backgroundColor: colors.errorSurface,
-    },
-    error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
-    successContainer: {
-        marginBottom: spacing.xl,
-        padding: spacing.md,
-        borderLeftWidth: 3,
-        borderLeftColor: colors.success,
-        borderRadius: radii.sm,
-        backgroundColor: colors.successSurface,
-    },
-    success: { color: colors.success, fontSize: typography.caption, lineHeight: 20 },
-    listTitle: {
-        marginBottom: spacing.lg,
-        color: colors.text,
-        fontSize: typography.heading,
-        fontWeight: '800',
-    },
-    availabilityCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.lg,
-        marginBottom: spacing.lg,
-        padding: spacing.lg,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radii.lg,
-        backgroundColor: colors.surface,
-        ...shadows.card,
-    },
-    availabilityCopy: { flex: 1 },
-    availabilityDate: {
-        color: colors.text,
-        fontSize: typography.body,
-        fontWeight: '800',
-    },
-    availabilityTime: {
-        marginTop: spacing.sm,
-        color: colors.textSecondary,
-        fontSize: typography.caption,
-    },
-    removeButton: { minWidth: 108 },
-    stateContainer: {
-        flexGrow: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: spacing.md,
-        minHeight: 220,
-    },
-    stateCard: {
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 160,
-        padding: spacing.xl,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radii.lg,
-        backgroundColor: colors.surface,
-    },
-    stateTitle: {
-        color: colors.text,
-        fontSize: typography.body,
-        fontWeight: '800',
-        textAlign: 'center',
-    },
-    stateMessage: {
-        marginTop: spacing.sm,
-        color: colors.textSecondary,
-        fontSize: typography.caption,
-        lineHeight: 20,
-        textAlign: 'center',
-    },
-    retryButton: { marginTop: spacing.lg },
-}));
+function createStyles(colors: ThemeColors) {
+    return StyleSheet.create({
+        safeArea: { flex: 1, backgroundColor: colors.background },
+        scroll: { flex: 1, backgroundColor: colors.background },
+        content: {
+            width: '100%',
+            maxWidth: 760,
+            alignSelf: 'center',
+            padding: spacing.lg,
+            paddingBottom: spacing.xxl,
+        },
+        scheduleSection: { marginTop: spacing.xl },
+        sectionHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: spacing.md,
+        },
+        sectionTitle: {
+            color: colors.text,
+            fontSize: typography.small,
+            fontWeight: '800',
+            letterSpacing: 1.3,
+        },
+        count: { color: colors.primary, fontSize: typography.caption, fontWeight: '700' },
+        selectedDate: {
+            marginTop: spacing.sm,
+            color: colors.text,
+            fontSize: typography.body,
+            fontWeight: '700',
+        },
+        successContainer: {
+            marginTop: spacing.lg,
+            padding: spacing.md,
+            borderLeftWidth: 3,
+            borderLeftColor: colors.success,
+            borderRadius: radii.sm,
+            backgroundColor: colors.successSurface,
+        },
+        successText: { color: colors.success, fontSize: typography.caption, lineHeight: 20 },
+        slotGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: spacing.sm,
+            marginTop: spacing.lg,
+        },
+        stateCard: {
+            alignItems: 'center',
+            marginTop: spacing.lg,
+            padding: spacing.xl,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: radii.lg,
+            backgroundColor: colors.surface,
+        },
+        loadingState: {
+            minHeight: 100,
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: spacing.sm,
+        },
+        emptyState: {
+            alignItems: 'center',
+            marginTop: spacing.lg,
+            padding: spacing.xl,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: radii.lg,
+            backgroundColor: colors.surface,
+        },
+        closedState: {
+            marginTop: spacing.lg,
+            padding: spacing.lg,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: radii.lg,
+            backgroundColor: colors.surface,
+        },
+        stateTitle: {
+            color: colors.text,
+            fontSize: typography.body,
+            fontWeight: '800',
+            textAlign: 'center',
+        },
+        stateMessage: {
+            color: colors.textSecondary,
+            fontSize: typography.caption,
+            lineHeight: 20,
+            textAlign: 'center',
+        },
+        retryButton: { marginTop: spacing.lg },
+        addButton: { width: '100%', marginTop: spacing.xl },
+    });
+}

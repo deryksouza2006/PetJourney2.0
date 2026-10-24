@@ -31,22 +31,27 @@ export function ClinicAdminFormScreen({ navigation, route }: Props) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [emailError, setEmailError] = useState<string | null>(null);
+    const [passwordError, setPasswordError] = useState<string | null>(null);
 
     async function handleSubmit(): Promise<void> {
         const username = email.trim();
 
-        if (!username || !password.trim()) {
-            setErrorMessage('E-mail e senha s\u00e3o obrigat\u00f3rios.');
-            return;
-        }
+        const nextEmailError = !username
+            ? 'Informe o e-mail.'
+            : !isValidEmail(username)
+                ? 'Informe um e-mail válido.'
+                : null;
+        const nextPasswordError = !password
+            ? 'Informe a senha.'
+            : password.length < 6
+                ? 'A senha deve ter pelo menos 6 caracteres.'
+                : null;
 
-        if (!isValidEmail(username)) {
-            setErrorMessage('Informe um e-mail v\u00e1lido.');
-            return;
-        }
+        setEmailError(nextEmailError);
+        setPasswordError(nextPasswordError);
 
-        if (password.length < 6) {
-            setErrorMessage('A senha deve ter pelo menos 6 caracteres.');
+        if (nextEmailError || nextPasswordError) {
             return;
         }
 
@@ -81,12 +86,13 @@ export function ClinicAdminFormScreen({ navigation, route }: Props) {
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
             <KeyboardAvoidingView
                 style={styles.keyboardView}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.content}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.wrapper}>
@@ -111,7 +117,12 @@ export function ClinicAdminFormScreen({ navigation, route }: Props) {
                                 <AppInput
                                     label="E-mail *"
                                     value={email}
-                                    onChangeText={setEmail}
+                                    onChangeText={(value) => {
+                                        setEmail(value);
+                                        setEmailError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={emailError}
                                     placeholder="nome@exemplo.com"
                                     autoCapitalize="none"
                                     autoComplete="email"
@@ -125,11 +136,18 @@ export function ClinicAdminFormScreen({ navigation, route }: Props) {
                                     ref={passwordInputRef}
                                     label="Senha *"
                                     value={password}
-                                    onChangeText={setPassword}
+                                    onChangeText={(value) => {
+                                        setPassword(value);
+                                        setPasswordError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={passwordError}
+                                    helperText="Use pelo menos 6 caracteres."
                                     placeholder="Mínimo de 6 caracteres"
                                     autoCapitalize="none"
                                     autoComplete="new-password"
                                     secureTextEntry
+                                    showPasswordToggle
                                     returnKeyType="done"
                                     editable={!createClinicAdmin.isPending}
                                     onSubmitEditing={() => void handleSubmit()}
@@ -146,6 +164,7 @@ export function ClinicAdminFormScreen({ navigation, route }: Props) {
                                 label="Criar administrador"
                                 onPress={() => void handleSubmit()}
                                 loading={createClinicAdmin.isPending}
+                                loadingLabel="Criando..."
                             />
                         </View>
                     </View>

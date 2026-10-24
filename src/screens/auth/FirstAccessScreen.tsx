@@ -28,32 +28,53 @@ export function FirstAccessScreen({ navigation }: Props) {
     const firstAccess = useFirstAccess();
     const codeInputRef = useRef<TextInput>(null);
     const passwordInputRef = useRef<TextInput>(null);
+    const confirmPasswordInputRef = useRef<TextInput>(null);
     const [email, setEmail] = useState('');
     const [code, setCode] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [emailError, setEmailError] = useState<string | null>(null);
+    const [codeError, setCodeError] = useState<string | null>(null);
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+    const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
 
     async function handleActivate(): Promise<void> {
         const username = email.trim();
         const trimmedCode = code.trim();
 
-        if (!username || !trimmedCode || !password.trim()) {
-            setErrorMessage('E-mail, código e nova senha são obrigatórios.');
-            return;
-        }
+        const nextEmailError = !username
+            ? 'Informe o e-mail.'
+            : !isValidEmail(username)
+                ? 'Informe um e-mail válido.'
+                : null;
+        const nextCodeError = !trimmedCode
+            ? 'Informe o código recebido.'
+            : !/^\d{6}$/.test(trimmedCode)
+                ? 'O código deve conter exatamente 6 dígitos.'
+                : null;
+        const nextPasswordError = !password
+            ? 'Informe a nova senha.'
+            : password.length < 6
+                ? 'A senha deve ter pelo menos 6 caracteres.'
+                : null;
+        const nextConfirmPasswordError = !confirmPassword
+            ? 'Confirme a nova senha.'
+            : confirmPassword !== password
+                ? 'As senhas não coincidem.'
+                : null;
 
-        if (!isValidEmail(username)) {
-            setErrorMessage('Informe um e-mail válido.');
-            return;
-        }
+        setEmailError(nextEmailError);
+        setCodeError(nextCodeError);
+        setPasswordError(nextPasswordError);
+        setConfirmPasswordError(nextConfirmPasswordError);
 
-        if (!/^\d{6}$/.test(trimmedCode)) {
-            setErrorMessage('O código de primeiro acesso deve conter exatamente 6 dígitos.');
-            return;
-        }
-
-        if (password.length < 6) {
-            setErrorMessage('A senha deve ter pelo menos 6 caracteres.');
+        if (
+            nextEmailError
+            || nextCodeError
+            || nextPasswordError
+            || nextConfirmPasswordError
+        ) {
             return;
         }
 
@@ -86,11 +107,12 @@ export function FirstAccessScreen({ navigation }: Props) {
         <SafeAreaView style={styles.safeArea}>
             <KeyboardAvoidingView
                 style={styles.keyboardView}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <ScrollView
                     contentContainerStyle={styles.content}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.wrapper}>
@@ -112,7 +134,12 @@ export function FirstAccessScreen({ navigation }: Props) {
                                 <AppInput
                                     label="E-mail"
                                     value={email}
-                                    onChangeText={setEmail}
+                                    onChangeText={(value) => {
+                                        setEmail(value);
+                                        setEmailError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={emailError}
                                     placeholder="nome@exemplo.com"
                                     autoCapitalize="none"
                                     autoComplete="email"
@@ -126,7 +153,12 @@ export function FirstAccessScreen({ navigation }: Props) {
                                     ref={codeInputRef}
                                     label="Código de primeiro acesso"
                                     value={code}
-                                    onChangeText={setCode}
+                                    onChangeText={(value) => {
+                                        setCode(value.replace(/\D/g, ''));
+                                        setCodeError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={codeError}
                                     placeholder="Digite o código recebido"
                                     keyboardType="numeric"
                                     maxLength={6}
@@ -138,11 +170,38 @@ export function FirstAccessScreen({ navigation }: Props) {
                                     ref={passwordInputRef}
                                     label="Nova senha"
                                     value={password}
-                                    onChangeText={setPassword}
+                                    onChangeText={(value) => {
+                                        setPassword(value);
+                                        setPasswordError(null);
+                                        setConfirmPasswordError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={passwordError}
+                                    helperText="Use pelo menos 6 caracteres."
                                     placeholder="Mínimo de 6 caracteres"
                                     autoCapitalize="none"
                                     autoComplete="new-password"
                                     secureTextEntry
+                                    showPasswordToggle
+                                    returnKeyType="next"
+                                    editable={!firstAccess.isPending}
+                                    onSubmitEditing={() => confirmPasswordInputRef.current?.focus()}
+                                />
+                                <AppInput
+                                    ref={confirmPasswordInputRef}
+                                    label="Confirmar nova senha"
+                                    value={confirmPassword}
+                                    onChangeText={(value) => {
+                                        setConfirmPassword(value);
+                                        setConfirmPasswordError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={confirmPasswordError}
+                                    placeholder="Digite a senha novamente"
+                                    autoCapitalize="none"
+                                    autoComplete="new-password"
+                                    secureTextEntry
+                                    showPasswordToggle
                                     returnKeyType="done"
                                     editable={!firstAccess.isPending}
                                     onSubmitEditing={() => void handleActivate()}
@@ -159,6 +218,7 @@ export function FirstAccessScreen({ navigation }: Props) {
                                 label="Ativar conta"
                                 onPress={() => void handleActivate()}
                                 loading={firstAccess.isPending}
+                                loadingLabel="Ativando..."
                             />
 
                             <View style={styles.backArea}>

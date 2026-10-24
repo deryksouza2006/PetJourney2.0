@@ -19,6 +19,7 @@ import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator
 import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { TutorRequest } from '../../types/tutor';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { isValidEmail } from '../../utils/formValidation';
 
 type Props =
     | NativeStackScreenProps<ClinicAdminStackParamList, 'CreateTutor'>
@@ -38,6 +39,9 @@ export function TutorFormScreen(props: Props) {
     const [phone, setPhone] = useState(tutor?.phone ?? '');
     const [email, setEmail] = useState(tutor?.email ?? '');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [nameError, setNameError] = useState<string | null>(null);
+    const [cpfError, setCpfError] = useState<string | null>(null);
+    const [emailError, setEmailError] = useState<string | null>(null);
     const isPending = createTutor.isPending || updateTutor.isPending;
 
     async function handleSubmit(): Promise<void> {
@@ -45,18 +49,21 @@ export function TutorFormScreen(props: Props) {
         const trimmedCpf = cpf.trim();
         const trimmedEmail = email.trim();
 
-        if (!trimmedName || !trimmedCpf) {
-            setErrorMessage('Nome e CPF são obrigatórios.');
-            return;
-        }
+        const nextNameError = trimmedName ? null : 'Informe o nome do tutor.';
+        const nextCpfError = !trimmedCpf
+            ? 'Informe o CPF.'
+            : !/^\d{11}$/.test(trimmedCpf)
+                ? 'O CPF deve conter 11 dígitos.'
+                : null;
+        const nextEmailError = trimmedEmail && !isValidEmail(trimmedEmail)
+            ? 'Informe um e-mail válido.'
+            : null;
 
-        if (!/^\d{11}$/.test(trimmedCpf)) {
-            setErrorMessage('O CPF deve conter 11 dígitos.');
-            return;
-        }
+        setNameError(nextNameError);
+        setCpfError(nextCpfError);
+        setEmailError(nextEmailError);
 
-        if (trimmedEmail && !/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
-            setErrorMessage('Informe um e-mail válido.');
+        if (nextNameError || nextCpfError || nextEmailError) {
             return;
         }
 
@@ -103,12 +110,13 @@ export function TutorFormScreen(props: Props) {
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
             <KeyboardAvoidingView
                 style={styles.keyboardView}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.content}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.wrapper}>
@@ -132,7 +140,12 @@ export function TutorFormScreen(props: Props) {
                                 <AppInput
                                     label="Nome *"
                                     value={name}
-                                    onChangeText={setName}
+                                    onChangeText={(value) => {
+                                        setName(value);
+                                        setNameError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={nameError}
                                     placeholder="Nome do tutor"
                                     editable={!isPending}
                                     returnKeyType="next"
@@ -142,8 +155,13 @@ export function TutorFormScreen(props: Props) {
                                     ref={cpfInputRef}
                                     label="CPF *"
                                     value={cpf}
-                                    onChangeText={setCpf}
-                                    placeholder="CPF (11 dígitos)"
+                                    onChangeText={(value) => {
+                                        setCpf(value.replace(/\D/g, '').slice(0, 11));
+                                        setCpfError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={cpfError}
+                                    placeholder="Somente 11 dígitos"
                                     keyboardType="number-pad"
                                     maxLength={11}
                                     editable={!isPending}
@@ -154,7 +172,10 @@ export function TutorFormScreen(props: Props) {
                                     ref={phoneInputRef}
                                     label="Telefone"
                                     value={phone}
-                                    onChangeText={setPhone}
+                                    onChangeText={(value) => {
+                                        setPhone(value);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Telefone"
                                     keyboardType="phone-pad"
                                     editable={!isPending}
@@ -165,7 +186,12 @@ export function TutorFormScreen(props: Props) {
                                     ref={emailInputRef}
                                     label="E-mail"
                                     value={email}
-                                    onChangeText={setEmail}
+                                    onChangeText={(value) => {
+                                        setEmail(value);
+                                        setEmailError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={emailError}
                                     placeholder="nome@exemplo.com"
                                     autoCapitalize="none"
                                     autoCorrect={false}
@@ -186,6 +212,7 @@ export function TutorFormScreen(props: Props) {
                                 label={isEditing ? 'Salvar alterações' : 'Cadastrar tutor'}
                                 onPress={() => void handleSubmit()}
                                 loading={isPending}
+                                loadingLabel={isEditing ? 'Salvando...' : 'Cadastrando...'}
                             />
                         </View>
                     </View>

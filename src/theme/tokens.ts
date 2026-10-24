@@ -25,6 +25,7 @@ export interface ThemeColors {
     headerControlBackground: string;
     headerControlBorder: string;
     overlayLight: string;
+    modalBackdrop: string;
     errorSurface: string;
     errorBorder: string;
     successSurface: string;
@@ -56,6 +57,7 @@ export const lightThemeColors: ThemeColors = {
     headerControlBackground: '#EAF4FC',
     headerControlBorder: '#DEE5EC',
     overlayLight: 'rgba(255, 255, 255, 0.14)',
+    modalBackdrop: 'rgba(9, 16, 20, 0.52)',
     errorSurface: '#FDF0F0',
     errorBorder: '#F1C6C6',
     successSurface: '#EAF7F0',
@@ -87,6 +89,7 @@ export const darkThemeColors: ThemeColors = {
     headerControlBackground: 'rgba(255, 255, 255, 0.14)',
     headerControlBorder: 'rgba(255, 255, 255, 0.14)',
     overlayLight: 'rgba(255, 255, 255, 0.14)',
+    modalBackdrop: 'rgba(0, 0, 0, 0.66)',
     errorSurface: '#3A2024',
     errorBorder: '#754148',
     successSurface: '#17352A',

@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
 import { PaginationControls } from '../../components/PaginationControls';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useDeleteClinic } from '../../hooks/clinics/useDeleteClinic';
 import { useClinics } from '../../hooks/clinics/useClinics';
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
@@ -13,6 +14,7 @@ import { Clinic } from '../../types/clinic';
 type Props = NativeStackScreenProps<SystemAdminStackParamList, 'Clinics'>;
 
 export function ClinicListScreen({ navigation }: Props) {
+    useTheme();
     const [page, setPage] = useState(0);
     const { data, isPending, isError, isFetching } = useClinics(page);
     const deleteClinic = useDeleteClinic();

@@ -32,6 +32,9 @@ export function ClinicFormScreen(props: Props) {
     const [email, setEmail] = useState(clinic?.email ?? '');
     const [address, setAddress] = useState(clinic?.address ?? '');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [nameError, setNameError] = useState<string | null>(null);
+    const [cnpjError, setCnpjError] = useState<string | null>(null);
+    const [emailError, setEmailError] = useState<string | null>(null);
     const isPending = createClinic.isPending || updateClinic.isPending;
 
     async function handleSubmit(): Promise<void> {
@@ -39,18 +42,21 @@ export function ClinicFormScreen(props: Props) {
         const trimmedCnpj = cnpj.trim();
         const trimmedEmail = email.trim();
 
-        if (!trimmedName || !trimmedCnpj) {
-            setErrorMessage('Nome e CNPJ são obrigatórios.');
-            return;
-        }
+        const nextNameError = trimmedName ? null : 'Informe o nome da clínica.';
+        const nextCnpjError = !trimmedCnpj
+            ? 'Informe o CNPJ.'
+            : !isValidCnpj(trimmedCnpj)
+                ? 'Informe um CNPJ válido.'
+                : null;
+        const nextEmailError = trimmedEmail && !isValidEmail(trimmedEmail)
+            ? 'Informe um e-mail válido.'
+            : null;
 
-        if (!isValidCnpj(trimmedCnpj)) {
-            setErrorMessage('Informe um CNPJ válido.');
-            return;
-        }
+        setNameError(nextNameError);
+        setCnpjError(nextCnpjError);
+        setEmailError(nextEmailError);
 
-        if (trimmedEmail && !isValidEmail(trimmedEmail)) {
-            setErrorMessage('Informe um e-mail válido.');
+        if (nextNameError || nextCnpjError || nextEmailError) {
             return;
         }
 
@@ -98,12 +104,13 @@ export function ClinicFormScreen(props: Props) {
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
             <KeyboardAvoidingView
                 style={styles.keyboardView}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.content}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.wrapper}>
@@ -125,7 +132,12 @@ export function ClinicFormScreen(props: Props) {
                                 <AppInput
                                     label="Nome *"
                                     value={name}
-                                    onChangeText={setName}
+                                    onChangeText={(value) => {
+                                        setName(value);
+                                        setNameError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={nameError}
                                     placeholder="Nome da clínica"
                                     editable={!isPending}
                                     returnKeyType="next"
@@ -135,8 +147,13 @@ export function ClinicFormScreen(props: Props) {
                                     ref={cnpjInputRef}
                                     label="CNPJ *"
                                     value={cnpj}
-                                    onChangeText={setCnpj}
-                                    placeholder="CNPJ"
+                                    onChangeText={(value) => {
+                                        setCnpj(value);
+                                        setCnpjError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={cnpjError}
+                                    placeholder="00.000.000/0000-00"
                                     keyboardType="numeric"
                                     editable={!isPending}
                                     returnKeyType="next"
@@ -146,7 +163,10 @@ export function ClinicFormScreen(props: Props) {
                                     ref={phoneInputRef}
                                     label="Telefone"
                                     value={phone}
-                                    onChangeText={setPhone}
+                                    onChangeText={(value) => {
+                                        setPhone(value);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Telefone"
                                     keyboardType="phone-pad"
                                     editable={!isPending}
@@ -157,7 +177,12 @@ export function ClinicFormScreen(props: Props) {
                                     ref={emailInputRef}
                                     label="E-mail"
                                     value={email}
-                                    onChangeText={setEmail}
+                                    onChangeText={(value) => {
+                                        setEmail(value);
+                                        setEmailError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={emailError}
                                     placeholder="nome@exemplo.com"
                                     autoCapitalize="none"
                                     autoCorrect={false}
@@ -170,7 +195,10 @@ export function ClinicFormScreen(props: Props) {
                                     ref={addressInputRef}
                                     label="Endereço"
                                     value={address}
-                                    onChangeText={setAddress}
+                                    onChangeText={(value) => {
+                                        setAddress(value);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Endereço"
                                     editable={!isPending}
                                     returnKeyType="done"
@@ -188,6 +216,7 @@ export function ClinicFormScreen(props: Props) {
                                 label={isEditing ? 'Salvar alterações' : 'Cadastrar clínica'}
                                 onPress={() => void handleSubmit()}
                                 loading={isPending}
+                                loadingLabel={isEditing ? 'Salvando...' : 'Cadastrando...'}
                             />
                         </View>
                     </View>

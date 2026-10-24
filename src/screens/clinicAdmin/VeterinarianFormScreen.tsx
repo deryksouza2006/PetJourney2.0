@@ -44,6 +44,9 @@ export function VeterinarianFormScreen(props: Props) {
     const [email, setEmail] = useState(veterinarian?.email ?? '');
     const [specialty, setSpecialty] = useState(veterinarian?.specialty ?? '');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [nameError, setNameError] = useState<string | null>(null);
+    const [crmvError, setCrmvError] = useState<string | null>(null);
+    const [emailError, setEmailError] = useState<string | null>(null);
     const isPending = createVeterinarian.isPending || updateVeterinarian.isPending;
 
     async function handleSubmit(): Promise<void> {
@@ -51,13 +54,17 @@ export function VeterinarianFormScreen(props: Props) {
         const trimmedCrmv = crmv.trim();
         const trimmedEmail = email.trim();
 
-        if (!trimmedName || !trimmedCrmv) {
-            setErrorMessage('Nome e CRMV são obrigatórios.');
-            return;
-        }
+        const nextNameError = trimmedName ? null : 'Informe o nome do veterinário.';
+        const nextCrmvError = trimmedCrmv ? null : 'Informe o CRMV.';
+        const nextEmailError = trimmedEmail && !isValidEmail(trimmedEmail)
+            ? 'Informe um e-mail válido.'
+            : null;
 
-        if (trimmedEmail && !isValidEmail(trimmedEmail)) {
-            setErrorMessage('Informe um e-mail válido.');
+        setNameError(nextNameError);
+        setCrmvError(nextCrmvError);
+        setEmailError(nextEmailError);
+
+        if (nextNameError || nextCrmvError || nextEmailError) {
             return;
         }
 
@@ -119,12 +126,13 @@ export function VeterinarianFormScreen(props: Props) {
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
             <KeyboardAvoidingView
                 style={styles.keyboardView}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.content}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.wrapper}>
@@ -148,7 +156,12 @@ export function VeterinarianFormScreen(props: Props) {
                                 <AppInput
                                     label="Nome *"
                                     value={name}
-                                    onChangeText={setName}
+                                    onChangeText={(value) => {
+                                        setName(value);
+                                        setNameError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={nameError}
                                     placeholder="Nome do veterinário"
                                     editable={!isPending}
                                     returnKeyType="next"
@@ -158,8 +171,13 @@ export function VeterinarianFormScreen(props: Props) {
                                     ref={crmvInputRef}
                                     label="CRMV *"
                                     value={crmv}
-                                    onChangeText={setCrmv}
-                                    placeholder="CRMV"
+                                    onChangeText={(value) => {
+                                        setCrmv(value);
+                                        setCrmvError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={crmvError}
+                                    placeholder="Ex.: CRMV-SP 12345"
                                     autoCapitalize="characters"
                                     editable={!isPending}
                                     returnKeyType="next"
@@ -169,7 +187,10 @@ export function VeterinarianFormScreen(props: Props) {
                                     ref={phoneInputRef}
                                     label="Telefone"
                                     value={phone}
-                                    onChangeText={setPhone}
+                                    onChangeText={(value) => {
+                                        setPhone(value);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Telefone"
                                     keyboardType="phone-pad"
                                     editable={!isPending}
@@ -180,32 +201,35 @@ export function VeterinarianFormScreen(props: Props) {
                                             : emailInputRef.current?.focus()
                                     }
                                 />
-                                <View style={styles.emailField}>
-                                    <AppInput
-                                        ref={emailInputRef}
-                                        label="E-mail"
-                                        value={email}
-                                        onChangeText={setEmail}
-                                        placeholder="nome@exemplo.com"
-                                        autoCapitalize="none"
-                                        autoCorrect={false}
-                                        keyboardType="email-address"
-                                        editable={!isEditing && !isPending}
-                                        returnKeyType="next"
-                                        style={isEditing ? styles.readOnlyInput : undefined}
-                                        onSubmitEditing={() => specialtyInputRef.current?.focus()}
-                                    />
-                                    {isEditing ? (
-                                        <Text style={styles.readOnlyHint}>
-                                            O e-mail não pode ser alterado na edição.
-                                        </Text>
-                                    ) : null}
-                                </View>
+                                <AppInput
+                                    ref={emailInputRef}
+                                    label="E-mail"
+                                    value={email}
+                                    onChangeText={(value) => {
+                                        setEmail(value);
+                                        setEmailError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={emailError}
+                                    helperText={isEditing
+                                        ? 'O e-mail não pode ser alterado na edição.'
+                                        : undefined}
+                                    placeholder="nome@exemplo.com"
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    keyboardType="email-address"
+                                    editable={!isEditing && !isPending}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => specialtyInputRef.current?.focus()}
+                                />
                                 <AppInput
                                     ref={specialtyInputRef}
                                     label="Especialidade"
                                     value={specialty}
-                                    onChangeText={setSpecialty}
+                                    onChangeText={(value) => {
+                                        setSpecialty(value);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Especialidade"
                                     editable={!isPending}
                                     returnKeyType="done"
@@ -223,6 +247,7 @@ export function VeterinarianFormScreen(props: Props) {
                                 label={isEditing ? 'Salvar alterações' : 'Cadastrar veterinário'}
                                 onPress={() => void handleSubmit()}
                                 loading={isPending}
+                                loadingLabel={isEditing ? 'Salvando...' : 'Cadastrando...'}
                             />
                         </View>
                     </View>
@@ -277,13 +302,6 @@ const styles = createThemedStyles((colors) => ({
         fontSize: typography.caption,
     },
     fields: { gap: spacing.lg, marginVertical: spacing.xl },
-    emailField: { gap: spacing.sm },
-    readOnlyInput: { backgroundColor: colors.background, color: colors.textSecondary },
-    readOnlyHint: {
-        color: colors.textSecondary,
-        fontSize: typography.small,
-        lineHeight: 18,
-    },
     errorContainer: {
         marginBottom: spacing.lg,
         padding: spacing.md,

@@ -1,174 +1,245 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useEffect, useMemo, useState } from 'react';
+import {
+    ActivityIndicator,
+    FlatList,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
 import { PaginationControls } from '../../components/PaginationControls';
-import { useDeleteVeterinarian } from '../../hooks/veterinarians/useDeleteVeterinarian';
+import { VeterinarianAvatar } from '../../components/clinicAdmin/VeterinarianAvatar';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useVeterinarians } from '../../hooks/veterinarians/useVeterinarians';
-import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
-import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { radii, spacing, ThemeColors, typography } from '../../theme/tokens';
 import { Veterinarian } from '../../types/veterinarian';
 
-type Props = NativeStackScreenProps<ClinicAdminStackParamList, 'Veterinarians'>;
+interface VeterinarianListScreenProps {
+    onCreateVeterinarian: () => void;
+    onOpenVeterinarian: (veterinarian: Veterinarian) => void;
+    onOpenTutors: () => void;
+}
 
-export function VeterinarianListScreen({ navigation }: Props) {
+function normalizeSearchValue(value: string): string {
+    return value.trim().toLocaleLowerCase('pt-BR');
+}
+
+function matchesSearch(veterinarian: Veterinarian, searchTerm: string): boolean {
+    if (!searchTerm) {
+        return true;
+    }
+
+    return [
+        veterinarian.name,
+        veterinarian.email,
+        veterinarian.crmv,
+        veterinarian.specialty,
+    ].some((value) => normalizeSearchValue(value ?? '').includes(searchTerm));
+}
+
+function getSecondaryInformation(veterinarian: Veterinarian): string {
+    const specialty = veterinarian.specialty?.trim();
+
+    if (specialty) {
+        return `${specialty} · CRMV ${veterinarian.crmv}`;
+    }
+
+    return `CRMV ${veterinarian.crmv}`;
+}
+
+export function VeterinarianListScreen({
+    onCreateVeterinarian,
+    onOpenVeterinarian,
+    onOpenTutors,
+}: VeterinarianListScreenProps) {
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
     const [page, setPage] = useState(0);
-    const { data, isPending, isError, isFetching } = useVeterinarians(page);
-    const deleteVeterinarian = useDeleteVeterinarian();
+    const [search, setSearch] = useState('');
+    const veterinarians = useVeterinarians(page);
+    const searchTerm = normalizeSearchValue(search);
+    const filteredVeterinarians = useMemo(
+        () => (veterinarians.data?.content ?? []).filter(
+            (veterinarian) => matchesSearch(veterinarian, searchTerm),
+        ),
+        [searchTerm, veterinarians.data?.content],
+    );
 
-    async function deleteSelectedVeterinarian(id: number): Promise<void> {
-        try {
-            await deleteVeterinarian.mutateAsync(id);
-
-            if (data && data.number > 0 && data.numberOfElements === 1) {
-                setPage(data.number - 1);
-            }
-        } catch {
-            Alert.alert('Não foi possível excluir. Tente novamente.');
+    useEffect(() => {
+        if (
+            veterinarians.data
+            && veterinarians.data.totalPages > 0
+            && page >= veterinarians.data.totalPages
+        ) {
+            setPage(veterinarians.data.totalPages - 1);
         }
-    }
+    }, [page, veterinarians.data]);
 
-    function confirmDelete(veterinarian: Veterinarian): void {
-        if (deleteVeterinarian.isPending) {
-            return;
-        }
-
-        Alert.alert(
-            `Excluir ${veterinarian.name}?`,
-            'Essa ação não pode ser desfeita.',
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Excluir',
-                    style: 'destructive',
-                    onPress: () => void deleteSelectedVeterinarian(veterinarian.id),
-                },
-            ],
-        );
-    }
-
-    function renderVeterinarian({ item }: { item: Veterinarian }) {
-        const isDeleting =
-            deleteVeterinarian.isPending && deleteVeterinarian.variables === item.id;
-
+    function renderVeterinarian({ item, index }: { item: Veterinarian; index: number }) {
         return (
-            <View style={styles.card}>
-                <View style={styles.cardHeader}>
-                    <View style={styles.veterinarianIcon}>
-                        <Text style={styles.veterinarianIconText}>VT</Text>
+            <>
+                {index > 0 ? <View style={styles.divider} /> : null}
+                <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Abrir detalhes de ${item.name}, ${getSecondaryInformation(item)}`}
+                    style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+                    onPress={() => onOpenVeterinarian(item)}
+                >
+                    <VeterinarianAvatar name={item.name} />
+                    <View style={styles.rowCopy}>
+                        <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
+                        <Text style={styles.secondary} numberOfLines={2}>
+                            {getSecondaryInformation(item)}
+                        </Text>
                     </View>
-                    <View style={styles.cardHeaderCopy}>
-                        <Text style={styles.veterinarianName}>{item.name}</Text>
-                        <Text style={styles.crmv}>CRMV {item.crmv}</Text>
-                    </View>
-                </View>
-
-                <View style={styles.details}>
-                    <View style={styles.detailBlock}>
-                        <Text style={styles.detailLabel}>Telefone</Text>
-                        <Text style={styles.detailValue}>{item.phone ?? 'Não informado'}</Text>
-                    </View>
-                    <View style={styles.detailBlock}>
-                        <Text style={styles.detailLabel}>E-mail</Text>
-                        <Text style={styles.detailValue}>{item.email ?? 'Não informado'}</Text>
-                    </View>
-                    <View style={styles.detailBlock}>
-                        <Text style={styles.detailLabel}>Especialidade</Text>
-                        <Text style={styles.detailValue}>{item.specialty ?? 'Não informada'}</Text>
-                    </View>
-                    <View style={styles.detailBlock}>
-                        <Text style={styles.detailLabel}>Clínica</Text>
-                        <Text style={styles.detailValue}>{item.clinicName ?? 'Não informada'}</Text>
-                    </View>
-                </View>
-
-                <View style={styles.cardActions}>
-                    <AppButton
-                        label="Editar"
-                        variant="secondary"
-                        size="small"
-                        style={styles.cardAction}
-                        onPress={() =>
-                            navigation.navigate('EditVeterinarian', {
-                                veterinarian: item,
-                            })
-                        }
-                        disabled={deleteVeterinarian.isPending}
-                    />
-                    <AppButton
-                        label="Excluir"
-                        variant="danger"
-                        size="small"
-                        style={styles.cardAction}
-                        onPress={() => confirmDelete(item)}
-                        disabled={deleteVeterinarian.isPending}
-                        loading={isDeleting}
-                    />
-                </View>
-            </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                </Pressable>
+            </>
         );
     }
+
+    const hasVeterinarians = (veterinarians.data?.totalElements ?? 0) > 0;
+    const hasFilteredResults = filteredVeterinarians.length > 0;
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
             <View style={styles.container}>
                 <View style={styles.heading}>
-                    <Text style={styles.eyebrow}>EQUIPE CLÍNICA</Text>
-                    <Text style={styles.title}>Veterinários</Text>
-                    <Text style={styles.description}>
-                        Gerencie os profissionais vinculados à clínica.
-                    </Text>
-                    <AppButton
-                        label="Cadastrar veterinário"
-                        onPress={() => navigation.navigate('CreateVeterinarian')}
-                        style={styles.createButton}
-                    />
+                    <View style={styles.headingCopy}>
+                        <Text style={styles.eyebrow}>EQUIPE</Text>
+                        <Text style={styles.title}>Veterinários</Text>
+                        <Text style={styles.description}>
+                            Profissionais vinculados à sua clínica.
+                        </Text>
+                    </View>
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Cadastrar veterinário"
+                        style={({ pressed }) => [styles.createButton, pressed && styles.buttonPressed]}
+                        onPress={onCreateVeterinarian}
+                    >
+                        <Ionicons name="add" size={20} color={colors.onPrimary} />
+                        <Text style={styles.createButtonText}>Cadastrar</Text>
+                    </Pressable>
                 </View>
 
-                {isPending ? (
-                    <View style={styles.stateContainer}>
-                        <ActivityIndicator size="large" color={colors.primary} />
-                        <Text style={styles.stateMessage}>Carregando veterinários...</Text>
+                <View style={styles.toolbar}>
+                    <View style={styles.searchContainer}>
+                        <Ionicons name="search-outline" size={20} color={colors.textSecondary} />
+                        <TextInput
+                            accessibilityLabel="Buscar veterinário"
+                            value={search}
+                            onChangeText={setSearch}
+                            placeholder="Buscar veterinário"
+                            placeholderTextColor={colors.textSecondary}
+                            selectionColor={colors.primary}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            returnKeyType="search"
+                            style={styles.searchInput}
+                        />
+                        {search ? (
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="Limpar busca"
+                                hitSlop={8}
+                                onPress={() => setSearch('')}
+                            >
+                                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+                            </Pressable>
+                        ) : null}
                     </View>
-                ) : isError ? (
-                    <View style={styles.stateCard}>
-                        <Text style={styles.stateTitle}>Não foi possível carregar</Text>
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Abrir tutores"
+                        style={({ pressed }) => [styles.tutorsButton, pressed && styles.buttonPressed]}
+                        onPress={onOpenTutors}
+                    >
+                        <Ionicons name="people-outline" size={19} color={colors.primary} />
+                        <Text style={styles.tutorsButtonText}>Tutores</Text>
+                    </Pressable>
+                </View>
+
+                {veterinarians.isPending ? (
+                    <View style={styles.centeredState}>
+                        <ActivityIndicator size="small" color={colors.primary} />
+                        <Text style={styles.stateMessage}>Carregando equipe...</Text>
+                    </View>
+                ) : veterinarians.isError ? (
+                    <View style={styles.centeredState}>
+                        <View style={styles.stateIcon}>
+                            <Ionicons name="alert-circle-outline" size={24} color={colors.danger} />
+                        </View>
+                        <Text style={styles.stateTitle}>Não foi possível carregar a equipe.</Text>
+                        <Text style={styles.stateMessage}>Verifique sua conexão e tente novamente.</Text>
+                        <AppButton
+                            label="Tentar novamente"
+                            variant="secondary"
+                            size="small"
+                            onPress={() => void veterinarians.refetch()}
+                        />
+                    </View>
+                ) : !hasVeterinarians ? (
+                    <View style={styles.centeredState}>
+                        <View style={styles.stateIcon}>
+                            <Ionicons name="medkit-outline" size={24} color={colors.primary} />
+                        </View>
+                        <Text style={styles.stateTitle}>Nenhum veterinário cadastrado.</Text>
                         <Text style={styles.stateMessage}>
-                            Não foi possível carregar os veterinários.
+                            Cadastre o primeiro profissional da equipe.
                         </Text>
+                        <AppButton
+                            label="Cadastrar veterinário"
+                            size="small"
+                            onPress={onCreateVeterinarian}
+                        />
+                    </View>
+                ) : !hasFilteredResults ? (
+                    <View style={styles.centeredState}>
+                        <View style={styles.stateIcon}>
+                            <Ionicons name="search-outline" size={24} color={colors.primary} />
+                        </View>
+                        <Text style={styles.stateTitle}>Nenhum resultado nesta página.</Text>
+                        <Text style={styles.stateMessage}>
+                            Tente buscar por nome, e-mail, CRMV ou especialidade.
+                        </Text>
+                        {veterinarians.data.totalPages > 1 ? (
+                            <PaginationControls
+                                page={veterinarians.data.number}
+                                totalPages={veterinarians.data.totalPages}
+                                isFirst={veterinarians.data.first}
+                                isLast={veterinarians.data.last}
+                                disabled={veterinarians.isFetching}
+                                onPrevious={() => setPage(veterinarians.data.number - 1)}
+                                onNext={() => setPage(veterinarians.data.number + 1)}
+                            />
+                        ) : null}
                     </View>
                 ) : (
                     <FlatList
                         style={styles.listContainer}
-                        data={data.content}
+                        data={filteredVeterinarians}
                         keyExtractor={(veterinarian) => veterinarian.id.toString()}
                         renderItem={renderVeterinarian}
-                        contentContainerStyle={
-                            data.content.length === 0 ? styles.emptyList : styles.list
-                        }
+                        contentContainerStyle={styles.listContent}
                         showsVerticalScrollIndicator={false}
-                        ListEmptyComponent={
-                            <View style={styles.stateCard}>
-                                <Text style={styles.stateTitle}>
-                                    Nenhum veterinário encontrado.
-                                </Text>
-                                <Text style={styles.stateMessage}>
-                                    Cadastre um veterinário para começar.
-                                </Text>
-                            </View>
-                        }
                         ListFooterComponent={
-                            data.totalPages > 0 ? (
-                                <PaginationControls
-                                    page={data.number}
-                                    totalPages={data.totalPages}
-                                    isFirst={data.first}
-                                    isLast={data.last}
-                                    disabled={isFetching || deleteVeterinarian.isPending}
-                                    onPrevious={() => setPage(data.number - 1)}
-                                    onNext={() => setPage(data.number + 1)}
-                                />
+                            veterinarians.data.totalPages > 1 ? (
+                                <View style={styles.pagination}>
+                                    <PaginationControls
+                                        page={veterinarians.data.number}
+                                        totalPages={veterinarians.data.totalPages}
+                                        isFirst={veterinarians.data.first}
+                                        isLast={veterinarians.data.last}
+                                        disabled={veterinarians.isFetching}
+                                        onPrevious={() => setPage(veterinarians.data.number - 1)}
+                                        onNext={() => setPage(veterinarians.data.number + 1)}
+                                    />
+                                </View>
                             ) : null
                         }
                     />
@@ -178,25 +249,31 @@ export function VeterinarianListScreen({ navigation }: Props) {
     );
 }
 
-const styles = createThemedStyles((colors) => ({
+function createStyles(colors: ThemeColors) {
+    return StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: colors.background },
     container: {
         flex: 1,
-        paddingHorizontal: spacing.xl,
-        backgroundColor: colors.background,
-    },
-    heading: {
         width: '100%',
         maxWidth: 760,
         alignSelf: 'center',
-        paddingVertical: spacing.xl,
+        paddingHorizontal: spacing.lg,
+        backgroundColor: colors.background,
     },
+    heading: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: spacing.md,
+        paddingTop: spacing.xl,
+        paddingBottom: spacing.lg,
+    },
+    headingCopy: { flex: 1 },
     eyebrow: {
-        marginBottom: spacing.sm,
+        marginBottom: spacing.xs,
         color: colors.primary,
         fontSize: typography.small,
         fontWeight: '800',
-        letterSpacing: 1.4,
+        letterSpacing: 1.2,
     },
     title: {
         color: colors.text,
@@ -205,92 +282,125 @@ const styles = createThemedStyles((colors) => ({
         letterSpacing: -0.5,
     },
     description: {
-        marginTop: spacing.sm,
+        marginTop: spacing.xs,
         color: colors.textSecondary,
-        fontSize: typography.body,
-        lineHeight: 23,
+        fontSize: typography.caption,
+        lineHeight: 20,
     },
-    createButton: { alignSelf: 'flex-start', marginTop: spacing.xl },
-    listContainer: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center' },
-    list: { paddingBottom: spacing.xxl },
-    emptyList: { flexGrow: 1, justifyContent: 'center', paddingBottom: spacing.xxl },
-    card: {
-        marginBottom: spacing.lg,
-        padding: spacing.lg,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radii.lg,
-        backgroundColor: colors.surface,
-        ...shadows.card,
-    },
-    cardHeader: { flexDirection: 'row', alignItems: 'center' },
-    veterinarianIcon: {
-        width: 46,
-        height: 46,
+    createButton: {
+        minHeight: 44,
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: spacing.xs,
+        paddingHorizontal: spacing.md,
         borderRadius: radii.md,
-        backgroundColor: colors.primarySoft,
+        backgroundColor: colors.primaryAction,
     },
-    veterinarianIconText: {
+    createButtonText: {
+        color: colors.onPrimary,
+        fontSize: typography.caption,
+        fontWeight: '800',
+    },
+    buttonPressed: { opacity: 0.78, transform: [{ scale: 0.98 }] },
+    toolbar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        marginBottom: spacing.lg,
+    },
+    searchContainer: {
+        minHeight: 48,
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        paddingHorizontal: spacing.md,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.md,
+        backgroundColor: colors.inputBackground,
+    },
+    searchInput: {
+        minWidth: 0,
+        flex: 1,
+        paddingVertical: spacing.sm,
+        color: colors.text,
+        fontSize: typography.caption,
+    },
+    tutorsButton: {
+        minHeight: 48,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: spacing.xs,
+        paddingHorizontal: spacing.md,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.md,
+        backgroundColor: colors.surface,
+    },
+    tutorsButtonText: {
         color: colors.primary,
         fontSize: typography.small,
         fontWeight: '800',
     },
-    cardHeaderCopy: { flex: 1, marginLeft: spacing.md },
-    veterinarianName: {
+    listContainer: { flex: 1 },
+    listContent: {
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radii.lg,
+        backgroundColor: colors.surface,
+    },
+    pagination: {
+        paddingHorizontal: spacing.lg,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: colors.border,
+    },
+    row: {
+        minHeight: 78,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
+    },
+    rowPressed: { backgroundColor: colors.primarySoft },
+    rowCopy: { minWidth: 0, flex: 1, marginHorizontal: spacing.md },
+    name: {
         color: colors.text,
-        fontSize: typography.heading,
+        fontSize: typography.body,
         fontWeight: '800',
     },
-    crmv: {
+    secondary: {
         marginTop: spacing.xs,
         color: colors.textSecondary,
-        fontSize: typography.caption,
-    },
-    details: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: spacing.lg,
-        marginTop: spacing.xl,
-        paddingTop: spacing.lg,
-        borderTopWidth: 1,
-        borderTopColor: colors.border,
-    },
-    detailBlock: { flexGrow: 1, flexBasis: 180 },
-    detailLabel: {
-        marginBottom: spacing.xs,
-        color: colors.textSecondary,
         fontSize: typography.small,
-        fontWeight: '700',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        lineHeight: 17,
     },
-    detailValue: { color: colors.text, fontSize: typography.caption, lineHeight: 20 },
-    cardActions: {
-        flexDirection: 'row',
-        gap: spacing.md,
-        marginTop: spacing.xl,
-        paddingTop: spacing.lg,
-        borderTopWidth: 1,
-        borderTopColor: colors.border,
+    divider: {
+        height: StyleSheet.hairlineWidth,
+        marginLeft: 46 + spacing.lg + spacing.md,
+        backgroundColor: colors.border,
     },
-    cardAction: { flex: 1 },
-    stateContainer: {
+    centeredState: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
         gap: spacing.md,
-    },
-    stateCard: {
-        width: '100%',
-        maxWidth: 760,
-        alignSelf: 'center',
         padding: spacing.xl,
         borderWidth: 1,
         borderColor: colors.border,
         borderRadius: radii.lg,
         backgroundColor: colors.surface,
+    },
+    stateIcon: {
+        width: 48,
+        height: 48,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: radii.pill,
+        backgroundColor: colors.primarySoft,
     },
     stateTitle: {
         color: colors.text,
@@ -299,10 +409,10 @@ const styles = createThemedStyles((colors) => ({
         textAlign: 'center',
     },
     stateMessage: {
-        marginTop: spacing.sm,
         color: colors.textSecondary,
         fontSize: typography.caption,
         lineHeight: 20,
         textAlign: 'center',
     },
-}));
+    });
+}

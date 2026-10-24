@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useSmartCareRanking } from '../../hooks/smartCare/useSmartCareRanking';
 import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import {
@@ -37,6 +38,7 @@ function getRankingErrorMessage(error: unknown): string {
 }
 
 export function SmartCareScreen() {
+    useTheme();
     const [expandedPetId, setExpandedPetId] = useState<number | null>(null);
     const ranking = useSmartCareRanking();
 

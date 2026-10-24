@@ -21,7 +21,9 @@ import { PetSex, PetSpecies } from '../../types/pet';
 import { RegisterTutorWithPetRequest } from '../../types/workflow';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { dateInputToIsoDate } from '../../utils/dateValidation';
+import { isValidEmail } from '../../utils/formValidation';
 import { formatDateInput } from '../../utils/inputMasks';
+import { PET_SEX_LABELS, PET_SPECIES_LABELS } from '../../utils/petPresentation';
 
 type Props = NativeStackScreenProps<VeterinarianStackParamList, 'RegisterTutorWithPet'>;
 
@@ -55,6 +57,13 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
     const [sex, setSex] = useState<PetSex | null>(null);
     const [birthDate, setBirthDate] = useState('');
     const [weight, setWeight] = useState('');
+    const [tutorNameError, setTutorNameError] = useState<string | null>(null);
+    const [cpfError, setCpfError] = useState<string | null>(null);
+    const [emailError, setEmailError] = useState<string | null>(null);
+    const [petNameError, setPetNameError] = useState<string | null>(null);
+    const [speciesError, setSpeciesError] = useState<string | null>(null);
+    const [birthDateError, setBirthDateError] = useState<string | null>(null);
+    const [weightError, setWeightError] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     async function handleSubmit(): Promise<void> {
@@ -62,46 +71,51 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
         const trimmedCpf = cpf.trim();
         const trimmedEmail = email.trim();
         const trimmedPetName = petName.trim();
-
-        if (!trimmedTutorName || !trimmedCpf) {
-            setErrorMessage('Nome e CPF do Tutor são obrigatórios.');
-            return;
-        }
-
-        if (!/^\d{11}$/.test(trimmedCpf)) {
-            setErrorMessage('O CPF deve conter 11 dígitos.');
-            return;
-        }
-
-        if (trimmedEmail && !/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
-            setErrorMessage('Informe um e-mail válido.');
-            return;
-        }
-
-        if (!trimmedPetName || species === null) {
-            setErrorMessage('Nome e espécie do Pet são obrigatórios.');
-            return;
-        }
-
         const trimmedBirthDate = birthDate.trim();
         const isoBirthDate = trimmedBirthDate
             ? dateInputToIsoDate(trimmedBirthDate)
             : null;
+        const trimmedWeight = weight.trim();
+        const parsedWeight = trimmedWeight
+            ? Number(trimmedWeight.replace(',', '.'))
+            : undefined;
+        const nextTutorNameError = trimmedTutorName ? null : 'Informe o nome do Tutor.';
+        const nextCpfError = /^\d{11}$/.test(trimmedCpf)
+            ? null
+            : 'Informe um CPF com 11 dígitos.';
+        const nextEmailError = trimmedEmail && !isValidEmail(trimmedEmail)
+            ? 'Informe um e-mail válido.'
+            : null;
+        const nextPetNameError = trimmedPetName ? null : 'Informe o nome do pet.';
+        const nextSpeciesError = species === null ? 'Selecione a espécie.' : null;
+        const nextBirthDateError = trimmedBirthDate && !isoBirthDate
+            ? 'Informe uma data válida no formato DD/MM/AAAA.'
+            : null;
+        const nextWeightError = parsedWeight !== undefined
+            && (!Number.isFinite(parsedWeight) || parsedWeight <= 0)
+            ? 'Informe um peso maior que zero.'
+            : null;
 
-        if (trimmedBirthDate && !isoBirthDate) {
-            setErrorMessage('Informe uma data de nascimento válida no formato DD/MM/AAAA.');
+        setTutorNameError(nextTutorNameError);
+        setCpfError(nextCpfError);
+        setEmailError(nextEmailError);
+        setPetNameError(nextPetNameError);
+        setSpeciesError(nextSpeciesError);
+        setBirthDateError(nextBirthDateError);
+        setWeightError(nextWeightError);
+        setErrorMessage(null);
+
+        if (
+            nextTutorNameError
+            || nextCpfError
+            || nextEmailError
+            || nextPetNameError
+            || nextSpeciesError
+            || nextBirthDateError
+            || nextWeightError
+            || species === null
+        ) {
             return;
-        }
-
-        let parsedWeight: number | undefined;
-
-        if (weight.trim()) {
-            parsedWeight = Number(weight.trim().replace(',', '.'));
-
-            if (!Number.isFinite(parsedWeight) || parsedWeight <= 0) {
-                setErrorMessage('O peso deve ser positivo.');
-                return;
-            }
         }
 
         const request: RegisterTutorWithPetRequest = {
@@ -139,8 +153,6 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
             request.pet.weight = parsedWeight;
         }
 
-        setErrorMessage(null);
-
         try {
             await registerTutorWithPet.mutateAsync(request);
             Alert.alert(
@@ -164,12 +176,13 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
             <KeyboardAvoidingView
                 style={styles.keyboardView}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.content}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.wrapper}>
@@ -188,8 +201,13 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                 <AppInput
                                     label="Nome *"
                                     value={tutorName}
-                                    onChangeText={setTutorName}
+                                    onChangeText={(value) => {
+                                        setTutorName(value);
+                                        setTutorNameError(null);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Nome do Tutor"
+                                    error={tutorNameError}
                                     editable={!isPending}
                                     returnKeyType="next"
                                     onSubmitEditing={() => cpfInputRef.current?.focus()}
@@ -198,8 +216,13 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                     ref={cpfInputRef}
                                     label="CPF *"
                                     value={cpf}
-                                    onChangeText={setCpf}
+                                    onChangeText={(value) => {
+                                        setCpf(value.replace(/\D/g, ''));
+                                        setCpfError(null);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="CPF (11 dígitos)"
+                                    error={cpfError}
                                     keyboardType="number-pad"
                                     maxLength={11}
                                     editable={!isPending}
@@ -210,7 +233,10 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                     ref={phoneInputRef}
                                     label="Telefone"
                                     value={phone}
-                                    onChangeText={setPhone}
+                                    onChangeText={(value) => {
+                                        setPhone(value);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Telefone"
                                     keyboardType="phone-pad"
                                     editable={!isPending}
@@ -221,8 +247,13 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                     ref={emailInputRef}
                                     label="E-mail"
                                     value={email}
-                                    onChangeText={setEmail}
+                                    onChangeText={(value) => {
+                                        setEmail(value);
+                                        setEmailError(null);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="nome@exemplo.com"
+                                    error={emailError}
                                     autoCapitalize="none"
                                     autoCorrect={false}
                                     keyboardType="email-address"
@@ -243,8 +274,13 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                     ref={petNameInputRef}
                                     label="Nome *"
                                     value={petName}
-                                    onChangeText={setPetName}
+                                    onChangeText={(value) => {
+                                        setPetName(value);
+                                        setPetNameError(null);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Nome do Pet"
+                                    error={petNameError}
                                     editable={!isPending}
                                     returnKeyType="next"
                                     onSubmitEditing={() => breedInputRef.current?.focus()}
@@ -267,7 +303,11 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                                     pressed && !isPending && styles.optionPressed,
                                                     isPending && styles.optionDisabled,
                                                 ]}
-                                                onPress={() => setSpecies(option)}
+                                                onPress={() => {
+                                                    setSpecies(option);
+                                                    setSpeciesError(null);
+                                                    setErrorMessage(null);
+                                                }}
                                                 disabled={isPending}
                                             >
                                                 <Text
@@ -276,18 +316,24 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                                         species === option && styles.optionTextSelected,
                                                     ]}
                                                 >
-                                                    {option}
+                                                    {PET_SPECIES_LABELS[option]}
                                                 </Text>
                                             </Pressable>
                                         ))}
                                     </View>
+                                    {speciesError ? (
+                                        <Text style={styles.fieldError}>{speciesError}</Text>
+                                    ) : null}
                                 </View>
 
                                 <AppInput
                                     ref={breedInputRef}
                                     label="Raça"
                                     value={breed}
-                                    onChangeText={setBreed}
+                                    onChangeText={(value) => {
+                                        setBreed(value);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Raça"
                                     editable={!isPending}
                                     returnKeyType="next"
@@ -320,7 +366,7 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                                         sex === option && styles.optionTextSelected,
                                                     ]}
                                                 >
-                                                    {option}
+                                                    {PET_SEX_LABELS[option]}
                                                 </Text>
                                             </Pressable>
                                         ))}
@@ -355,8 +401,13 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                     ref={birthDateInputRef}
                                     label="Nascimento"
                                     value={birthDate}
-                                    onChangeText={(text) => setBirthDate(formatDateInput(text))}
-                                    placeholder="DD/MM/AAAA"
+                                    onChangeText={(text) => {
+                                        setBirthDate(formatDateInput(text));
+                                        setBirthDateError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    placeholder="DD/MM/AAAA (opcional)"
+                                    error={birthDateError}
                                     keyboardType="numeric"
                                     autoCapitalize="none"
                                     maxLength={10}
@@ -366,10 +417,15 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                                 />
                                 <AppInput
                                     ref={weightInputRef}
-                                    label="Peso"
+                                    label="Peso (kg)"
                                     value={weight}
-                                    onChangeText={setWeight}
-                                    placeholder="Peso em kg"
+                                    onChangeText={(value) => {
+                                        setWeight(value);
+                                        setWeightError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    placeholder="Ex.: 12,5 (opcional)"
+                                    error={weightError}
                                     keyboardType="decimal-pad"
                                     editable={!isPending}
                                     returnKeyType="done"
@@ -388,6 +444,7 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                             label="Cadastrar Paciente"
                             onPress={() => void handleSubmit()}
                             loading={isPending}
+                            loadingLabel="Cadastrando..."
                         />
                     </View>
                 </ScrollView>
@@ -482,4 +539,5 @@ const styles = createThemedStyles((colors) => ({
         backgroundColor: colors.errorSurface,
     },
     error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
+    fieldError: { color: colors.danger, fontSize: typography.small, lineHeight: 18 },
 }));

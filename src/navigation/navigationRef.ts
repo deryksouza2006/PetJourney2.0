@@ -7,7 +7,7 @@ let tutorAgendaNavigationPending = false;
 
 export function openTutorAgendaFromNotification(): void {
     if (navigationRef.isReady()) {
-        navigationRef.navigate('TutorAgenda');
+        navigationRef.navigate('TutorTabs', { screen: 'TutorAgenda' });
         tutorAgendaNavigationPending = false;
         return;
     }
@@ -20,6 +20,6 @@ export function flushPendingNotificationNavigation(): void {
         return;
     }
 
-    navigationRef.navigate('TutorAgenda');
+    navigationRef.navigate('TutorTabs', { screen: 'TutorAgenda' });
     tutorAgendaNavigationPending = false;
 }

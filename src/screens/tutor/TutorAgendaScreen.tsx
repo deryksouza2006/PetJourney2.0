@@ -1,4 +1,3 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
@@ -12,10 +11,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
 import { PaginationControls } from '../../components/PaginationControls';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useCancelAppointment } from '../../hooks/appointments/useCancelAppointment';
 import { useAppointmentsByPet } from '../../hooks/appointments/useAppointmentsByPet';
 import { usePets } from '../../hooks/pets/usePets';
-import { TutorStackParamList } from '../../navigation/TutorNavigator';
 import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { DEFAULT_PAGE_SIZE } from '../../types/pagination';
 import { AppointmentResponse, AppointmentStatus } from '../../types/workflow';
@@ -24,8 +23,6 @@ import {
     canCancelAppointment,
     formatLocalDateTime,
 } from '../../utils/dateTimeFormatting';
-
-type Props = NativeStackScreenProps<TutorStackParamList, 'TutorAgenda'>;
 
 function formatStatus(status: AppointmentStatus): string {
     return status.charAt(0) + status.slice(1).toLocaleLowerCase('pt-BR');
@@ -52,7 +49,8 @@ function compareAppointments(first: AppointmentResponse, second: AppointmentResp
     return firstIsFuture ? firstTime - secondTime : secondTime - firstTime;
 }
 
-export function TutorAgendaScreen(_props: Props) {
+export function TutorAgendaScreen() {
+    useTheme();
     const [selectedPetId, setSelectedPetId] = useState<number | null>(null);
     const [page, setPage] = useState(0);
     const [cancellingAppointmentId, setCancellingAppointmentId] = useState<number | null>(null);

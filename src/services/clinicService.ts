@@ -9,6 +9,11 @@ export async function getClinics(page: number, size: number): Promise<ClinicPage
     return response.data;
 }
 
+export async function getClinicById(id: number): Promise<Clinic> {
+    const response = await api.get<Clinic>(`/clinics/${id}`);
+    return response.data;
+}
+
 export async function createClinic(request: ClinicRequest): Promise<Clinic> {
     const response = await api.post<Clinic>('/clinics', request);
 

@@ -4,6 +4,7 @@ import {
     StyleProp,
     StyleSheet,
     Text,
+    View,
     ViewStyle,
 } from 'react-native';
 import { colors, createThemedStyles, radii, spacing, typography } from '../theme/tokens';
@@ -16,6 +17,7 @@ interface AppButtonProps {
     onPress: () => void;
     disabled?: boolean;
     loading?: boolean;
+    loadingLabel?: string;
     variant?: AppButtonVariant;
     size?: AppButtonSize;
     style?: StyleProp<ViewStyle>;
@@ -26,6 +28,7 @@ export function AppButton({
     onPress,
     disabled = false,
     loading = false,
+    loadingLabel,
     variant = 'primary',
     size = 'default',
     style,
@@ -54,7 +57,12 @@ export function AppButton({
             disabled={isDisabled}
         >
             {loading ? (
-                <ActivityIndicator color={activityColor} />
+                <View style={styles.loadingContent}>
+                    <ActivityIndicator color={activityColor} />
+                    <Text style={[styles.label, styles[`${variant}Label`]]}>
+                        {loadingLabel ?? label}
+                    </Text>
+                </View>
             ) : (
                 <Text style={[styles.label, styles[`${variant}Label`]]}>{label}</Text>
             )}
@@ -65,6 +73,7 @@ export function AppButton({
 const styles = createThemedStyles((colors) => ({
     button: {
         minHeight: 54,
+        alignSelf: 'stretch',
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: spacing.xl,
@@ -86,6 +95,12 @@ const styles = createThemedStyles((colors) => ({
     primaryPressed: { backgroundColor: colors.primaryActionPressed, transform: [{ scale: 0.99 }] },
     outlinePressed: { opacity: 0.78, transform: [{ scale: 0.99 }] },
     buttonDisabled: { opacity: 0.6 },
+    loadingContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: spacing.sm,
+    },
     label: { color: colors.onPrimary, fontSize: typography.body, fontWeight: '700' },
     primaryLabel: { color: colors.onPrimary },
     secondaryLabel: { color: colors.primary },

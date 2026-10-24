@@ -1,18 +1,25 @@
+import { CompositeScreenProps } from '@react-navigation/native';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
 import { PaginationControls } from '../../components/PaginationControls';
+import { useTheme } from '../../contexts/ThemeContext';
 import { usePets } from '../../hooks/pets/usePets';
-import { TutorStackParamList } from '../../navigation/TutorNavigator';
+import { TutorStackParamList, TutorTabParamList } from '../../navigation/TutorNavigator';
 import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { DEFAULT_PAGE_SIZE } from '../../types/pagination';
 import { Pet } from '../../types/pet';
 
-type Props = NativeStackScreenProps<TutorStackParamList, 'TutorPets'>;
+type Props = CompositeScreenProps<
+    BottomTabScreenProps<TutorTabParamList, 'TutorPets'>,
+    NativeStackScreenProps<TutorStackParamList>
+>;
 
 export function TutorPetListScreen({ navigation }: Props) {
+    useTheme();
     const [page, setPage] = useState(0);
     const pets = usePets(page, DEFAULT_PAGE_SIZE);
 

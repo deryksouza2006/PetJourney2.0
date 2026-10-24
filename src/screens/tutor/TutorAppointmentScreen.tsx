@@ -1,5 +1,6 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useMemo, useState } from 'react';
+import { ComponentProps, PropsWithChildren, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -7,13 +8,20 @@ import {
     Platform,
     Pressable,
     ScrollView,
-    StyleSheet,
     Text,
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
 import { AppInput } from '../../components/AppInput';
+import { TutorAppointmentDaySelector } from '../../components/tutor/TutorAppointmentDaySelector';
+import { TutorAppointmentPetSelector } from '../../components/tutor/TutorAppointmentPetSelector';
+import {
+    APPOINTMENT_REASON_TITLES,
+    AppointmentReason,
+    TutorAppointmentReasonChips,
+} from '../../components/tutor/TutorAppointmentReasonChips';
+import { TutorAppointmentTimeGrid } from '../../components/tutor/TutorAppointmentTimeGrid';
 import { useAuth } from '../../contexts/AuthContext';
 import { useScheduleAppointment } from '../../hooks/appointments/useScheduleAppointment';
 import { useFutureAvailableSlots } from '../../hooks/availability/useFutureAvailableSlots';
@@ -24,11 +32,18 @@ import { VeterinarianAvailability } from '../../types/veterinarianAvailability';
 import { getApiErrorMessage } from '../../utils/apiError';
 
 type Props = NativeStackScreenProps<TutorStackParamList, 'TutorAppointment'>;
+type IconName = ComponentProps<typeof Ionicons>['name'];
 
 interface AvailableVeterinarian {
     id: number;
     name: string;
     nextAvailability: string;
+}
+
+interface AppointmentSectionProps extends PropsWithChildren {
+    icon: IconName;
+    title: string;
+    description: string;
 }
 
 function getLocalIsoDate(date: Date): string {
@@ -51,17 +66,27 @@ function formatDate(isoDate: string): string {
     return match ? `${match[3]}/${match[2]}/${match[1]}` : isoDate;
 }
 
-function formatSlotTime(dateTime: string): string {
-    const match = /T(\d{2}:\d{2})/.exec(dateTime);
+function getAppointmentTitle(
+    reason: AppointmentReason | null,
+    customTitle: string,
+): string {
+    if (reason === null) {
+        return '';
+    }
 
-    return match?.[1] ?? dateTime;
+    if (reason === 'OTHER') {
+        return customTitle.trim();
+    }
+
+    return APPOINTMENT_REASON_TITLES[reason];
 }
 
 const today = new Date();
 const discoveryEnd = new Date(today);
 discoveryEnd.setDate(discoveryEnd.getDate() + 365);
 
-const FUTURE_RANGE_START = `${getLocalIsoDate(today)}T00:00:00`;
+const TODAY_ISO_DATE = getLocalIsoDate(today);
+const FUTURE_RANGE_START = `${TODAY_ISO_DATE}T00:00:00`;
 const FUTURE_RANGE_END = `${getLocalIsoDate(discoveryEnd)}T23:59:59`;
 
 export function TutorAppointmentScreen(_props: Props) {
@@ -73,15 +98,17 @@ export function TutorAppointmentScreen(_props: Props) {
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const [selectedSlot, setSelectedSlot] = useState<VeterinarianAvailability | null>(null);
     const [selectedPetId, setSelectedPetId] = useState<number | null>(null);
-    const [title, setTitle] = useState('');
+    const [selectedReason, setSelectedReason] = useState<AppointmentReason | null>(null);
+    const [customTitle, setCustomTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [titleError, setTitleError] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const sortedSlots = useMemo(
-        () => [...(slotsQuery.data?.content ?? [])].sort((first, second) =>
-            first.startTime.localeCompare(second.startTime),
-        ),
+        () => [...(slotsQuery.data?.content ?? [])]
+            .filter((slot) => getDatePart(slot.startTime) >= TODAY_ISO_DATE)
+            .sort((first, second) => first.startTime.localeCompare(second.startTime)),
         [slotsQuery.data],
     );
 
@@ -126,6 +153,8 @@ export function TutorAppointmentScreen(_props: Props) {
         );
     }, [selectedDate, selectedVeterinarianId, sortedSlots]);
 
+    const appointmentTitle = getAppointmentTitle(selectedReason, customTitle);
+
     function clearFeedback(): void {
         setErrorMessage(null);
         setSuccessMessage(null);
@@ -144,20 +173,37 @@ export function TutorAppointmentScreen(_props: Props) {
         clearFeedback();
     }
 
+    function selectReason(reason: AppointmentReason): void {
+        setSelectedReason(reason);
+        setTitleError(null);
+
+        if (reason !== 'OTHER') {
+            setCustomTitle('');
+        }
+
+        clearFeedback();
+    }
+
     async function handleSubmit(): Promise<void> {
-        const trimmedTitle = title.trim();
         const clinicId = user?.clinicId ?? null;
+        const nextTitleError = selectedReason === null
+            ? 'Selecione o motivo da consulta.'
+            : selectedReason === 'OTHER' && !appointmentTitle
+                ? 'Informe um título curto para a consulta.'
+                : null;
+
+        setTitleError(nextTitleError);
 
         if (
             selectedVeterinarianId === null
             || selectedDate === null
             || selectedSlot === null
             || selectedPetId === null
-            || !trimmedTitle
+            || !appointmentTitle
             || clinicId === null
         ) {
             setSuccessMessage(null);
-            setErrorMessage('Preencha todas as seleções e o título antes de agendar.');
+            setErrorMessage('Complete as seleções obrigatórias antes de agendar.');
             return;
         }
 
@@ -166,7 +212,7 @@ export function TutorAppointmentScreen(_props: Props) {
 
         try {
             const result = await scheduleAppointment.mutateAsync({
-                title: trimmedTitle,
+                title: appointmentTitle,
                 description: description.trim() || undefined,
                 petId: selectedPetId,
                 clinicId,
@@ -176,8 +222,10 @@ export function TutorAppointmentScreen(_props: Props) {
 
             setSelectedSlot(null);
             setSelectedPetId(null);
-            setTitle('');
+            setSelectedReason(null);
+            setCustomTitle('');
             setDescription('');
+            setTitleError(null);
             setSuccessMessage('Consulta agendada com sucesso.');
             const notificationWarning = result.notifications.shouldWarnPermissionDenied
                 ? '\n\nAs notificações estão desativadas. Você pode ativá-las nas configurações do aparelho.'
@@ -203,7 +251,7 @@ export function TutorAppointmentScreen(_props: Props) {
         || selectedDate === null
         || selectedSlot === null
         || selectedPetId === null
-        || !title.trim()
+        || !appointmentTitle
         || clinicId === null
         || scheduleAppointment.isPending;
 
@@ -211,264 +259,238 @@ export function TutorAppointmentScreen(_props: Props) {
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
             <KeyboardAvoidingView
                 style={styles.keyboardView}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.content}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.wrapper}>
-                        <Text style={styles.eyebrow}>ÁREA DO TUTOR</Text>
-                        <Text style={styles.title}>Agendar consulta</Text>
-                        <Text style={styles.description}>
-                            Escolha um horário livre, o pet e os dados da consulta.
-                        </Text>
-
-                        <View style={styles.sectionCard}>
-                            <Text style={styles.step}>1</Text>
-                            <Text style={styles.sectionTitle}>Escolha o veterinário</Text>
-
-                            {slotsQuery.isPending ? (
-                                <View style={styles.inlineState}>
-                                    <ActivityIndicator color={colors.primary} />
-                                    <Text style={styles.stateMessage}>
-                                        Carregando disponibilidades...
-                                    </Text>
-                                </View>
-                            ) : slotsQuery.isError ? (
-                                <View style={styles.stateBox}>
-                                    <Text style={styles.stateTitle}>Não foi possível carregar</Text>
-                                    <Text style={styles.stateMessage}>
-                                        Não foi possível consultar os próximos horários livres.
-                                    </Text>
-                                    <AppButton
-                                        label="Tentar novamente"
-                                        onPress={() => void slotsQuery.refetch()}
-                                        variant="secondary"
-                                        size="small"
-                                        style={styles.retryButton}
-                                    />
-                                </View>
-                            ) : veterinarians.length === 0 ? (
-                                <View style={styles.stateBox}>
-                                    <Text style={styles.stateTitle}>Nenhum veterinário disponível</Text>
-                                    <Text style={styles.stateMessage}>
-                                        Nenhum veterinário da sua clínica possui horários livres publicados.
-                                    </Text>
-                                </View>
-                            ) : (
-                                <View style={styles.options}>
-                                    {veterinarians.map((veterinarian) => {
-                                        const isSelected =
-                                            veterinarian.id === selectedVeterinarianId;
-
-                                        return (
-                                            <Pressable
-                                                key={veterinarian.id}
-                                                accessibilityRole="button"
-                                                accessibilityState={{ selected: isSelected }}
-                                                style={({ pressed }) => [
-                                                    styles.veterinarianCard,
-                                                    isSelected && styles.optionSelected,
-                                                    pressed && styles.optionPressed,
-                                                ]}
-                                                onPress={() => selectVeterinarian(veterinarian.id)}
-                                                disabled={scheduleAppointment.isPending}
-                                            >
-                                                <View style={styles.veterinarianIcon}>
-                                                    <Text style={styles.veterinarianIconText}>VT</Text>
-                                                </View>
-                                                <View style={styles.veterinarianCopy}>
-                                                    <Text style={styles.veterinarianName}>
-                                                        {veterinarian.name}
-                                                    </Text>
-                                                    <Text style={styles.optionHint}>
-                                                        Próxima disponibilidade:{' '}
-                                                        {formatDate(getDatePart(
-                                                            veterinarian.nextAvailability,
-                                                        ))}
-                                                    </Text>
-                                                </View>
-                                            </Pressable>
-                                        );
-                                    })}
-                                </View>
-                            )}
+                        <View style={styles.introduction}>
+                            <View style={styles.heroIcon}>
+                                <Ionicons name="calendar" size={24} color={colors.primary} />
+                            </View>
+                            <View style={styles.introductionCopy}>
+                                <Text style={styles.eyebrow}>ÁREA DO TUTOR</Text>
+                                <Text style={styles.title}>Agendar consulta</Text>
+                                <Text style={styles.description}>
+                                    Monte o agendamento com as opções disponíveis para você.
+                                </Text>
+                            </View>
                         </View>
 
-                        <View style={styles.sectionCard}>
-                            <Text style={styles.step}>2</Text>
-                            <Text style={styles.sectionTitle}>Datas disponíveis</Text>
-
-                            {selectedVeterinarianId === null ? (
-                                <StateMessage text="Selecione um veterinário para ver as datas disponíveis." />
-                            ) : availableDates.length === 0 ? (
-                                <StateMessage title="Nenhuma data disponível" />
-                            ) : (
-                                <View style={styles.dateOptions}>
-                                    {availableDates.map((date) => {
-                                        const isSelected = date === selectedDate;
-
-                                        return (
-                                            <Pressable
-                                                key={date}
-                                                accessibilityRole="button"
-                                                accessibilityState={{ selected: isSelected }}
-                                                style={({ pressed }) => [
-                                                    styles.dateCard,
-                                                    isSelected && styles.optionSelected,
-                                                    pressed && styles.optionPressed,
-                                                ]}
-                                                onPress={() => selectDate(date)}
-                                                disabled={scheduleAppointment.isPending}
-                                            >
-                                                <Text style={[
-                                                    styles.dateText,
-                                                    isSelected && styles.selectedText,
-                                                ]}>
-                                                    {formatDate(date)}
-                                                </Text>
-                                            </Pressable>
-                                        );
-                                    })}
-                                </View>
-                            )}
-                        </View>
-
-                        <View style={styles.sectionCard}>
-                            <Text style={styles.step}>3</Text>
-                            <Text style={styles.sectionTitle}>Escolha o horário</Text>
-
-                            {selectedVeterinarianId === null ? (
-                                <StateMessage text="Selecione um veterinário para continuar." />
-                            ) : selectedDate === null ? (
-                                <StateMessage text="Selecione uma das datas disponíveis." />
-                            ) : selectedDateSlots.length === 0 ? (
-                                <StateMessage title="Nenhum horário disponível nesta data." />
-                            ) : (
-                                <View style={styles.slots}>
-                                    <Text style={styles.selectedDateTitle}>
-                                        {formatDate(selectedDate)}
-                                    </Text>
-                                    {selectedDateSlots.map((slot) => {
-                                        const isSelected = slot.id === selectedSlot?.id;
-
-                                        return (
-                                            <Pressable
-                                                key={slot.id}
-                                                accessibilityRole="button"
-                                                accessibilityState={{ selected: isSelected }}
-                                                style={({ pressed }) => [
-                                                    styles.slotCard,
-                                                    isSelected && styles.slotSelected,
-                                                    pressed && styles.optionPressed,
-                                                ]}
-                                                onPress={() => {
-                                                    setSelectedSlot(slot);
-                                                    clearFeedback();
-                                                }}
-                                                disabled={scheduleAppointment.isPending}
-                                            >
-                                                <Text style={styles.slotTime}>
-                                                    {formatSlotTime(slot.startTime)} -{' '}
-                                                    {formatSlotTime(slot.endTime)}
-                                                </Text>
-                                            </Pressable>
-                                        );
-                                    })}
-                                </View>
-                            )}
-                        </View>
-
-                        <View style={styles.sectionCard}>
-                            <Text style={styles.step}>4</Text>
-                            <Text style={styles.sectionTitle}>Escolha o pet</Text>
-
+                        <AppointmentSection
+                            icon="paw-outline"
+                            title="PET"
+                            description="Quem será atendido?"
+                        >
                             {petsQuery.isPending ? (
-                                <View style={styles.inlineState}>
-                                    <ActivityIndicator color={colors.primary} />
-                                    <Text style={styles.stateMessage}>Carregando seus pets...</Text>
-                                </View>
+                                <InlineLoading text="Carregando seus pets..." />
                             ) : petsQuery.isError ? (
-                                <View style={styles.stateBox}>
-                                    <Text style={styles.stateTitle}>Não foi possível carregar seus pets</Text>
-                                    <AppButton
-                                        label="Tentar novamente"
-                                        onPress={() => void petsQuery.refetch()}
-                                        variant="secondary"
-                                        size="small"
-                                        style={styles.retryButton}
-                                    />
-                                </View>
+                                <StateMessage
+                                    title="Não foi possível carregar seus pets"
+                                    actionLabel="Tentar novamente"
+                                    onAction={() => void petsQuery.refetch()}
+                                />
                             ) : (petsQuery.data?.content.length ?? 0) === 0 ? (
-                                <StateMessage title="Nenhum pet encontrado para este Tutor." />
+                                <StateMessage title="Nenhum pet vinculado à sua conta." />
                             ) : (
-                                <View style={styles.petOptions}>
-                                    {petsQuery.data?.content.map((pet) => {
-                                        const isSelected = pet.id === selectedPetId;
-
-                                        return (
-                                            <Pressable
-                                                key={pet.id}
-                                                accessibilityRole="button"
-                                                accessibilityState={{ selected: isSelected }}
-                                                style={({ pressed }) => [
-                                                    styles.petCard,
-                                                    isSelected && styles.optionSelected,
-                                                    pressed && styles.optionPressed,
-                                                ]}
-                                                onPress={() => {
-                                                    setSelectedPetId(pet.id);
-                                                    clearFeedback();
-                                                }}
-                                                disabled={scheduleAppointment.isPending}
-                                            >
-                                                <Text style={[
-                                                    styles.petName,
-                                                    isSelected && styles.selectedText,
-                                                ]}>
-                                                    {pet.name}
-                                                </Text>
-                                                <Text style={styles.optionHint}>{pet.species}</Text>
-                                            </Pressable>
-                                        );
-                                    })}
-                                </View>
-                            )}
-                        </View>
-
-                        <View style={styles.sectionCard}>
-                            <Text style={styles.step}>5</Text>
-                            <Text style={styles.sectionTitle}>Dados da consulta</Text>
-                            <View style={styles.fields}>
-                                <AppInput
-                                    label="Título *"
-                                    value={title}
-                                    onChangeText={(value) => {
-                                        setTitle(value);
+                                <TutorAppointmentPetSelector
+                                    pets={petsQuery.data?.content ?? []}
+                                    selectedPetId={selectedPetId}
+                                    disabled={scheduleAppointment.isPending}
+                                    onSelect={(petId) => {
+                                        setSelectedPetId(petId);
                                         clearFeedback();
                                     }}
-                                    placeholder="Consulta preventiva"
+                                />
+                            )}
+                        </AppointmentSection>
+
+                        <AppointmentSection
+                            icon="medkit-outline"
+                            title="MOTIVO"
+                            description="Selecione a finalidade da consulta."
+                        >
+                            <TutorAppointmentReasonChips
+                                selectedReason={selectedReason}
+                                disabled={scheduleAppointment.isPending}
+                                onSelect={selectReason}
+                            />
+                            {titleError && selectedReason !== 'OTHER' ? (
+                                <Text style={styles.fieldError}>{titleError}</Text>
+                            ) : null}
+                            {selectedReason === 'OTHER' ? (
+                                <AppInput
+                                    label="Título da consulta *"
+                                    value={customTitle}
+                                    onChangeText={(value) => {
+                                        setCustomTitle(value);
+                                        setTitleError(null);
+                                        clearFeedback();
+                                    }}
+                                    placeholder="Ex.: Avaliação dermatológica"
+                                    error={titleError}
                                     maxLength={120}
                                     editable={!scheduleAppointment.isPending}
+                                    containerStyle={styles.customTitleInput}
                                 />
+                            ) : null}
+                            <View style={styles.optionalField}>
                                 <AppInput
-                                    label="Descrição"
+                                    label="Observações"
                                     value={description}
                                     onChangeText={(value) => {
                                         setDescription(value);
                                         clearFeedback();
                                     }}
-                                    placeholder="Ex.: check-up anual"
+                                    placeholder="Ex.: informações que ajudem no atendimento"
+                                    helperText="Opcional"
                                     maxLength={500}
                                     multiline
-                                    numberOfLines={4}
+                                    numberOfLines={3}
                                     textAlignVertical="top"
                                     style={styles.descriptionInput}
                                     editable={!scheduleAppointment.isPending}
                                 />
+                            </View>
+                        </AppointmentSection>
+
+                        <AppointmentSection
+                            icon="person-outline"
+                            title="VETERINÁRIO"
+                            description="Escolha um profissional com disponibilidade."
+                        >
+                            {slotsQuery.isPending ? (
+                                <InlineLoading text="Carregando disponibilidades..." />
+                            ) : slotsQuery.isError ? (
+                                <StateMessage
+                                    title="Não foi possível consultar os horários livres."
+                                    actionLabel="Tentar novamente"
+                                    onAction={() => void slotsQuery.refetch()}
+                                />
+                            ) : veterinarians.length === 0 ? (
+                                <StateMessage
+                                    title="Nenhum veterinário disponível"
+                                    text="Sua clínica ainda não publicou novos horários livres."
+                                />
+                            ) : (
+                                <ScrollView
+                                    horizontal
+                                    nestedScrollEnabled
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={styles.veterinarianList}
+                                >
+                                    {veterinarians.map((veterinarian) => {
+                                        const isSelected = veterinarian.id === selectedVeterinarianId;
+
+                                        return (
+                                            <Pressable
+                                                key={veterinarian.id}
+                                                accessibilityRole="button"
+                                                accessibilityState={{
+                                                    selected: isSelected,
+                                                    disabled: scheduleAppointment.isPending,
+                                                }}
+                                                disabled={scheduleAppointment.isPending}
+                                                onPress={() => selectVeterinarian(veterinarian.id)}
+                                                style={({ pressed }) => [
+                                                    styles.veterinarianCard,
+                                                    isSelected && styles.veterinarianCardSelected,
+                                                    pressed && styles.optionPressed,
+                                                ]}
+                                            >
+                                                <View style={styles.veterinarianIcon}>
+                                                    <Ionicons
+                                                        name="medical-outline"
+                                                        size={22}
+                                                        color={colors.primary}
+                                                    />
+                                                </View>
+                                                <View style={styles.veterinarianCopy}>
+                                                    <Text style={styles.veterinarianName} numberOfLines={1}>
+                                                        {veterinarian.name}
+                                                    </Text>
+                                                    <Text style={styles.optionHint}>
+                                                        Próximo dia: {formatDate(getDatePart(
+                                                            veterinarian.nextAvailability,
+                                                        ))}
+                                                    </Text>
+                                                </View>
+                                                {isSelected ? (
+                                                    <Ionicons
+                                                        name="checkmark-circle"
+                                                        size={22}
+                                                        color={colors.primary}
+                                                    />
+                                                ) : null}
+                                            </Pressable>
+                                        );
+                                    })}
+                                </ScrollView>
+                            )}
+                        </AppointmentSection>
+
+                        <AppointmentSection
+                            icon="calendar-outline"
+                            title="DIA"
+                            description="Mostramos somente dias com horários livres."
+                        >
+                            {selectedVeterinarianId === null ? (
+                                <StateMessage text="Selecione um veterinário para ver os dias disponíveis." />
+                            ) : availableDates.length === 0 ? (
+                                <StateMessage
+                                    title="Nenhuma data disponível"
+                                    text="Escolha outro veterinário ou tente novamente mais tarde."
+                                />
+                            ) : (
+                                <TutorAppointmentDaySelector
+                                    dates={availableDates}
+                                    selectedDate={selectedDate}
+                                    disabled={scheduleAppointment.isPending}
+                                    onSelect={selectDate}
+                                />
+                            )}
+                        </AppointmentSection>
+
+                        <AppointmentSection
+                            icon="time-outline"
+                            title="HORÁRIO"
+                            description="Escolha um dos horários livres."
+                        >
+                            {selectedVeterinarianId === null ? (
+                                <StateMessage text="Selecione um veterinário para continuar." />
+                            ) : selectedDate === null ? (
+                                <StateMessage text="Selecione um dos dias disponíveis." />
+                            ) : selectedDateSlots.length === 0 ? (
+                                <StateMessage title="Nenhum horário disponível nesta data." />
+                            ) : (
+                                <TutorAppointmentTimeGrid
+                                    slots={selectedDateSlots}
+                                    selectedSlotId={selectedSlot?.id ?? null}
+                                    disabled={scheduleAppointment.isPending}
+                                    onSelect={(slot) => {
+                                        setSelectedSlot(slot);
+                                        clearFeedback();
+                                    }}
+                                />
+                            )}
+                        </AppointmentSection>
+
+                        <View style={styles.ctaCard}>
+                            <View style={styles.ctaHeader}>
+                                <View style={styles.ctaIcon}>
+                                    <Ionicons name="checkmark" size={20} color={colors.primary} />
+                                </View>
+                                <View style={styles.ctaCopy}>
+                                    <Text style={styles.ctaTitle}>Confirmar agendamento</Text>
+                                    <Text style={styles.ctaDescription}>
+                                        Revise as seleções acima antes de continuar.
+                                    </Text>
+                                </View>
                             </View>
 
                             {clinicId === null ? (
@@ -477,10 +499,14 @@ export function TutorAppointmentScreen(_props: Props) {
                                 </Text>
                             ) : null}
                             {errorMessage ? (
-                                <Text style={styles.errorText}>{errorMessage}</Text>
+                                <Text style={styles.errorText} accessibilityLiveRegion="polite">
+                                    {errorMessage}
+                                </Text>
                             ) : null}
                             {successMessage ? (
-                                <Text style={styles.successText}>{successMessage}</Text>
+                                <Text style={styles.successText} accessibilityLiveRegion="polite">
+                                    {successMessage}
+                                </Text>
                             ) : null}
 
                             <AppButton
@@ -488,6 +514,7 @@ export function TutorAppointmentScreen(_props: Props) {
                                 onPress={() => void handleSubmit()}
                                 disabled={isSubmitDisabled}
                                 loading={scheduleAppointment.isPending}
+                                loadingLabel="Agendando..."
                                 style={styles.submitButton}
                             />
                         </View>
@@ -498,180 +525,261 @@ export function TutorAppointmentScreen(_props: Props) {
     );
 }
 
-function StateMessage({ title, text }: { title?: string; text?: string }) {
+function AppointmentSection({
+    icon,
+    title,
+    description,
+    children,
+}: AppointmentSectionProps) {
     return (
-        <View style={styles.stateBox}>
-            {title ? <Text style={styles.stateTitle}>{title}</Text> : null}
-            {text ? <Text style={styles.stateMessage}>{text}</Text> : null}
+        <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+                <View style={styles.sectionIcon}>
+                    <Ionicons name={icon} size={20} color={colors.primary} />
+                </View>
+                <View style={styles.sectionCopy}>
+                    <Text style={styles.sectionTitle}>{title}</Text>
+                    <Text style={styles.sectionDescription}>{description}</Text>
+                </View>
+            </View>
+            <View style={styles.sectionContent}>{children}</View>
         </View>
     );
 }
 
-const styles = createThemedStyles((colors) => ({
-    safeArea: { flex: 1, backgroundColor: colors.background },
+function InlineLoading({ text }: { text: string }) {
+    return (
+        <View style={styles.inlineState}>
+            <ActivityIndicator color={colors.primary} />
+            <Text style={styles.stateMessage}>{text}</Text>
+        </View>
+    );
+}
+
+interface StateMessageProps {
+    title?: string;
+    text?: string;
+    actionLabel?: string;
+    onAction?: () => void;
+}
+
+function StateMessage({ title, text, actionLabel, onAction }: StateMessageProps) {
+    return (
+        <View style={styles.stateBox}>
+            {title ? <Text style={styles.stateTitle}>{title}</Text> : null}
+            {text ? <Text style={styles.stateMessage}>{text}</Text> : null}
+            {actionLabel && onAction ? (
+                <AppButton
+                    label={actionLabel}
+                    onPress={onAction}
+                    variant="secondary"
+                    size="small"
+                    style={styles.retryButton}
+                />
+            ) : null}
+        </View>
+    );
+}
+
+const styles = createThemedStyles((themeColors) => ({
+    safeArea: { flex: 1, backgroundColor: themeColors.background },
     keyboardView: { flex: 1 },
-    scrollView: { flex: 1, backgroundColor: colors.background },
-    content: { flexGrow: 1, padding: spacing.xl },
+    scrollView: { flex: 1, backgroundColor: themeColors.background },
+    content: { flexGrow: 1, padding: spacing.lg, paddingBottom: spacing.xxxl },
     wrapper: { width: '100%', maxWidth: 760, alignSelf: 'center' },
+    introduction: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        marginBottom: spacing.xl,
+    },
+    heroIcon: {
+        width: 48,
+        height: 48,
+        flexShrink: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: radii.md,
+        backgroundColor: themeColors.primarySoft,
+    },
+    introductionCopy: { minWidth: 0, flex: 1, marginLeft: spacing.md },
     eyebrow: {
-        marginBottom: spacing.sm,
-        color: colors.primary,
+        color: themeColors.primary,
         fontSize: typography.small,
         fontWeight: '800',
-        letterSpacing: 1.4,
+        letterSpacing: 1.3,
     },
     title: {
-        color: colors.text,
+        marginTop: spacing.xs,
+        color: themeColors.text,
         fontSize: typography.title,
         fontWeight: '800',
         letterSpacing: -0.5,
     },
     description: {
         marginTop: spacing.sm,
-        marginBottom: spacing.xl,
-        color: colors.textSecondary,
-        fontSize: typography.body,
-        lineHeight: 23,
+        color: themeColors.textSecondary,
+        fontSize: typography.caption,
+        lineHeight: 20,
     },
     sectionCard: {
         marginBottom: spacing.lg,
-        padding: spacing.xl,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radii.lg,
-        backgroundColor: colors.surface,
-        ...shadows.card,
-    },
-    step: {
-        width: 28,
-        height: 28,
-        marginBottom: spacing.md,
-        paddingTop: 5,
-        borderRadius: radii.pill,
-        backgroundColor: colors.primarySoft,
-        color: colors.primary,
-        fontSize: typography.caption,
-        fontWeight: '800',
-        textAlign: 'center',
-    },
-    sectionTitle: { color: colors.text, fontSize: typography.heading, fontWeight: '800' },
-    options: { gap: spacing.md, marginTop: spacing.xl },
-    veterinarianCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
         padding: spacing.lg,
         borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radii.md,
-        backgroundColor: colors.background,
+        borderColor: themeColors.border,
+        borderRadius: radii.lg,
+        backgroundColor: themeColors.surface,
     },
-    optionSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-    optionPressed: { opacity: 0.78, transform: [{ scale: 0.99 }] },
-    veterinarianIcon: {
-        width: 42,
-        height: 42,
+    sectionHeader: { flexDirection: 'row', alignItems: 'center' },
+    sectionIcon: {
+        width: 40,
+        height: 40,
+        flexShrink: 0,
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: radii.md,
-        backgroundColor: colors.surface,
+        backgroundColor: themeColors.primarySoft,
     },
-    veterinarianIconText: { color: colors.primary, fontSize: typography.small, fontWeight: '800' },
-    veterinarianCopy: { flex: 1, marginLeft: spacing.md },
-    veterinarianName: { color: colors.text, fontSize: typography.body, fontWeight: '800' },
-    optionHint: {
+    sectionCopy: { minWidth: 0, flex: 1, marginLeft: spacing.md },
+    sectionTitle: {
+        color: themeColors.text,
+        fontSize: typography.small,
+        fontWeight: '800',
+        letterSpacing: 1.1,
+    },
+    sectionDescription: {
         marginTop: spacing.xs,
-        color: colors.textSecondary,
+        color: themeColors.textSecondary,
         fontSize: typography.small,
         lineHeight: 18,
     },
-    dateOptions: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: spacing.sm,
-        marginTop: spacing.xl,
+    sectionContent: { marginTop: spacing.lg },
+    fieldError: {
+        marginTop: spacing.sm,
+        color: themeColors.danger,
+        fontSize: typography.small,
+        lineHeight: 18,
     },
-    dateCard: {
-        paddingHorizontal: spacing.lg,
-        paddingVertical: spacing.md,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radii.pill,
-        backgroundColor: colors.background,
+    customTitleInput: { marginTop: spacing.lg },
+    optionalField: {
+        marginTop: spacing.lg,
+        paddingTop: spacing.lg,
+        borderTopWidth: 1,
+        borderTopColor: themeColors.border,
     },
-    dateText: { color: colors.text, fontSize: typography.caption, fontWeight: '700' },
-    selectedText: { color: colors.primaryDark },
-    inlineState: {
+    descriptionInput: { minHeight: 88, paddingTop: spacing.md },
+    veterinarianList: { gap: spacing.md, paddingVertical: spacing.xs, paddingRight: spacing.sm },
+    veterinarianCard: {
+        width: 260,
+        minHeight: 84,
         flexDirection: 'row',
         alignItems: 'center',
+        padding: spacing.md,
+        borderWidth: 1,
+        borderColor: themeColors.border,
+        borderRadius: radii.lg,
+        backgroundColor: themeColors.inputBackground,
+    },
+    veterinarianCardSelected: {
+        borderColor: themeColors.primary,
+        backgroundColor: themeColors.primarySoft,
+    },
+    veterinarianIcon: {
+        width: 42,
+        height: 42,
+        flexShrink: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: radii.pill,
+        backgroundColor: themeColors.surface,
+    },
+    veterinarianCopy: { minWidth: 0, flex: 1, marginHorizontal: spacing.md },
+    veterinarianName: {
+        color: themeColors.text,
+        fontSize: typography.caption,
+        fontWeight: '800',
+    },
+    optionHint: {
+        marginTop: spacing.xs,
+        color: themeColors.textSecondary,
+        fontSize: typography.small,
+        lineHeight: 17,
+    },
+    optionPressed: { opacity: 0.78, transform: [{ scale: 0.98 }] },
+    inlineState: {
+        minHeight: 84,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
         gap: spacing.md,
-        marginTop: spacing.xl,
-        padding: spacing.lg,
     },
     stateBox: {
+        minHeight: 96,
         alignItems: 'center',
-        marginTop: spacing.xl,
+        justifyContent: 'center',
         padding: spacing.lg,
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: themeColors.border,
         borderRadius: radii.md,
-        backgroundColor: colors.background,
+        backgroundColor: themeColors.background,
     },
     stateTitle: {
-        color: colors.text,
+        color: themeColors.text,
         fontSize: typography.caption,
         fontWeight: '800',
         textAlign: 'center',
     },
     stateMessage: {
-        color: colors.textSecondary,
+        marginTop: spacing.xs,
+        color: themeColors.textSecondary,
         fontSize: typography.caption,
         lineHeight: 20,
         textAlign: 'center',
     },
-    retryButton: { marginTop: spacing.lg },
-    slots: { gap: spacing.md, marginTop: spacing.xl },
-    selectedDateTitle: { color: colors.text, fontSize: typography.body, fontWeight: '800' },
-    slotCard: {
+    retryButton: { marginTop: spacing.md },
+    ctaCard: {
+        padding: spacing.lg,
+        borderWidth: 1,
+        borderColor: themeColors.primary,
+        borderRadius: radii.lg,
+        backgroundColor: themeColors.surface,
+        ...shadows.card,
+    },
+    ctaHeader: { flexDirection: 'row', alignItems: 'center' },
+    ctaIcon: {
+        width: 40,
+        height: 40,
+        flexShrink: 0,
         alignItems: 'center',
-        padding: spacing.lg,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radii.md,
-        backgroundColor: colors.background,
+        justifyContent: 'center',
+        borderRadius: radii.pill,
+        backgroundColor: themeColors.primarySoft,
     },
-    slotSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-    slotTime: { color: colors.primaryDark, fontSize: typography.body, fontWeight: '800' },
-    petOptions: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: spacing.md,
-        marginTop: spacing.xl,
+    ctaCopy: { minWidth: 0, flex: 1, marginLeft: spacing.md },
+    ctaTitle: {
+        color: themeColors.text,
+        fontSize: typography.body,
+        fontWeight: '800',
     },
-    petCard: {
-        minWidth: 130,
-        padding: spacing.lg,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radii.md,
-        backgroundColor: colors.background,
+    ctaDescription: {
+        marginTop: spacing.xs,
+        color: themeColors.textSecondary,
+        fontSize: typography.small,
+        lineHeight: 18,
     },
-    petName: { color: colors.text, fontSize: typography.body, fontWeight: '800' },
-    fields: { gap: spacing.lg, marginTop: spacing.xl },
-    descriptionInput: { minHeight: 110, paddingTop: spacing.lg },
     errorText: {
         marginTop: spacing.lg,
-        color: colors.danger,
+        color: themeColors.danger,
         fontSize: typography.caption,
         lineHeight: 20,
         textAlign: 'center',
     },
     successText: {
         marginTop: spacing.lg,
-        color: colors.success,
+        color: themeColors.success,
         fontSize: typography.caption,
         fontWeight: '700',
         lineHeight: 20,
         textAlign: 'center',
     },
-    submitButton: { marginTop: spacing.xl },
+    submitButton: { marginTop: spacing.lg },
 }));

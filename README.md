@@ -156,6 +156,28 @@ Depois de alterar `EXPO_PUBLIC_API_URL`, encerre o processo anterior e, se o end
 npx expo start -c
 ```
 
+### Build de referência
+
+A tela **Sobre o App** exibe o commit injetado no bundle pela variável pública
+`EXPO_PUBLIC_COMMIT_HASH`. Para uma build remota de produção, atualize a variável
+do ambiente EAS com o commit atual e então inicie a build:
+
+```bash
+eas env:set --name EXPO_PUBLIC_COMMIT_HASH --value "$(git rev-parse --short HEAD)" --environment production --visibility plaintext
+eas build --profile production --platform android
+```
+
+Para validar localmente sem alterar o `.env`, execute o Metro com a variável apenas
+naquele processo:
+
+```bash
+EXPO_PUBLIC_COMMIT_HASH=$(git rev-parse --short HEAD) \
+npx expo start --dev-client -c
+```
+
+Quando a variável não estiver definida, a tela identifica a execução como
+**Desenvolvimento**.
+
 ### Desenvolvimento local
 
 Durante o desenvolvimento, caso seja necessário executar o backend localmente, a URL pode ser alterada no `.env`:

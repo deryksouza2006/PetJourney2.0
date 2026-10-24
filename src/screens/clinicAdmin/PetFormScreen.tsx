@@ -26,6 +26,7 @@ import { PetRequest, PetSex, PetSpecies } from '../../types/pet';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { dateInputToIsoDate, isoDateToDateInput } from '../../utils/dateValidation';
 import { formatDateInput } from '../../utils/inputMasks';
+import { PET_SEX_LABELS, PET_SPECIES_LABELS } from '../../utils/petPresentation';
 
 type Props =
     | NativeStackScreenProps<ClinicAdminStackParamList, 'CreatePet'>
@@ -70,6 +71,11 @@ export function PetFormScreen(props: Props) {
     const [selectedTutorName, setSelectedTutorName] = useState<string | null>(
         pet?.tutorName ?? null,
     );
+    const [nameError, setNameError] = useState<string | null>(null);
+    const [speciesError, setSpeciesError] = useState<string | null>(null);
+    const [birthDateError, setBirthDateError] = useState<string | null>(null);
+    const [weightError, setWeightError] = useState<string | null>(null);
+    const [tutorError, setTutorError] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const isPending = createPet.isPending || updatePet.isPending;
     const displayedTutorName = tutorId === pet?.tutorId
@@ -78,9 +84,41 @@ export function PetFormScreen(props: Props) {
 
     async function handleSubmit(): Promise<void> {
         const trimmedName = name.trim();
+        const trimmedBirthDate = birthDate.trim();
+        const trimmedWeight = weight.trim();
+        const nextNameError = trimmedName ? null : 'Informe o nome do pet.';
+        const nextSpeciesError = species === null ? 'Selecione a espécie.' : null;
+        const nextTutorError = tutorId === null ? 'Selecione o Tutor responsável.' : null;
+        const isoBirthDate = trimmedBirthDate
+            ? dateInputToIsoDate(trimmedBirthDate)
+            : null;
+        const nextBirthDateError = trimmedBirthDate && !isoBirthDate
+            ? 'Informe uma data válida no formato DD/MM/AAAA.'
+            : null;
+        const parsedWeight = trimmedWeight
+            ? Number(trimmedWeight.replace(',', '.'))
+            : undefined;
+        const nextWeightError = parsedWeight !== undefined
+            && (!Number.isFinite(parsedWeight) || parsedWeight <= 0)
+            ? 'Informe um peso maior que zero.'
+            : null;
 
-        if (!trimmedName || species === null || tutorId === null) {
-            setErrorMessage('Nome, espécie e Tutor são obrigatórios.');
+        setNameError(nextNameError);
+        setSpeciesError(nextSpeciesError);
+        setTutorError(nextTutorError);
+        setBirthDateError(nextBirthDateError);
+        setWeightError(nextWeightError);
+        setErrorMessage(null);
+
+        if (
+            nextNameError
+            || nextSpeciesError
+            || nextTutorError
+            || nextBirthDateError
+            || nextWeightError
+            || species === null
+            || tutorId === null
+        ) {
             return;
         }
 
@@ -98,31 +136,13 @@ export function PetFormScreen(props: Props) {
             request.sex = sex;
         }
 
-        const trimmedBirthDate = birthDate.trim();
-
-        if (trimmedBirthDate) {
-            const isoBirthDate = dateInputToIsoDate(trimmedBirthDate);
-
-            if (!isoBirthDate) {
-                setErrorMessage('Informe uma data de nascimento válida no formato DD/MM/AAAA.');
-                return;
-            }
-
+        if (isoBirthDate) {
             request.birthDate = isoBirthDate;
         }
 
-        if (weight.trim()) {
-            const parsedWeight = Number(weight.trim().replace(',', '.'));
-
-            if (!Number.isFinite(parsedWeight) || parsedWeight <= 0) {
-                setErrorMessage('O peso deve ser positivo.');
-                return;
-            }
-
+        if (parsedWeight !== undefined) {
             request.weight = parsedWeight;
         }
-
-        setErrorMessage(null);
 
         try {
             if (pet) {
@@ -152,12 +172,13 @@ export function PetFormScreen(props: Props) {
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
             <KeyboardAvoidingView
                 style={styles.keyboardView}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.content}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.wrapper}>
@@ -183,8 +204,13 @@ export function PetFormScreen(props: Props) {
                                 <AppInput
                                     label="Nome *"
                                     value={name}
-                                    onChangeText={setName}
+                                    onChangeText={(value) => {
+                                        setName(value);
+                                        setNameError(null);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Nome do pet"
+                                    error={nameError}
                                     editable={!isPending}
                                     returnKeyType="next"
                                     onSubmitEditing={() => breedInputRef.current?.focus()}
@@ -207,7 +233,11 @@ export function PetFormScreen(props: Props) {
                                                     pressed && !isPending && styles.optionPressed,
                                                     isPending && styles.optionDisabled,
                                                 ]}
-                                                onPress={() => setSpecies(option)}
+                                                onPress={() => {
+                                                    setSpecies(option);
+                                                    setSpeciesError(null);
+                                                    setErrorMessage(null);
+                                                }}
                                                 disabled={isPending}
                                             >
                                                 <Text
@@ -216,18 +246,24 @@ export function PetFormScreen(props: Props) {
                                                         species === option && styles.optionTextSelected,
                                                     ]}
                                                 >
-                                                    {option}
+                                                    {PET_SPECIES_LABELS[option]}
                                                 </Text>
                                             </Pressable>
                                         ))}
                                     </View>
+                                    {speciesError ? (
+                                        <Text style={styles.fieldError}>{speciesError}</Text>
+                                    ) : null}
                                 </View>
 
                                 <AppInput
                                     ref={breedInputRef}
                                     label="Raça"
                                     value={breed}
-                                    onChangeText={setBreed}
+                                    onChangeText={(value) => {
+                                        setBreed(value);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Raça (opcional)"
                                     editable={!isPending}
                                     returnKeyType="next"
@@ -260,7 +296,7 @@ export function PetFormScreen(props: Props) {
                                                         sex === option && styles.optionTextSelected,
                                                     ]}
                                                 >
-                                                    {option}
+                                                    {PET_SEX_LABELS[option]}
                                                 </Text>
                                             </Pressable>
                                         ))}
@@ -295,8 +331,13 @@ export function PetFormScreen(props: Props) {
                                     ref={birthDateInputRef}
                                     label="Nascimento"
                                     value={birthDate}
-                                    onChangeText={(text) => setBirthDate(formatDateInput(text))}
+                                    onChangeText={(text) => {
+                                        setBirthDate(formatDateInput(text));
+                                        setBirthDateError(null);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="DD/MM/AAAA (opcional)"
+                                    error={birthDateError}
                                     keyboardType="numeric"
                                     autoCapitalize="none"
                                     maxLength={10}
@@ -306,10 +347,15 @@ export function PetFormScreen(props: Props) {
                                 />
                                 <AppInput
                                     ref={weightInputRef}
-                                    label="Peso"
+                                    label="Peso (kg)"
                                     value={weight}
-                                    onChangeText={setWeight}
-                                    placeholder="Peso em kg (opcional)"
+                                    onChangeText={(value) => {
+                                        setWeight(value);
+                                        setWeightError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    placeholder="Ex.: 12,5 (opcional)"
+                                    error={weightError}
                                     keyboardType="decimal-pad"
                                     editable={!isPending}
                                 />
@@ -379,6 +425,8 @@ export function PetFormScreen(props: Props) {
                                                             onPress={() => {
                                                                 setTutorId(tutor.id);
                                                                 setSelectedTutorName(tutor.name);
+                                                                setTutorError(null);
+                                                                setErrorMessage(null);
                                                             }}
                                                             disabled={isPending}
                                                         >
@@ -410,6 +458,9 @@ export function PetFormScreen(props: Props) {
                                             />
                                         </>
                                     )}
+                                    {tutorError ? (
+                                        <Text style={styles.fieldError}>{tutorError}</Text>
+                                    ) : null}
                                 </View>
                             </View>
 
@@ -423,6 +474,7 @@ export function PetFormScreen(props: Props) {
                                 label={isEditing ? 'Salvar alterações' : 'Cadastrar pet'}
                                 onPress={() => void handleSubmit()}
                                 loading={isPending}
+                                loadingLabel={isEditing ? 'Salvando...' : 'Cadastrando...'}
                             />
                         </View>
                     </View>
@@ -575,4 +627,5 @@ const styles = createThemedStyles((colors) => ({
         backgroundColor: colors.errorSurface,
     },
     error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
+    fieldError: { color: colors.danger, fontSize: typography.small, lineHeight: 18 },
 }));

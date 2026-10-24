@@ -3,33 +3,21 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../contexts/ThemeContext';
 import { radii, shadows, spacing, ThemeColors, typography } from '../theme/tokens';
-import { BrandMark } from './BrandMark';
 
 interface HomeScreenLayoutProps extends PropsWithChildren {
     title: string;
     description: string;
-    onSignOut: () => void;
 }
 
-export function HomeScreenLayout({ title, description, onSignOut, children }: HomeScreenLayoutProps) {
+export function HomeScreenLayout({ title, description, children }: HomeScreenLayoutProps) {
     const insets = useSafeAreaInsets();
-    const { colors, isDark } = useTheme();
+    const { colors } = useTheme();
     const styles = useMemo(() => createLayoutStyles(colors), [colors]);
 
     return (
-        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
             <View style={styles.header}>
                 <View style={styles.headerInner}>
-                    <View style={styles.topBar}>
-                        <BrandMark compact light={isDark} />
-                        <Pressable
-                            accessibilityRole="button"
-                            style={({ pressed }) => [styles.signOutButton, pressed && styles.signOutButtonPressed]}
-                            onPress={onSignOut}
-                        >
-                            <Text style={styles.signOutText}>Sair</Text>
-                        </Pressable>
-                    </View>
                     <Text style={styles.eyebrow}>VISÃO GERAL</Text>
                     <Text style={styles.title}>{title}</Text>
                     <Text style={styles.description}>{description}</Text>
@@ -85,30 +73,11 @@ function createLayoutStyles(colors: ThemeColors) {
         safeArea: { flex: 1, backgroundColor: colors.headerBackground },
         header: {
             paddingHorizontal: spacing.xl,
-            paddingTop: spacing.md,
-            paddingBottom: spacing.xxxl,
+            paddingTop: spacing.xl,
+            paddingBottom: spacing.xxl,
             backgroundColor: colors.headerBackground,
         },
         headerInner: { width: '100%', maxWidth: 720, alignSelf: 'center' },
-        topBar: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: spacing.xxxl,
-        },
-        signOutButton: {
-            minHeight: 42,
-            minWidth: 64,
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingHorizontal: spacing.lg,
-            borderWidth: 1,
-            borderColor: colors.headerControlBorder,
-            borderRadius: radii.pill,
-            backgroundColor: colors.headerControlBackground,
-        },
-        signOutButtonPressed: { opacity: 0.78 },
-        signOutText: { color: colors.headerText, fontSize: typography.caption, fontWeight: '700' },
         eyebrow: {
             marginBottom: spacing.sm,
             color: colors.headerAccent,

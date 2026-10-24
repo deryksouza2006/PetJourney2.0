@@ -1,45 +1,60 @@
+import { CompositeScreenProps } from '@react-navigation/native';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppButton } from '../../components/AppButton';
-import { BrandMark } from '../../components/BrandMark';
+import { TutorMedicationSummary } from '../../components/tutor/TutorMedicationSummary';
+import { TutorNextAppointmentCard } from '../../components/tutor/TutorNextAppointmentCard';
+import { TutorPetAvatarList } from '../../components/tutor/TutorPetAvatarList';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAppointmentsByPet } from '../../hooks/appointments/useAppointmentsByPet';
+import { useMedicationsByPet } from '../../hooks/medications/useMedicationsByPet';
 import { usePets } from '../../hooks/pets/usePets';
-import { TutorStackParamList } from '../../navigation/TutorNavigator';
-import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { TutorStackParamList, TutorTabParamList } from '../../navigation/TutorNavigator';
+import { spacing, ThemeColors, typography } from '../../theme/tokens';
 
-type Props = NativeStackScreenProps<TutorStackParamList, 'TutorHome'>;
+type Props = CompositeScreenProps<
+    BottomTabScreenProps<TutorTabParamList, 'TutorHome'>,
+    NativeStackScreenProps<TutorStackParamList>
+>;
+
+const HOME_QUERY_SIZE = 100;
+
+function getGreeting(date = new Date()): string {
+    const hour = date.getHours();
+
+    if (hour < 12) {
+        return 'Bom dia';
+    }
+
+    if (hour < 18) {
+        return 'Boa tarde';
+    }
+
+    return 'Boa noite';
+}
+
+function getFriendlyUsername(username: string | undefined): string | null {
+    const value = username?.trim();
+
+    return value && !value.includes('@') ? value : null;
+}
 
 export function TutorHomeScreen({ navigation }: Props) {
-    const { user, signOut } = useAuth();
-    const { isDark } = useTheme();
-    const pets = usePets();
+    const { user } = useAuth();
+    const { colors } = useTheme();
     const insets = useSafeAreaInsets();
-    const firstPet = pets.data?.content[0];
+    const styles = useMemo(() => createStyles(colors), [colors]);
+    const pets = usePets(0, HOME_QUERY_SIZE);
+    const highlightedPet = pets.data?.content[0] ?? null;
+    const appointments = useAppointmentsByPet(highlightedPet?.id ?? null, 0, HOME_QUERY_SIZE);
+    const medications = useMedicationsByPet(highlightedPet?.id ?? null, 0, HOME_QUERY_SIZE);
+    const friendlyUsername = getFriendlyUsername(user?.username);
 
     return (
-        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-            <View style={styles.header}>
-                <View style={styles.headerInner}>
-                    <View style={styles.topBar}>
-                        <BrandMark compact light={isDark} />
-                        <AppButton
-                            label="Sair"
-                            onPress={() => void signOut()}
-                            variant="secondary"
-                            size="small"
-                            style={styles.signOutButton}
-                        />
-                    </View>
-                    <Text style={styles.eyebrow}>ÁREA DO TUTOR</Text>
-                    <Text style={styles.title}>Olá, {user?.username ?? 'Tutor'}!</Text>
-                    <Text style={styles.description}>
-                        Acompanhe os dados dos seus pets em um só lugar.
-                    </Text>
-                </View>
-            </View>
-
+        <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={[
@@ -49,105 +64,48 @@ export function TutorHomeScreen({ navigation }: Props) {
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.contentInner}>
-                    <Text style={styles.sectionTitle}>Seu pet</Text>
-                    <Text style={styles.sectionDescription}>
-                        Um resumo do primeiro pet vinculado à sua conta.
-                    </Text>
+                    <View style={styles.greetingBlock}>
+                        <Text style={styles.greetingLabel}>
+                            {getGreeting().toLocaleUpperCase('pt-BR')}
+                        </Text>
+                        <Text style={styles.greetingName}>{friendlyUsername || 'Olá!'}</Text>
+                        <Text style={styles.greetingDescription}>
+                            Cuide da saúde e da rotina dos seus pets.
+                        </Text>
+                    </View>
 
-                    {pets.isPending ? (
-                        <View style={styles.stateCard}>
-                            <ActivityIndicator size="large" color={colors.primary} />
-                            <Text style={styles.stateMessage}>Carregando seus pets...</Text>
-                        </View>
-                    ) : pets.isError ? (
-                        <View style={styles.stateCard}>
-                            <Text style={styles.stateTitle}>Não foi possível carregar</Text>
-                            <Text style={styles.stateMessage}>
-                                Não foi possível consultar seus pets agora.
-                            </Text>
-                            <AppButton
-                                label="Tentar novamente"
-                                onPress={() => void pets.refetch()}
-                                variant="secondary"
-                                size="small"
-                                style={styles.retryButton}
-                            />
-                        </View>
-                    ) : firstPet ? (
-                        <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel={`Ver detalhes de ${firstPet.name}`}
-                            style={({ pressed }) => [
-                                styles.petCard,
-                                pressed && styles.petCardPressed,
-                            ]}
-                            onPress={() => navigation.navigate('TutorPetDetails', {
-                                petId: firstPet.id,
-                            })}
-                        >
-                            <View style={styles.petIcon}>
-                                <Text style={styles.petIconText}>PET</Text>
-                            </View>
-                            <View style={styles.petCopy}>
-                                <Text style={styles.petName}>{firstPet.name}</Text>
-                                <Text style={styles.petSpecies}>{firstPet.species}</Text>
-                                <Text style={styles.petSummary}>
-                                    {firstPet.breed ?? 'Raça não informada'}
-                                    {' • '}
-                                    {firstPet.weight !== null
-                                        ? `${firstPet.weight} kg`
-                                        : 'Peso não informado'}
-                                </Text>
-                            </View>
-                            <Text style={styles.arrow} accessibilityElementsHidden>›</Text>
-                        </Pressable>
-                    ) : (
-                        <View style={styles.stateCard}>
-                            <Text style={styles.stateTitle}>Nenhum pet encontrado</Text>
-                            <Text style={styles.stateMessage}>
-                                Ainda não há pets vinculados à sua conta.
-                            </Text>
-                        </View>
-                    )}
+                    <TutorNextAppointmentCard
+                        pet={highlightedPet}
+                        appointments={appointments.data?.content ?? []}
+                        isPetLoading={pets.isPending}
+                        isPetError={pets.isError}
+                        isAppointmentLoading={appointments.isPending}
+                        isAppointmentError={appointments.isError}
+                        onRetry={() => void appointments.refetch()}
+                        onSchedule={() => navigation.navigate('TutorAppointment')}
+                    />
 
-                    <Text style={[styles.sectionTitle, styles.accessTitle]}>Acesso rápido</Text>
-                    <Text style={styles.sectionDescription}>
-                        Consulte seus pets, sua agenda e os registros de saúde.
-                    </Text>
-                    <AppButton
-                        label="Ver meus pets"
-                        onPress={() => navigation.navigate('TutorPets')}
-                        style={styles.petsButton}
+                    <TutorPetAvatarList
+                        pets={pets.data?.content ?? []}
+                        isLoading={pets.isPending}
+                        isError={pets.isError}
+                        onRetry={() => void pets.refetch()}
+                        onPetPress={(petId) => navigation.navigate('TutorPetDetails', { petId })}
                     />
-                    <AppButton
-                        label="Agenda"
-                        onPress={() => navigation.navigate('TutorAgenda')}
-                        variant="secondary"
-                        style={styles.quickAccessButton}
-                    />
-                    <AppButton
-                        label="Agendar consulta"
-                        onPress={() => navigation.navigate('TutorAppointment')}
-                        variant="secondary"
-                        style={styles.quickAccessButton}
-                    />
-                    <AppButton
-                        label="Prontuário"
-                        onPress={() => navigation.navigate('TutorMedicalRecords')}
-                        variant="secondary"
-                        style={styles.quickAccessButton}
-                    />
-                    <AppButton
-                        label="Medicamentos"
-                        onPress={() => navigation.navigate('TutorMedications')}
-                        variant="secondary"
-                        style={styles.quickAccessButton}
-                    />
-                    <AppButton
-                        label="Aparência"
-                        onPress={() => navigation.navigate('Appearance')}
-                        variant="secondary"
-                        style={styles.quickAccessButton}
+
+                    <TutorMedicationSummary
+                        petName={highlightedPet?.name ?? null}
+                        medications={medications.data?.content ?? []}
+                        isLoading={pets.isPending || (highlightedPet !== null && medications.isPending)}
+                        isError={pets.isError || medications.isError}
+                        onRetry={() => {
+                            if (pets.isError) {
+                                void pets.refetch();
+                                return;
+                            }
+
+                            void medications.refetch();
+                        }}
                     />
                 </View>
             </ScrollView>
@@ -155,131 +113,31 @@ export function TutorHomeScreen({ navigation }: Props) {
     );
 }
 
-const styles = createThemedStyles((colors) => ({
-    safeArea: { flex: 1, backgroundColor: colors.headerBackground },
-    header: {
-        paddingHorizontal: spacing.xl,
-        paddingTop: spacing.md,
-        paddingBottom: spacing.xxxl,
-        backgroundColor: colors.headerBackground,
-    },
-    headerInner: { width: '100%', maxWidth: 720, alignSelf: 'center' },
-    topBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: spacing.md,
-        marginBottom: spacing.xxxl,
-    },
-    signOutButton: {
-        minHeight: 42,
-        borderColor: colors.headerControlBorder,
-        backgroundColor: colors.headerControlBackground,
-    },
-    eyebrow: {
-        marginBottom: spacing.sm,
-        color: colors.headerAccent,
-        fontSize: typography.small,
-        fontWeight: '800',
-        letterSpacing: 1.5,
-    },
-    title: {
-        color: colors.headerText,
-        fontSize: typography.title,
-        fontWeight: '800',
-        letterSpacing: -0.6,
-    },
-    description: {
-        maxWidth: 560,
-        marginTop: spacing.sm,
-        color: colors.headerTextSecondary,
-        fontSize: typography.body,
-        lineHeight: 23,
-    },
-    scrollView: {
-        flex: 1,
-        borderTopLeftRadius: radii.lg,
-        borderTopRightRadius: radii.lg,
-        backgroundColor: colors.background,
-    },
-    content: {
-        flexGrow: 1,
-        paddingHorizontal: spacing.xl,
-        paddingTop: spacing.xxl,
-    },
-    contentInner: { width: '100%', maxWidth: 720, alignSelf: 'center' },
-    sectionTitle: { color: colors.text, fontSize: typography.heading, fontWeight: '800' },
-    sectionDescription: {
-        marginTop: spacing.xs,
-        color: colors.textSecondary,
-        fontSize: typography.caption,
-        lineHeight: 20,
-    },
-    petCard: {
-        minHeight: 112,
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: spacing.xl,
-        padding: spacing.lg,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radii.lg,
-        backgroundColor: colors.surface,
-        ...shadows.card,
-    },
-    petCardPressed: {
-        borderColor: colors.primary,
-        backgroundColor: colors.primarySoft,
-        transform: [{ scale: 0.99 }],
-    },
-    petIcon: {
-        width: 52,
-        height: 52,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: radii.md,
-        backgroundColor: colors.primarySoft,
-    },
-    petIconText: { color: colors.primary, fontSize: 11, fontWeight: '800' },
-    petCopy: { flex: 1, marginHorizontal: spacing.lg },
-    petName: { color: colors.text, fontSize: typography.heading, fontWeight: '800' },
-    petSpecies: {
-        marginTop: spacing.xs,
-        color: colors.primary,
-        fontSize: typography.caption,
-        fontWeight: '700',
-    },
-    petSummary: {
-        marginTop: spacing.sm,
-        color: colors.textSecondary,
-        fontSize: typography.caption,
-        lineHeight: 20,
-    },
-    arrow: { color: colors.primary, fontSize: 30, fontWeight: '400' },
-    stateCard: {
-        alignItems: 'center',
-        marginTop: spacing.xl,
-        padding: spacing.xl,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radii.lg,
-        backgroundColor: colors.surface,
-    },
-    stateTitle: {
-        color: colors.text,
-        fontSize: typography.body,
-        fontWeight: '800',
-        textAlign: 'center',
-    },
-    stateMessage: {
-        marginTop: spacing.sm,
-        color: colors.textSecondary,
-        fontSize: typography.caption,
-        lineHeight: 20,
-        textAlign: 'center',
-    },
-    retryButton: { marginTop: spacing.lg },
-    accessTitle: { marginTop: spacing.xxxl },
-    petsButton: { marginTop: spacing.xl },
-    quickAccessButton: { marginTop: spacing.md },
-}));
+function createStyles(colors: ThemeColors) {
+    return StyleSheet.create({
+        safeArea: { flex: 1, backgroundColor: colors.background },
+        scrollView: { flex: 1, backgroundColor: colors.background },
+        content: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.xl },
+        contentInner: { width: '100%', maxWidth: 760, alignSelf: 'center' },
+        greetingBlock: { marginBottom: spacing.xl },
+        greetingLabel: {
+            color: colors.primary,
+            fontSize: typography.small,
+            fontWeight: '800',
+            letterSpacing: 1.4,
+        },
+        greetingName: {
+            marginTop: spacing.xs,
+            color: colors.text,
+            fontSize: typography.title,
+            fontWeight: '800',
+            letterSpacing: -0.5,
+        },
+        greetingDescription: {
+            marginTop: spacing.sm,
+            color: colors.textSecondary,
+            fontSize: typography.caption,
+            lineHeight: 20,
+        },
+    });
+}

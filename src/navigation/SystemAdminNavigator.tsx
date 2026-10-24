@@ -1,9 +1,11 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { AppHeader } from '../components/navigation/AppHeader';
+import { AboutAppScreen } from '../screens/settings/AboutAppScreen';
 import { ClinicAdminFormScreen } from '../screens/systemAdmin/ClinicAdminFormScreen';
 import { ClinicFormScreen } from '../screens/systemAdmin/ClinicFormScreen';
 import { ClinicListScreen } from '../screens/systemAdmin/ClinicListScreen';
 import { SystemAdminHomeScreen } from '../screens/systemAdmin/SystemAdminHomeScreen';
-import { AppearanceScreen } from '../screens/settings/AppearanceScreen';
+import { SystemAdminPrivacyScreen } from '../screens/systemAdmin/SystemAdminPrivacyScreen';
 import { Clinic } from '../types/clinic';
 
 export type SystemAdminStackParamList = {
@@ -12,33 +14,38 @@ export type SystemAdminStackParamList = {
     CreateClinic: undefined;
     EditClinic: { clinic: Clinic };
     CreateClinicAdmin: { clinicId: number; clinicName: string };
-    Appearance: undefined;
+    SystemAdminPrivacy: undefined;
+    AboutApp: undefined;
 };
 
 const Stack = createNativeStackNavigator<SystemAdminStackParamList>();
 
 export function SystemAdminNavigator() {
     return (
-        <Stack.Navigator>
+        <Stack.Navigator initialRouteName="SystemAdminHome">
             <Stack.Screen
                 name="SystemAdminHome"
                 component={SystemAdminHomeScreen}
-                options={{ headerShown: false }}
+                options={{
+                    header: () => (
+                        <AppHeader contextLabel="Administração" includeSystemTheme />
+                    ),
+                }}
             />
             <Stack.Screen
                 name="Clinics"
                 component={ClinicListScreen}
-                options={{ title: 'Cl\u00ednicas' }}
+                options={{ title: 'Clínicas' }}
             />
             <Stack.Screen
                 name="CreateClinic"
                 component={ClinicFormScreen}
-                options={{ title: 'Cadastrar Cl\u00ednica' }}
+                options={{ title: 'Cadastrar Clínica' }}
             />
             <Stack.Screen
                 name="EditClinic"
                 component={ClinicFormScreen}
-                options={{ title: 'Editar Cl\u00ednica' }}
+                options={{ title: 'Editar Clínica' }}
             />
             <Stack.Screen
                 name="CreateClinicAdmin"
@@ -46,9 +53,14 @@ export function SystemAdminNavigator() {
                 options={{ title: 'Criar administrador' }}
             />
             <Stack.Screen
-                name="Appearance"
-                component={AppearanceScreen}
-                options={{ title: 'Aparência' }}
+                name="SystemAdminPrivacy"
+                component={SystemAdminPrivacyScreen}
+                options={{ title: 'Privacidade e Dados' }}
+            />
+            <Stack.Screen
+                name="AboutApp"
+                component={AboutAppScreen}
+                options={{ title: 'Sobre o App' }}
             />
         </Stack.Navigator>
     );

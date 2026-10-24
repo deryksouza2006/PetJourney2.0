@@ -18,6 +18,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { isValidEmail } from '../../utils/formValidation';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -28,10 +29,22 @@ export function LoginScreen({ navigation }: Props) {
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [emailError, setEmailError] = useState<string | null>(null);
+    const [passwordError, setPasswordError] = useState<string | null>(null);
 
     async function handleSignIn(): Promise<void> {
-        if (!email.trim() || !password) {
-            setErrorMessage('Informe o e-mail e a senha.');
+        const username = email.trim();
+        const nextEmailError = !username
+            ? 'Informe o e-mail.'
+            : !isValidEmail(username)
+                ? 'Informe um e-mail válido.'
+                : null;
+        const nextPasswordError = password ? null : 'Informe a senha.';
+
+        setEmailError(nextEmailError);
+        setPasswordError(nextPasswordError);
+
+        if (nextEmailError || nextPasswordError) {
             return;
         }
 
@@ -39,7 +52,7 @@ export function LoginScreen({ navigation }: Props) {
         setErrorMessage(null);
 
         try {
-            await signIn({ username: email.trim(), password });
+            await signIn({ username, password });
         } catch (error: unknown) {
             setErrorMessage(
                 getApiErrorMessage(
@@ -56,11 +69,12 @@ export function LoginScreen({ navigation }: Props) {
         <SafeAreaView style={styles.safeArea}>
             <KeyboardAvoidingView
                 style={styles.keyboardView}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <ScrollView
                     contentContainerStyle={styles.content}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.wrapper}>
@@ -80,7 +94,12 @@ export function LoginScreen({ navigation }: Props) {
                                 <AppInput
                                     label="E-mail"
                                     value={email}
-                                    onChangeText={setEmail}
+                                    onChangeText={(value) => {
+                                        setEmail(value);
+                                        setEmailError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={emailError}
                                     placeholder="nome@exemplo.com"
                                     autoCapitalize="none"
                                     autoComplete="email"
@@ -94,11 +113,17 @@ export function LoginScreen({ navigation }: Props) {
                                     ref={passwordInputRef}
                                     label="Senha"
                                     value={password}
-                                    onChangeText={setPassword}
+                                    onChangeText={(value) => {
+                                        setPassword(value);
+                                        setPasswordError(null);
+                                        setErrorMessage(null);
+                                    }}
+                                    error={passwordError}
                                     placeholder="Digite sua senha"
                                     autoCapitalize="none"
                                     autoComplete="current-password"
                                     secureTextEntry
+                                    showPasswordToggle
                                     returnKeyType="done"
                                     editable={!isSubmitting}
                                     onSubmitEditing={() => void handleSignIn()}
@@ -115,6 +140,7 @@ export function LoginScreen({ navigation }: Props) {
                                 label="Entrar"
                                 onPress={() => void handleSignIn()}
                                 loading={isSubmitting}
+                                loadingLabel="Entrando..."
                             />
 
                             <View style={styles.firstAccessArea}>
