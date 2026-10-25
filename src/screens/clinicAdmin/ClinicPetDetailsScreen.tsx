@@ -8,7 +8,7 @@ import { PetAvatar } from '../../components/veterinarian/PetAvatar';
 import { useDeletePet } from '../../hooks/pets/useDeletePet';
 import { usePet } from '../../hooks/pets/usePet';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
-import { colors, createThemedStyles, radii, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { formatLocalDate } from '../../utils/dateTimeFormatting';
 import {
@@ -224,6 +224,7 @@ const styles = createThemedStyles((themeColors) => ({
         borderColor: themeColors.border,
         borderRadius: radii.lg,
         backgroundColor: themeColors.surface,
+        ...shadows.card,
     },
     name: {
         marginTop: spacing.md,

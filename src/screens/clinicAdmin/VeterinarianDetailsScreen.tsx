@@ -14,7 +14,7 @@ import { VeterinarianAvatar } from '../../components/clinicAdmin/VeterinarianAva
 import { useVeterinarianAvailability } from '../../hooks/availability/useVeterinarianAvailability';
 import { useDeleteVeterinarian } from '../../hooks/veterinarians/useDeleteVeterinarian';
 import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
-import { colors, createThemedStyles, radii, spacing, typography } from '../../theme/tokens';
+import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../../theme/tokens';
 import { VeterinarianAvailability } from '../../types/veterinarianAvailability';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { formatLocalDateTime } from '../../utils/dateTimeFormatting';
@@ -294,6 +294,7 @@ const styles = createThemedStyles((themeColors) => ({
         borderColor: themeColors.border,
         borderRadius: radii.lg,
         backgroundColor: themeColors.surface,
+        ...shadows.card,
     },
     name: {
         color: themeColors.text,
@@ -325,6 +326,7 @@ const styles = createThemedStyles((themeColors) => ({
         borderColor: themeColors.border,
         borderRadius: radii.lg,
         backgroundColor: themeColors.surface,
+        ...shadows.card,
     },
     summaryLabel: {
         marginTop: spacing.md,

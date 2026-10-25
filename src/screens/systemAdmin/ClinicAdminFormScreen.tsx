@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useRef, useState } from 'react';
 import {
@@ -73,6 +74,11 @@ export function ClinicAdminFormScreen({ navigation, route }: Props) {
                 [{ text: 'OK', onPress: () => navigation.goBack() }],
             );
         } catch (error: unknown) {
+            if (axios.isAxiosError(error) && error.response?.status === 409) {
+                setErrorMessage('Esta clínica já possui um administrador.');
+                return;
+            }
+
             setErrorMessage(
                 getApiErrorMessage(
                     error,

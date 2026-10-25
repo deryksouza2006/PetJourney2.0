@@ -1,21 +1,19 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     ProfileMenuRow,
     ProfileSection,
 } from '../../components/profile/ProfileMenuSection';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useClinics } from '../../hooks/clinics/useClinics';
 import { SystemAdminStackParamList } from '../../navigation/SystemAdminNavigator';
 import { radii, shadows, spacing, ThemeColors, typography } from '../../theme/tokens';
 
 type Props = NativeStackScreenProps<SystemAdminStackParamList, 'SystemAdminHome'>;
 
 const ROLE_LABEL = 'Administrador do sistema';
-const HOME_CLINIC_QUERY_SIZE = 1;
 
 function getInitials(name: string): string {
     const words = name.trim().split(/\s+/).filter(Boolean);
@@ -30,32 +28,17 @@ function getInitials(name: string): string {
     return `${first}${last}`.toLocaleUpperCase('pt-BR');
 }
 
-function formatClinicTotal(total: number): string {
-    return total === 1 ? '1 clínica cadastrada' : `${total} clínicas cadastradas`;
-}
-
 export function SystemAdminHomeScreen({ navigation }: Props) {
-    const { user, signOut } = useAuth();
+    const { signOut } = useAuth();
     const { colors } = useTheme();
-    const insets = useSafeAreaInsets();
     const styles = useMemo(() => createStyles(colors), [colors]);
-    const clinics = useClinics(0, HOME_CLINIC_QUERY_SIZE);
-    const username = user?.username.trim() ?? '';
     const displayName = ROLE_LABEL;
-    const clinicsDescription = clinics.isPending
-        ? 'Gerencie as clínicas cadastradas • carregando total'
-        : clinics.isError
-            ? 'Gerencie as clínicas cadastradas'
-            : `Gerencie as clínicas cadastradas • ${formatClinicTotal(clinics.data.totalElements)}`;
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
             <ScrollView
                 style={styles.scrollView}
-                contentContainerStyle={[
-                    styles.content,
-                    { paddingBottom: spacing.xxl + insets.bottom },
-                ]}
+                contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.wrapper}>
@@ -68,10 +51,6 @@ export function SystemAdminHomeScreen({ navigation }: Props) {
                         </View>
                         <View style={styles.profileCopy}>
                             <Text style={styles.name}>{displayName}</Text>
-                            {username ? (
-                                <Text style={styles.secondaryDetail}>{username}</Text>
-                            ) : null}
-                            <Text style={styles.secondaryDetail}>Administração da plataforma</Text>
                         </View>
                     </View>
 
@@ -79,7 +58,7 @@ export function SystemAdminHomeScreen({ navigation }: Props) {
                         <ProfileMenuRow
                             icon="business-outline"
                             title="Clínicas"
-                            description={clinicsDescription}
+                            description="Gerencie as clínicas cadastradas"
                             onPress={() => navigation.navigate('Clinics')}
                         />
                         <ProfileMenuRow
@@ -126,7 +105,12 @@ function createStyles(colors: ThemeColors) {
     return StyleSheet.create({
         safeArea: { flex: 1, backgroundColor: colors.background },
         scrollView: { flex: 1, backgroundColor: colors.background },
-        content: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.xl },
+        content: {
+            flexGrow: 1,
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.xl,
+            paddingBottom: spacing.lg,
+        },
         wrapper: { width: '100%', maxWidth: 640, alignSelf: 'center' },
         eyebrow: {
             color: colors.primary,
@@ -169,11 +153,5 @@ function createStyles(colors: ThemeColors) {
         },
         profileCopy: { minWidth: 0, flex: 1, marginLeft: spacing.lg },
         name: { color: colors.text, fontSize: typography.heading, fontWeight: '800' },
-        secondaryDetail: {
-            marginTop: spacing.xs,
-            color: colors.textSecondary,
-            fontSize: typography.small,
-            lineHeight: 17,
-        },
     });
 }

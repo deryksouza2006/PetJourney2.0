@@ -4,15 +4,21 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClinicManagementRow } from '../../components/clinicAdmin/ClinicManagementRow';
-import {
-    ClinicAdminStackParamList,
-    ClinicAdminTabParamList,
-} from '../../navigation/ClinicAdminNavigator';
 import { createThemedStyles, radii, spacing, typography } from '../../theme/tokens';
 
+type ManagementTabParamList = {
+    ClinicManagement: undefined;
+    ClinicTeam: undefined;
+};
+
+type ManagementStackParamList = {
+    ClinicProfileDetails: undefined;
+    ClinicReports: undefined;
+};
+
 type Props = CompositeScreenProps<
-    BottomTabScreenProps<ClinicAdminTabParamList, 'ClinicManagement'>,
-    NativeStackScreenProps<ClinicAdminStackParamList>
+    BottomTabScreenProps<ManagementTabParamList, 'ClinicManagement'>,
+    NativeStackScreenProps<ManagementStackParamList>
 >;
 
 export function ClinicManagementScreen({ navigation }: Props) {
@@ -60,7 +66,7 @@ export function ClinicManagementScreen({ navigation }: Props) {
                             <ClinicManagementRow
                                 icon="bar-chart-outline"
                                 title="Relatórios da Clínica"
-                                description="Pets e acompanhamento de peso"
+                                description="Pacientes e resumo de peso atual"
                                 onPress={() => navigation.navigate('ClinicReports')}
                             />
                         </View>

@@ -7,6 +7,7 @@ export interface Clinic {
     phone: string | null;
     email: string | null;
     address: string | null;
+    hasAdmin: boolean;
 }
 
 export interface ClinicRequest {

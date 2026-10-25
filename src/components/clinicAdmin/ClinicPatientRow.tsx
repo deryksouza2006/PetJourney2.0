@@ -1,7 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Pressable, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '../../contexts/ThemeContext';
 import { Pet } from '../../types/pet';
-import { colors, createThemedStyles, spacing, typography } from '../../theme/tokens';
+import { spacing, ThemeColors, typography } from '../../theme/tokens';
 import { getPetSecondaryInformation } from '../../utils/petPresentation';
 import { PetAvatar } from '../veterinarian/PetAvatar';
 
@@ -11,6 +13,8 @@ interface ClinicPatientRowProps {
 }
 
 export function ClinicPatientRow({ pet, onPress }: ClinicPatientRowProps) {
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
     const secondaryInformation = getPetSecondaryInformation(pet);
     const tutorName = pet.tutorName?.trim();
 
@@ -42,34 +46,36 @@ export function ClinicPatientRow({ pet, onPress }: ClinicPatientRowProps) {
     );
 }
 
-const styles = createThemedStyles((themeColors) => ({
-    row: {
-        minHeight: 88,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.md,
-        paddingHorizontal: spacing.lg,
-        paddingVertical: spacing.md,
-        backgroundColor: themeColors.surface,
-    },
-    rowPressed: { backgroundColor: themeColors.primarySoft },
-    copy: { minWidth: 0, flex: 1 },
-    name: {
-        color: themeColors.text,
-        fontSize: typography.body,
-        fontWeight: '800',
-    },
-    secondary: {
-        marginTop: spacing.xs,
-        color: themeColors.textSecondary,
-        fontSize: typography.small,
-        lineHeight: 17,
-    },
-    tutor: {
-        marginTop: spacing.xs,
-        color: themeColors.textSecondary,
-        fontSize: typography.small,
-        fontWeight: '600',
-        lineHeight: 17,
-    },
-}));
+function createStyles(colors: ThemeColors) {
+    return StyleSheet.create({
+        row: {
+            minHeight: 88,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.md,
+            paddingHorizontal: spacing.lg,
+            paddingVertical: spacing.md,
+            backgroundColor: colors.surface,
+        },
+        rowPressed: { backgroundColor: colors.primarySoft },
+        copy: { minWidth: 0, flex: 1 },
+        name: {
+            color: colors.text,
+            fontSize: typography.body,
+            fontWeight: '800',
+        },
+        secondary: {
+            marginTop: spacing.xs,
+            color: colors.textSecondary,
+            fontSize: typography.small,
+            lineHeight: 17,
+        },
+        tutor: {
+            marginTop: spacing.xs,
+            color: colors.textSecondary,
+            fontSize: typography.small,
+            fontWeight: '600',
+            lineHeight: 17,
+        },
+    });
+}

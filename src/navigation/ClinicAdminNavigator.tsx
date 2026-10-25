@@ -13,13 +13,9 @@ import { useTheme } from '../contexts/ThemeContext';
 import { ClinicAdminAccountScreen } from '../screens/clinicAdmin/ClinicAdminAccountScreen';
 import { ClinicPetDetailsScreen } from '../screens/clinicAdmin/ClinicPetDetailsScreen';
 import { ClinicAdminHomeScreen } from '../screens/clinicAdmin/ClinicAdminHomeScreen';
-import { ClinicManagementScreen } from '../screens/clinicAdmin/ClinicManagementScreen';
 import { ClinicAdminPrivacyScreen } from '../screens/clinicAdmin/ClinicAdminPrivacyScreen';
 import { ClinicAdminProfileScreen } from '../screens/clinicAdmin/ClinicAdminProfileScreen';
-import { ClinicPetReportScreen } from '../screens/clinicAdmin/ClinicPetReportScreen';
-import { ClinicPetWeightReportScreen } from '../screens/clinicAdmin/ClinicPetWeightReportScreen';
 import { ClinicProfileDetailsScreen } from '../screens/clinicAdmin/ClinicProfileDetailsScreen';
-import { ClinicReportsScreen } from '../screens/clinicAdmin/ClinicReportsScreen';
 import { PetFormScreen } from '../screens/clinicAdmin/PetFormScreen';
 import { PetListScreen } from '../screens/clinicAdmin/PetListScreen';
 import { TutorFormScreen } from '../screens/clinicAdmin/TutorFormScreen';
@@ -38,7 +34,6 @@ export type ClinicAdminTabParamList = {
     ClinicAdminHome: undefined;
     Pets: undefined;
     ClinicTeam: undefined;
-    ClinicManagement: undefined;
     ClinicProfile: undefined;
 };
 
@@ -49,9 +44,6 @@ export type ClinicAdminStackParamList = {
     CreateVeterinarian: undefined;
     EditVeterinarian: { veterinarian: Veterinarian };
     ClinicProfileDetails: undefined;
-    ClinicReports: undefined;
-    ClinicPetReport: undefined;
-    ClinicPetWeightReport: undefined;
     ClinicPetDetails: { petId: number };
     CreatePet: undefined;
     EditPet: { pet: Pet };
@@ -161,16 +153,6 @@ function ClinicAdminTabs() {
                 }}
             />
             <Tab.Screen
-                name="ClinicManagement"
-                component={ClinicManagementScreen}
-                options={{
-                    title: 'Gestão',
-                    tabBarIcon: ({ color, size, focused }) => (
-                        <Ionicons name={focused ? 'grid' : 'grid-outline'} size={size} color={color} />
-                    ),
-                }}
-            />
-            <Tab.Screen
                 name="ClinicProfile"
                 component={ClinicAdminProfileScreen}
                 options={{
@@ -221,21 +203,6 @@ export function ClinicAdminNavigator() {
                 name="ClinicProfileDetails"
                 component={ClinicProfileDetailsScreen}
                 options={{ title: 'Perfil da Clínica' }}
-            />
-            <Stack.Screen
-                name="ClinicReports"
-                component={ClinicReportsScreen}
-                options={{ title: 'Relatórios da Clínica' }}
-            />
-            <Stack.Screen
-                name="ClinicPetReport"
-                component={ClinicPetReportScreen}
-                options={{ title: 'Relatório de Pets' }}
-            />
-            <Stack.Screen
-                name="ClinicPetWeightReport"
-                component={ClinicPetWeightReportScreen}
-                options={{ title: 'Relatório de Peso' }}
             />
             <Stack.Screen
                 name="CreatePet"

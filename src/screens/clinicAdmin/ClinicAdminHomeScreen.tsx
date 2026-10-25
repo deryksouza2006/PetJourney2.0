@@ -4,10 +4,9 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ClinicMetricGrid } from '../../components/clinicAdmin/ClinicMetricGrid';
 import { ClinicSmartCareSummary } from '../../components/clinicAdmin/ClinicSmartCareSummary';
-import { ClinicTeamSummary } from '../../components/clinicAdmin/ClinicTeamSummary';
 import { useTheme } from '../../contexts/ThemeContext';
 import { usePets } from '../../hooks/pets/usePets';
 import { useSmartCareRanking } from '../../hooks/smartCare/useSmartCareRanking';
@@ -25,7 +24,6 @@ type Props = CompositeScreenProps<
 
 export function ClinicAdminHomeScreen({ navigation }: Props) {
     const { colors } = useTheme();
-    const insets = useSafeAreaInsets();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const pets = usePets(0, 1);
     const veterinarians = useVeterinarians(0, 3);
@@ -44,10 +42,7 @@ export function ClinicAdminHomeScreen({ navigation }: Props) {
         <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
             <ScrollView
                 style={styles.scrollView}
-                contentContainerStyle={[
-                    styles.content,
-                    { paddingBottom: spacing.xxl + insets.bottom },
-                ]}
+                contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.contentInner}>
@@ -91,15 +86,6 @@ export function ClinicAdminHomeScreen({ navigation }: Props) {
                         </View>
                     </View>
 
-                    <ClinicTeamSummary
-                        veterinarians={veterinarians.data?.content ?? []}
-                        total={veterinarians.data?.totalElements ?? 0}
-                        isLoading={veterinarians.isPending}
-                        isError={veterinarians.isError}
-                        onRetry={() => void veterinarians.refetch()}
-                        onPress={() => navigation.navigate('ClinicTeam')}
-                    />
-
                     <ClinicSmartCareSummary
                         alerts={alerts}
                         isLoading={smartCare.isPending}
@@ -117,7 +103,12 @@ function createStyles(colors: ThemeColors) {
     return StyleSheet.create({
         safeArea: { flex: 1, backgroundColor: colors.background },
         scrollView: { flex: 1, backgroundColor: colors.background },
-        content: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.xl },
+        content: {
+            flexGrow: 1,
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.xl,
+            paddingBottom: spacing.lg,
+        },
         contentInner: { width: '100%', maxWidth: 760, alignSelf: 'center' },
         introduction: { marginBottom: spacing.xl },
         clinicName: {

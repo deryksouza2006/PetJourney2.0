@@ -4,6 +4,7 @@ import {
     ActivityIndicator,
     FlatList,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     View,
@@ -25,6 +26,10 @@ const SPECIES_FILTERS: SpeciesFilter[] = [
     { value: null, label: 'Todos' },
     { value: 'CACHORRO', label: 'Cães' },
     { value: 'GATO', label: 'Gatos' },
+    { value: 'AVE', label: 'Aves' },
+    { value: 'ROEDOR', label: 'Roedores' },
+    { value: 'REPTIL', label: 'Répteis' },
+    { value: 'OUTRO', label: 'Outros' },
 ];
 
 function getItemTitle(item: PetWeightReportItem): string {
@@ -47,7 +52,7 @@ function getTypeLabel(item: PetWeightReportItem): string {
         return 'TOTAL DO RELATÓRIO';
     }
 
-    return item.tipo === 'SUBTOTAL' ? 'SUBTOTAL' : 'DETALHE';
+    return item.tipo === 'SUBTOTAL' ? 'SUBTOTAL' : 'POR SEXO';
 }
 
 function formatWeight(weight: number): string {
@@ -79,14 +84,20 @@ export function ClinicPetWeightReportScreen() {
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
             <View style={styles.container}>
                 <View style={styles.heading}>
-                    <Text style={styles.eyebrow}>RELATÓRIO</Text>
-                    <Text style={styles.title}>Peso dos Pets</Text>
+                    <Text style={styles.eyebrow}>PESO ATUAL</Text>
+                    <Text style={styles.title}>Resumo de Peso Atual</Text>
                     <Text style={styles.description}>
-                        Valores consolidados por espécie e sexo.
+                        Peso atual consolidado por espécie e sexo. Os valores representam a soma
+                        dos pesos atuais dos pets em cada grupo.
                     </Text>
                 </View>
 
-                <View style={styles.filters}>
+                <ScrollView
+                    horizontal
+                    style={styles.filterScroll}
+                    contentContainerStyle={styles.filters}
+                    showsHorizontalScrollIndicator={false}
+                >
                     {SPECIES_FILTERS.map((filter) => {
                         const isSelected = species === filter.value;
 
@@ -113,7 +124,7 @@ export function ClinicPetWeightReportScreen() {
                             </Pressable>
                         );
                     })}
-                </View>
+                </ScrollView>
 
                 {report.isPending ? (
                     <View style={styles.centeredState}>
@@ -153,7 +164,7 @@ export function ClinicPetWeightReportScreen() {
                                     <Ionicons name="scale-outline" size={24} color={colors.primary} />
                                 </View>
                                 <Text style={styles.stateTitle}>
-                                    Nenhum registro de peso encontrado.
+                                    Nenhum peso cadastrado para este filtro.
                                 </Text>
                             </View>
                         )}
@@ -194,14 +205,19 @@ const styles = createThemedStyles((themeColors) => ({
         fontSize: typography.caption,
         lineHeight: 20,
     },
-    filters: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: spacing.sm,
+    filterScroll: {
+        flexGrow: 0,
         marginBottom: spacing.lg,
     },
+    filters: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        paddingRight: spacing.lg,
+    },
     filterChip: {
-        minHeight: 40,
+        height: 40,
+        flexShrink: 0,
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: spacing.lg,

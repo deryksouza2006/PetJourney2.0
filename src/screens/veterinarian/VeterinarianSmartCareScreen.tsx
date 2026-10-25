@@ -291,13 +291,20 @@ function createStyles(colors: ThemeColors) {
             fontSize: typography.small,
             lineHeight: 18,
         },
-        filterScroll: { marginHorizontal: -spacing.lg, marginTop: spacing.xl },
+        filterScroll: {
+            height: 40,
+            flexGrow: 0,
+            marginHorizontal: -spacing.lg,
+            marginTop: spacing.xl,
+        },
         filterContent: {
+            alignItems: 'center',
             gap: spacing.sm,
             paddingHorizontal: spacing.lg,
         },
         filterChip: {
-            minHeight: 42,
+            height: 40,
+            flexShrink: 0,
             justifyContent: 'center',
             paddingHorizontal: spacing.lg,
             borderWidth: 1,
@@ -315,7 +322,7 @@ function createStyles(colors: ThemeColors) {
             fontSize: typography.caption,
             fontWeight: '700',
         },
-        activeFilterLabel: { color: colors.primary, fontWeight: '800' },
+        activeFilterLabel: { color: colors.primary },
         listHeader: {
             minHeight: 48,
             flexDirection: 'row',

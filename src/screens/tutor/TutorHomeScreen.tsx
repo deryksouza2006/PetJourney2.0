@@ -3,10 +3,9 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { TutorMedicationSummary } from '../../components/tutor/TutorMedicationSummary';
 import { TutorNextAppointmentCard } from '../../components/tutor/TutorNextAppointmentCard';
-import { TutorPetAvatarList } from '../../components/tutor/TutorPetAvatarList';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAppointmentsByPet } from '../../hooks/appointments/useAppointmentsByPet';
@@ -45,7 +44,6 @@ function getFriendlyUsername(username: string | undefined): string | null {
 export function TutorHomeScreen({ navigation }: Props) {
     const { user } = useAuth();
     const { colors } = useTheme();
-    const insets = useSafeAreaInsets();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const pets = usePets(0, HOME_QUERY_SIZE);
     const highlightedPet = pets.data?.content[0] ?? null;
@@ -57,10 +55,7 @@ export function TutorHomeScreen({ navigation }: Props) {
         <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
             <ScrollView
                 style={styles.scrollView}
-                contentContainerStyle={[
-                    styles.content,
-                    { paddingBottom: spacing.xxl + insets.bottom },
-                ]}
+                contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.contentInner}>
@@ -83,14 +78,6 @@ export function TutorHomeScreen({ navigation }: Props) {
                         isAppointmentError={appointments.isError}
                         onRetry={() => void appointments.refetch()}
                         onSchedule={() => navigation.navigate('TutorAppointment')}
-                    />
-
-                    <TutorPetAvatarList
-                        pets={pets.data?.content ?? []}
-                        isLoading={pets.isPending}
-                        isError={pets.isError}
-                        onRetry={() => void pets.refetch()}
-                        onPetPress={(petId) => navigation.navigate('TutorPetDetails', { petId })}
                     />
 
                     <TutorMedicationSummary
@@ -117,7 +104,12 @@ function createStyles(colors: ThemeColors) {
     return StyleSheet.create({
         safeArea: { flex: 1, backgroundColor: colors.background },
         scrollView: { flex: 1, backgroundColor: colors.background },
-        content: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.xl },
+        content: {
+            flexGrow: 1,
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.xl,
+            paddingBottom: spacing.lg,
+        },
         contentInner: { width: '100%', maxWidth: 760, alignSelf: 'center' },
         greetingBlock: { marginBottom: spacing.xl },
         greetingLabel: {

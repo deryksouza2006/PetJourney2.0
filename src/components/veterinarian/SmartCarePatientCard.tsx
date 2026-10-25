@@ -59,7 +59,7 @@ export function SmartCarePatientCard(props: SmartCarePatientCardProps) {
     );
 
     if (props.kind === 'insufficient') {
-        return <View style={[styles.card, styles.noDataCard]}>{content}</View>;
+        return <View style={styles.card}>{content}</View>;
     }
 
     return (
@@ -88,7 +88,6 @@ function createStyles(colors: ThemeColors) {
             backgroundColor: colors.surface,
             ...shadows.card,
         },
-        noDataCard: { shadowOpacity: 0, elevation: 0 },
         pressed: { opacity: 0.8, transform: [{ scale: 0.99 }] },
         avatar: {
             width: 48,

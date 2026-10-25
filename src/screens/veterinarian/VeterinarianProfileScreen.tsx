@@ -1,8 +1,8 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     ProfileMenuRow,
     ProfileSection,
@@ -40,7 +40,6 @@ function getInitials(name: string): string {
 export function VeterinarianProfileScreen({ navigation }: Props) {
     const { user, signOut } = useAuth();
     const { colors } = useTheme();
-    const insets = useSafeAreaInsets();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const veterinarians = useVeterinarians(0, PROFILE_VETERINARIAN_QUERY_SIZE);
     const veterinarian = veterinarians.data?.content.find(
@@ -50,11 +49,6 @@ export function VeterinarianProfileScreen({ navigation }: Props) {
     const veterinarianName = veterinarian?.name.trim();
     const displayName = veterinarianName
         || (username && !isEmail(username) ? username : 'Veterinário');
-    const professionalContext = [
-        veterinarian?.specialty?.trim(),
-        veterinarian?.clinicName?.trim(),
-    ].filter((value): value is string => Boolean(value)).join(' • ');
-    const fallbackEmail = veterinarian?.email?.trim() || (isEmail(username) ? username : null);
     const parentNavigation = navigation.getParent<
         NativeStackNavigationProp<VeterinarianStackParamList>
     >();
@@ -63,10 +57,7 @@ export function VeterinarianProfileScreen({ navigation }: Props) {
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
             <ScrollView
                 style={styles.scrollView}
-                contentContainerStyle={[
-                    styles.content,
-                    { paddingBottom: spacing.xxl + insets.bottom },
-                ]}
+                contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.wrapper}>
@@ -79,23 +70,6 @@ export function VeterinarianProfileScreen({ navigation }: Props) {
                         </View>
                         <View style={styles.profileCopy}>
                             <Text style={styles.name}>{displayName}</Text>
-                            {veterinarian?.crmv.trim() ? (
-                                <Text style={styles.primaryDetail}>{veterinarian.crmv}</Text>
-                            ) : null}
-                            {professionalContext ? (
-                                <Text style={styles.secondaryDetail}>{professionalContext}</Text>
-                            ) : null}
-                            {!veterinarian?.crmv.trim() && !professionalContext && fallbackEmail ? (
-                                <Text style={styles.secondaryDetail}>{fallbackEmail}</Text>
-                            ) : null}
-                            {user?.veterinarianId != null && veterinarians.isPending ? (
-                                <View style={styles.inlineLoading}>
-                                    <ActivityIndicator size="small" color={colors.primary} />
-                                    <Text style={styles.secondaryDetail}>
-                                        Carregando dados profissionais...
-                                    </Text>
-                                </View>
-                            ) : null}
                         </View>
                     </View>
 
@@ -147,7 +121,12 @@ function createStyles(colors: ThemeColors) {
     return StyleSheet.create({
         safeArea: { flex: 1, backgroundColor: colors.background },
         scrollView: { flex: 1, backgroundColor: colors.background },
-        content: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.xl },
+        content: {
+            flexGrow: 1,
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.xl,
+            paddingBottom: spacing.lg,
+        },
         wrapper: { width: '100%', maxWidth: 640, alignSelf: 'center' },
         eyebrow: {
             color: colors.primary,
@@ -190,19 +169,6 @@ function createStyles(colors: ThemeColors) {
         },
         profileCopy: { minWidth: 0, flex: 1, marginLeft: spacing.lg },
         name: { color: colors.text, fontSize: typography.heading, fontWeight: '800' },
-        primaryDetail: {
-            marginTop: spacing.xs,
-            color: colors.text,
-            fontSize: typography.caption,
-            fontWeight: '700',
-        },
-        secondaryDetail: {
-            marginTop: spacing.xs,
-            color: colors.textSecondary,
-            fontSize: typography.small,
-            lineHeight: 17,
-        },
-        inlineLoading: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
         profileWarning: {
             marginTop: spacing.sm,
             color: colors.textSecondary,

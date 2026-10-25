@@ -2,10 +2,15 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClinicManagementRow } from '../../components/clinicAdmin/ClinicManagementRow';
-import { ClinicAdminStackParamList } from '../../navigation/ClinicAdminNavigator';
 import { createThemedStyles, radii, spacing, typography } from '../../theme/tokens';
 
-type Props = NativeStackScreenProps<ClinicAdminStackParamList, 'ClinicReports'>;
+type ReportsParamList = {
+    ClinicReports: undefined;
+    ClinicPetReport: undefined;
+    ClinicPetWeightReport: undefined;
+};
+
+type Props = NativeStackScreenProps<ReportsParamList, 'ClinicReports'>;
 
 export function ClinicReportsScreen({ navigation }: Props) {
     const insets = useSafeAreaInsets();
@@ -30,15 +35,15 @@ export function ClinicReportsScreen({ navigation }: Props) {
                     <View style={styles.surface}>
                         <ClinicManagementRow
                             icon="paw-outline"
-                            title="Relatório de Pets"
-                            description="Pets e tutores vinculados à clínica"
+                            title="Relação de Pacientes"
+                            description="Pacientes e tutores vinculados à clínica"
                             onPress={() => navigation.navigate('ClinicPetReport')}
                         />
                         <View style={styles.divider} />
                         <ClinicManagementRow
                             icon="scale-outline"
-                            title="Relatório de Peso"
-                            description="Peso consolidado por espécie e sexo"
+                            title="Resumo de Peso Atual"
+                            description="Peso atual consolidado por espécie e sexo"
                             onPress={() => navigation.navigate('ClinicPetWeightReport')}
                         />
                     </View>

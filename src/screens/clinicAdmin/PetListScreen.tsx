@@ -16,12 +16,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
 import { PaginationControls } from '../../components/PaginationControls';
 import { ClinicPatientRow } from '../../components/clinicAdmin/ClinicPatientRow';
+import { useTheme } from '../../contexts/ThemeContext';
 import { usePets } from '../../hooks/pets/usePets';
 import {
     ClinicAdminStackParamList,
     ClinicAdminTabParamList,
 } from '../../navigation/ClinicAdminNavigator';
-import { colors, createThemedStyles, radii, spacing, typography } from '../../theme/tokens';
+import { radii, spacing, ThemeColors, typography } from '../../theme/tokens';
 import { Pet } from '../../types/pet';
 import { PET_SPECIES_LABELS } from '../../utils/petPresentation';
 
@@ -55,6 +56,8 @@ function matchesSearch(pet: Pet, searchTerm: string): boolean {
 }
 
 export function PetListScreen({ navigation }: Props) {
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
     const [page, setPage] = useState(0);
     const [search, setSearch] = useState('');
     const pets = usePets(page);
@@ -207,128 +210,130 @@ export function PetListScreen({ navigation }: Props) {
     );
 }
 
-const styles = createThemedStyles((themeColors) => ({
-    safeArea: { flex: 1, backgroundColor: themeColors.background },
-    container: {
-        flex: 1,
-        width: '100%',
-        maxWidth: 760,
-        alignSelf: 'center',
-        paddingHorizontal: spacing.lg,
-        backgroundColor: themeColors.background,
-    },
-    heading: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.md,
-        paddingTop: spacing.xl,
-        paddingBottom: spacing.lg,
-    },
-    headingCopy: { minWidth: 0, flex: 1 },
-    eyebrow: {
-        marginBottom: spacing.xs,
-        color: themeColors.primary,
-        fontSize: typography.small,
-        fontWeight: '800',
-        letterSpacing: 1.2,
-    },
-    title: {
-        color: themeColors.text,
-        fontSize: typography.title,
-        fontWeight: '800',
-        letterSpacing: -0.5,
-    },
-    createButton: {
-        minHeight: 44,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: spacing.xs,
-        paddingHorizontal: spacing.md,
-        borderRadius: radii.md,
-        backgroundColor: themeColors.primaryAction,
-    },
-    createButtonText: {
-        color: themeColors.onPrimary,
-        fontSize: typography.caption,
-        fontWeight: '800',
-    },
-    pressed: { opacity: 0.78, transform: [{ scale: 0.98 }] },
-    searchContainer: {
-        minHeight: 48,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.sm,
-        marginBottom: spacing.lg,
-        paddingHorizontal: spacing.md,
-        borderWidth: 1,
-        borderColor: themeColors.border,
-        borderRadius: radii.md,
-        backgroundColor: themeColors.inputBackground,
-    },
-    searchInput: {
-        minWidth: 0,
-        flex: 1,
-        paddingVertical: spacing.sm,
-        color: themeColors.text,
-        fontSize: typography.caption,
-    },
-    listSurface: {
-        flex: 1,
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: themeColors.border,
-        borderRadius: radii.lg,
-        backgroundColor: themeColors.surface,
-    },
-    divider: {
-        height: StyleSheet.hairlineWidth,
-        marginLeft: 48 + spacing.lg + spacing.md,
-        backgroundColor: themeColors.border,
-    },
-    pagination: {
-        paddingHorizontal: spacing.lg,
-        borderTopWidth: StyleSheet.hairlineWidth,
-        borderTopColor: themeColors.border,
-    },
-    emptyListContent: { flexGrow: 1 },
-    emptyState: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: spacing.md,
-        padding: spacing.xl,
-    },
-    centeredState: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: spacing.md,
-        padding: spacing.xl,
-        borderWidth: 1,
-        borderColor: themeColors.border,
-        borderRadius: radii.lg,
-        backgroundColor: themeColors.surface,
-    },
-    stateIcon: {
-        width: 48,
-        height: 48,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: radii.pill,
-        backgroundColor: themeColors.primarySoft,
-    },
-    stateTitle: {
-        color: themeColors.text,
-        fontSize: typography.body,
-        fontWeight: '800',
-        lineHeight: 22,
-        textAlign: 'center',
-    },
-    stateMessage: {
-        color: themeColors.textSecondary,
-        fontSize: typography.caption,
-        lineHeight: 20,
-        textAlign: 'center',
-    },
-}));
+function createStyles(colors: ThemeColors) {
+    return StyleSheet.create({
+        safeArea: { flex: 1, backgroundColor: colors.background },
+        container: {
+            flex: 1,
+            width: '100%',
+            maxWidth: 760,
+            alignSelf: 'center',
+            paddingHorizontal: spacing.lg,
+            backgroundColor: colors.background,
+        },
+        heading: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.md,
+            paddingTop: spacing.xl,
+            paddingBottom: spacing.lg,
+        },
+        headingCopy: { minWidth: 0, flex: 1 },
+        eyebrow: {
+            marginBottom: spacing.xs,
+            color: colors.primary,
+            fontSize: typography.small,
+            fontWeight: '800',
+            letterSpacing: 1.2,
+        },
+        title: {
+            color: colors.text,
+            fontSize: typography.title,
+            fontWeight: '800',
+            letterSpacing: -0.5,
+        },
+        createButton: {
+            minHeight: 44,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: spacing.xs,
+            paddingHorizontal: spacing.md,
+            borderRadius: radii.md,
+            backgroundColor: colors.primaryAction,
+        },
+        createButtonText: {
+            color: colors.onPrimary,
+            fontSize: typography.caption,
+            fontWeight: '800',
+        },
+        pressed: { opacity: 0.78, transform: [{ scale: 0.98 }] },
+        searchContainer: {
+            minHeight: 48,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.sm,
+            marginBottom: spacing.lg,
+            paddingHorizontal: spacing.md,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: radii.md,
+            backgroundColor: colors.inputBackground,
+        },
+        searchInput: {
+            minWidth: 0,
+            flex: 1,
+            paddingVertical: spacing.sm,
+            color: colors.text,
+            fontSize: typography.caption,
+        },
+        listSurface: {
+            flex: 1,
+            overflow: 'hidden',
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: radii.lg,
+            backgroundColor: colors.surface,
+        },
+        divider: {
+            height: StyleSheet.hairlineWidth,
+            marginLeft: 48 + spacing.lg + spacing.md,
+            backgroundColor: colors.border,
+        },
+        pagination: {
+            paddingHorizontal: spacing.lg,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: colors.border,
+        },
+        emptyListContent: { flexGrow: 1 },
+        emptyState: {
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: spacing.md,
+            padding: spacing.xl,
+        },
+        centeredState: {
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: spacing.md,
+            padding: spacing.xl,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: radii.lg,
+            backgroundColor: colors.surface,
+        },
+        stateIcon: {
+            width: 48,
+            height: 48,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: radii.pill,
+            backgroundColor: colors.primarySoft,
+        },
+        stateTitle: {
+            color: colors.text,
+            fontSize: typography.body,
+            fontWeight: '800',
+            lineHeight: 22,
+            textAlign: 'center',
+        },
+        stateMessage: {
+            color: colors.textSecondary,
+            fontSize: typography.caption,
+            lineHeight: 20,
+            textAlign: 'center',
+        },
+    });
+}

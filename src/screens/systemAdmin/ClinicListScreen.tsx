@@ -81,19 +81,21 @@ export function ClinicListScreen({ navigation }: Props) {
                 </View>
 
                 <View style={styles.cardActions}>
-                    <AppButton
-                        label="Criar administrador"
-                        variant="secondary"
-                        size="small"
-                        style={styles.adminButton}
-                        onPress={() =>
-                            navigation.navigate('CreateClinicAdmin', {
-                                clinicId: item.id,
-                                clinicName: item.name,
-                            })
-                        }
-                        disabled={deleteClinic.isPending}
-                    />
+                    {!item.hasAdmin ? (
+                        <AppButton
+                            label="Cadastrar administrador"
+                            variant="secondary"
+                            size="small"
+                            style={styles.adminButton}
+                            onPress={() =>
+                                navigation.navigate('CreateClinicAdmin', {
+                                    clinicId: item.id,
+                                    clinicName: item.name,
+                                })
+                            }
+                            disabled={deleteClinic.isPending}
+                        />
+                    ) : null}
                     <View style={styles.secondaryActions}>
                         <AppButton
                             label="Editar"

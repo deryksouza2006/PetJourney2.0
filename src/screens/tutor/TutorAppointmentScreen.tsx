@@ -89,7 +89,7 @@ const TODAY_ISO_DATE = getLocalIsoDate(today);
 const FUTURE_RANGE_START = `${TODAY_ISO_DATE}T00:00:00`;
 const FUTURE_RANGE_END = `${getLocalIsoDate(discoveryEnd)}T23:59:59`;
 
-export function TutorAppointmentScreen(_props: Props) {
+export function TutorAppointmentScreen({ navigation }: Props) {
     const { user } = useAuth();
     const slotsQuery = useFutureAvailableSlots(FUTURE_RANGE_START, FUTURE_RANGE_END);
     const petsQuery = usePets(0, 100);
@@ -236,6 +236,10 @@ export function TutorAppointmentScreen(_props: Props) {
             Alert.alert(
                 'Agendamento confirmado',
                 `Consulta agendada com sucesso.${reminderConfirmation}${notificationWarning}`,
+                [{
+                    text: 'OK',
+                    onPress: () => navigation.navigate('TutorTabs', { screen: 'TutorHome' }),
+                }],
             );
         } catch (error: unknown) {
             setErrorMessage(getApiErrorMessage(

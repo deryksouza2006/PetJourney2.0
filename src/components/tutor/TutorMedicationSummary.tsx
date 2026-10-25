@@ -248,6 +248,7 @@ function createStyles(colors: ThemeColors) {
             borderColor: colors.border,
             borderRadius: radii.lg,
             backgroundColor: colors.card,
+            ...shadows.card,
         },
         careRow: {
             minHeight: 72,

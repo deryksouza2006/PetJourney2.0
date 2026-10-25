@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ComponentProps, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
-import { radii, spacing, ThemeColors, typography } from '../../theme/tokens';
+import { radii, shadows, spacing, ThemeColors, typography } from '../../theme/tokens';
 import { Pet, PetSex, PetSpecies } from '../../types/pet';
 import { formatLocalDate } from '../../utils/dateTimeFormatting';
 import { PetAvatar } from './PetAvatar';
@@ -149,6 +149,7 @@ function createStyles(colors: ThemeColors) {
             borderColor: colors.border,
             borderRadius: radii.lg,
             backgroundColor: colors.primarySoft,
+            ...shadows.card,
         },
         heroDecoration: {
             position: 'absolute',

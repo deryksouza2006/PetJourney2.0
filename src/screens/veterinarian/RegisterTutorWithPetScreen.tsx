@@ -445,6 +445,7 @@ export function RegisterTutorWithPetScreen({ navigation }: Props) {
                             onPress={() => void handleSubmit()}
                             loading={isPending}
                             loadingLabel="Cadastrando..."
+                            style={styles.submitButton}
                         />
                     </View>
                 </ScrollView>
@@ -540,4 +541,5 @@ const styles = createThemedStyles((colors) => ({
     },
     error: { color: colors.danger, fontSize: typography.caption, lineHeight: 20 },
     fieldError: { color: colors.danger, fontSize: typography.small, lineHeight: 18 },
+    submitButton: { marginTop: spacing.xl },
 }));

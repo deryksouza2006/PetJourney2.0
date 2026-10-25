@@ -2,7 +2,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     ProfileMenuRow,
     ProfileSection,
@@ -40,12 +40,10 @@ function getInitials(name: string): string {
 export function ClinicAdminProfileScreen({ navigation }: Props) {
     const { user, signOut } = useAuth();
     const { colors } = useTheme();
-    const insets = useSafeAreaInsets();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const clinic = useClinic(user?.clinicId ?? null);
     const username = user?.username.trim() ?? '';
     const displayName = username && !isEmail(username) ? username : ROLE_LABEL;
-    const email = isEmail(username) ? username : null;
     const clinicName = clinic.data?.name.trim();
     const parentNavigation = navigation.getParent<
         NativeStackNavigationProp<ClinicAdminStackParamList>
@@ -55,10 +53,7 @@ export function ClinicAdminProfileScreen({ navigation }: Props) {
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
             <ScrollView
                 style={styles.scrollView}
-                contentContainerStyle={[
-                    styles.content,
-                    { paddingBottom: spacing.xxl + insets.bottom },
-                ]}
+                contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.wrapper}>
@@ -74,7 +69,6 @@ export function ClinicAdminProfileScreen({ navigation }: Props) {
                             {clinicName ? (
                                 <Text style={styles.primaryDetail}>{clinicName}</Text>
                             ) : null}
-                            {email ? <Text style={styles.secondaryDetail}>{email}</Text> : null}
                             {displayName !== ROLE_LABEL ? (
                                 <Text style={styles.secondaryDetail}>{ROLE_LABEL}</Text>
                             ) : null}
@@ -149,7 +143,12 @@ function createStyles(colors: ThemeColors) {
     return StyleSheet.create({
         safeArea: { flex: 1, backgroundColor: colors.background },
         scrollView: { flex: 1, backgroundColor: colors.background },
-        content: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.xl },
+        content: {
+            flexGrow: 1,
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.xl,
+            paddingBottom: spacing.lg,
+        },
         wrapper: { width: '100%', maxWidth: 640, alignSelf: 'center' },
         eyebrow: {
             color: colors.primary,

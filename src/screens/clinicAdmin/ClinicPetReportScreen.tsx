@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/AppButton';
 import { PetAvatar } from '../../components/veterinarian/PetAvatar';
@@ -7,18 +8,31 @@ import { usePetReport } from '../../hooks/reports/usePetReport';
 import { colors, createThemedStyles, radii, spacing, typography } from '../../theme/tokens';
 import { PetReportItem } from '../../types/report';
 
-export function ClinicPetReportScreen() {
+type PetReportParamList = {
+    ClinicPetReport: undefined;
+    ClinicPetDetails: { petId: number };
+};
+
+type Props = NativeStackScreenProps<PetReportParamList, 'ClinicPetReport'>;
+
+export function ClinicPetReportScreen({ navigation }: Props) {
     const report = usePetReport();
 
     function renderItem({ item }: { item: PetReportItem }) {
         return (
-            <View style={styles.row}>
+            <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Abrir detalhes de ${item.pet}`}
+                onPress={() => navigation.navigate('ClinicPetDetails', { petId: item.petId })}
+                style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+            >
                 <PetAvatar />
                 <View style={styles.rowCopy}>
                     <Text style={styles.petName} numberOfLines={1}>{item.pet}</Text>
                     <Text style={styles.tutorName} numberOfLines={1}>Tutor · {item.tutor}</Text>
                 </View>
-            </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </Pressable>
         );
     }
 
@@ -26,10 +40,10 @@ export function ClinicPetReportScreen() {
         <SafeAreaView style={styles.safeArea} edges={['right', 'bottom', 'left']}>
             <View style={styles.container}>
                 <View style={styles.heading}>
-                    <Text style={styles.eyebrow}>RELATÓRIO</Text>
-                    <Text style={styles.title}>Pets da Clínica</Text>
+                    <Text style={styles.eyebrow}>PACIENTES</Text>
+                    <Text style={styles.title}>Relação de Pacientes</Text>
                     <Text style={styles.description}>
-                        Pets e tutores retornados pelo relatório da clínica.
+                        Pacientes e tutores vinculados à clínica.
                     </Text>
                 </View>
 
@@ -69,7 +83,7 @@ export function ClinicPetReportScreen() {
                                     <Ionicons name="paw-outline" size={24} color={colors.primary} />
                                 </View>
                                 <Text style={styles.stateTitle}>
-                                    Nenhum pet encontrado no relatório.
+                                    Nenhum paciente encontrado.
                                 </Text>
                             </View>
                         )}
@@ -126,6 +140,7 @@ const styles = createThemedStyles((themeColors) => ({
         paddingHorizontal: spacing.lg,
         paddingVertical: spacing.md,
     },
+    rowPressed: { backgroundColor: themeColors.primarySoft },
     rowCopy: { minWidth: 0, flex: 1 },
     petName: {
         color: themeColors.text,
