@@ -10,9 +10,9 @@ export type MedicationStatus = 'ATIVO' | 'FINALIZADO' | 'CANCELADO';
 export interface Medication {
     id: number;
     name: string;
-    dosage: string;
-    frequency: string;
-    startDate: string;
+    dosage: string | null;
+    frequency: string | null;
+    startDate: string | null;
     endDate: string | null;
     observations: string | null;
     status: MedicationStatus;

@@ -4,7 +4,6 @@ import { BottomTabScreenProps, createBottomTabNavigator } from '@react-navigatio
 import {
     createNativeStackNavigator,
     NativeStackNavigationProp,
-    NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,7 +38,6 @@ export type ClinicAdminTabParamList = {
 
 export type ClinicAdminStackParamList = {
     ClinicAdminTabs: NavigatorScreenParams<ClinicAdminTabParamList> | undefined;
-    Veterinarians: undefined;
     VeterinarianDetails: { veterinarian: Veterinarian };
     CreateVeterinarian: undefined;
     EditVeterinarian: { veterinarian: Veterinarian };
@@ -73,23 +71,6 @@ function ClinicTeamScreen({ navigation }: TeamProps) {
                 parentNavigation?.navigate('VeterinarianDetails', { veterinarian })
             }
             onOpenTutors={() => parentNavigation?.navigate('Tutors')}
-        />
-    );
-}
-
-type VeterinarianListStackProps = NativeStackScreenProps<
-    ClinicAdminStackParamList,
-    'Veterinarians'
->;
-
-function VeterinarianListStackScreen({ navigation }: VeterinarianListStackProps) {
-    return (
-        <VeterinarianListScreen
-            onCreateVeterinarian={() => navigation.navigate('CreateVeterinarian')}
-            onOpenVeterinarian={(veterinarian) =>
-                navigation.navigate('VeterinarianDetails', { veterinarian })
-            }
-            onOpenTutors={() => navigation.navigate('Tutors')}
         />
     );
 }
@@ -173,11 +154,6 @@ export function ClinicAdminNavigator() {
                 name="ClinicAdminTabs"
                 component={ClinicAdminTabs}
                 options={{ headerShown: false }}
-            />
-            <Stack.Screen
-                name="Veterinarians"
-                component={VeterinarianListStackScreen}
-                options={{ title: 'Veterinários' }}
             />
             <Stack.Screen
                 name="VeterinarianDetails"

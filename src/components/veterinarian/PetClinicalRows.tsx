@@ -104,15 +104,22 @@ export function PetMedicalRecordRow({ record }: { record: MedicalRecord }) {
 }
 
 export function PetMedicationRow({ medication }: { medication: Medication }) {
-    const period = medication.endDate
+    const details = [medication.dosage?.trim(), medication.frequency?.trim()]
+        .filter((value): value is string => Boolean(value))
+        .join(' • ');
+    const period = medication.startDate && medication.endDate
         ? `${formatLocalDate(medication.startDate)} – ${formatLocalDate(medication.endDate)}`
-        : `Desde ${formatLocalDate(medication.startDate)}`;
+        : medication.startDate
+            ? `Desde ${formatLocalDate(medication.startDate)}`
+            : medication.endDate
+                ? `Até ${formatLocalDate(medication.endDate)}`
+                : null;
 
     return (
         <ClinicalRow
             icon="medkit-outline"
             title={medication.name}
-            primaryDetail={`${medication.dosage} • ${medication.frequency}`}
+            primaryDetail={details || 'Detalhes não informados'}
             secondaryDetail={period}
             trailing={(
                 <StatusBadge

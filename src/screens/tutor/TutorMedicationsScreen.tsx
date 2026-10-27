@@ -127,12 +127,22 @@ function MedicationCard({ medication }: { medication: Medication }) {
                 </View>
             </View>
 
-            <Text style={styles.medicationDetail}>Dose: {medication.dosage}</Text>
-            <Text style={styles.medicationDetail}>Frequência: {medication.frequency}</Text>
-            <Text style={styles.medicationPeriod}>
-                {formatLocalDate(medication.startDate)}
-                {medication.endDate ? ` a ${formatLocalDate(medication.endDate)}` : ''}
+            <Text style={styles.medicationDetail}>
+                Dose: {medication.dosage?.trim() || 'Não informada'}
             </Text>
+            <Text style={styles.medicationDetail}>
+                Frequência: {medication.frequency?.trim() || 'Não informada'}
+            </Text>
+            {medication.startDate ? (
+                <Text style={styles.medicationPeriod}>
+                    {formatLocalDate(medication.startDate)}
+                    {medication.endDate ? ` a ${formatLocalDate(medication.endDate)}` : ''}
+                </Text>
+            ) : medication.endDate ? (
+                <Text style={styles.medicationPeriod}>
+                    Até {formatLocalDate(medication.endDate)}
+                </Text>
+            ) : null}
             <Text style={styles.medicationProfessional}>
                 {medication.veterinarianName ?? 'Veterinário não informado'}
             </Text>

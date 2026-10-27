@@ -36,6 +36,14 @@ function getPetName(medication: Medication, fallbackName: string): string {
     return medication.petName?.trim() || fallbackName;
 }
 
+function getDosage(medication: Medication): string {
+    return medication.dosage?.trim() || 'Não informada';
+}
+
+function getFrequency(medication: Medication): string {
+    return medication.frequency?.trim() || 'Frequência não informada';
+}
+
 export function TutorMedicationSummary({
     petName,
     medications,
@@ -75,7 +83,7 @@ export function TutorMedicationSummary({
                     <View
                         key={medication.id}
                         accessible
-                        accessibilityLabel={`${medication.name}, ${medication.frequency}, status ativo`}
+                        accessibilityLabel={`${medication.name}, ${getFrequency(medication)}, status ativo`}
                         style={[styles.careRow, index > 0 && styles.rowSeparator]}
                     >
                         <View style={styles.statusIndicator}>
@@ -84,7 +92,7 @@ export function TutorMedicationSummary({
                         <View style={styles.careCopy}>
                             <Text style={styles.careName}>{medication.name}</Text>
                             <Text style={styles.careDetail}>
-                                {getPetName(medication, petName)} • {medication.frequency}
+                                {getPetName(medication, petName)} • {getFrequency(medication)}
                             </Text>
                         </View>
                         <View style={styles.activeBadge}>
@@ -115,7 +123,7 @@ export function TutorMedicationSummary({
                     <View
                         key={medication.id}
                         accessible
-                        accessibilityLabel={`${medication.name}, dose ${medication.dosage}, ${medication.frequency}, ${medication.endDate ? `até ${formatShortDate(medication.endDate)}` : 'em curso'}`}
+                        accessibilityLabel={`${medication.name}, dose ${getDosage(medication)}, ${getFrequency(medication)}, ${medication.endDate ? `até ${formatShortDate(medication.endDate)}` : 'em curso'}`}
                         style={[styles.medicationRow, index > 0 && styles.rowSeparator]}
                     >
                         <View style={styles.medicationIcon}>
@@ -124,10 +132,10 @@ export function TutorMedicationSummary({
                         <View style={styles.medicationCopy}>
                             <Text style={styles.medicationName}>{medication.name}</Text>
                             <Text style={styles.medicationDetail} numberOfLines={2}>
-                                {getPetName(medication, petName)} • {medication.frequency}
+                                {getPetName(medication, petName)} • {getFrequency(medication)}
                             </Text>
                             <Text style={styles.medicationDosage} numberOfLines={1}>
-                                Dose: {medication.dosage}
+                                Dose: {getDosage(medication)}
                             </Text>
                         </View>
                         <Text style={styles.medicationEnd}>

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { colors, createThemedStyles, spacing, typography } from '../theme/tokens';
 import { AppButton } from './AppButton';
 

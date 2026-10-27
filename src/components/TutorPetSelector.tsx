@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { colors, createThemedStyles, radii, shadows, spacing, typography } from '../theme/tokens';
 import { Pet } from '../types/pet';
 import { getApiErrorMessage } from '../utils/apiError';
