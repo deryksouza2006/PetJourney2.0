@@ -109,6 +109,13 @@ export function ClinicAdminProfileScreen({ navigation }: Props) {
                             onPress={() => parentNavigation?.navigate('ClinicProfileDetails')}
                         />
                         <ProfileMenuRow
+                            icon="document-text-outline"
+                            title="Relatórios"
+                            description="Consulte os relatórios da clínica"
+                            showDivider
+                            onPress={() => parentNavigation?.navigate('ClinicReports')}
+                        />
+                        <ProfileMenuRow
                             icon="shield-checkmark-outline"
                             title="Privacidade e dados"
                             description="Como o PetJourney utiliza suas informações"
