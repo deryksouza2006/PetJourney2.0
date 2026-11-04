@@ -8,7 +8,7 @@ import { TutorMedicationSummary } from '../../components/tutor/TutorMedicationSu
 import { TutorNextAppointmentCard } from '../../components/tutor/TutorNextAppointmentCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useAppointmentsByPet } from '../../hooks/appointments/useAppointmentsByPet';
+import { useTutorHomeAppointments } from '../../hooks/appointments/useTutorHomeAppointments';
 import { useMedicationsByPet } from '../../hooks/medications/useMedicationsByPet';
 import { usePets } from '../../hooks/pets/usePets';
 import { TutorStackParamList, TutorTabParamList } from '../../navigation/TutorNavigator';
@@ -47,7 +47,10 @@ export function TutorHomeScreen({ navigation }: Props) {
     const styles = useMemo(() => createStyles(colors), [colors]);
     const pets = usePets(0, HOME_QUERY_SIZE);
     const highlightedPet = pets.data?.content[0] ?? null;
-    const appointments = useAppointmentsByPet(highlightedPet?.id ?? null, 0, HOME_QUERY_SIZE);
+    const appointments = useTutorHomeAppointments(
+        pets.data?.content.map((pet) => pet.id) ?? [],
+        HOME_QUERY_SIZE,
+    );
     const medications = useMedicationsByPet(highlightedPet?.id ?? null, 0, HOME_QUERY_SIZE);
     const friendlyUsername = getFriendlyUsername(user?.username);
 
@@ -70,8 +73,8 @@ export function TutorHomeScreen({ navigation }: Props) {
                     </View>
 
                     <TutorNextAppointmentCard
-                        pet={highlightedPet}
-                        appointments={appointments.data?.content ?? []}
+                        hasPets={(pets.data?.content.length ?? 0) > 0}
+                        appointments={appointments.data}
                         isPetLoading={pets.isPending}
                         isPetError={pets.isError}
                         isAppointmentLoading={appointments.isPending}

@@ -3,12 +3,11 @@ import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { radii, shadows, spacing, ThemeColors, typography } from '../../theme/tokens';
-import { Pet } from '../../types/pet';
 import { AppointmentResponse } from '../../types/workflow';
 import { localDateTimeToDate } from '../../utils/dateTimeFormatting';
 
 interface TutorNextAppointmentCardProps {
-    pet: Pet | null;
+    hasPets: boolean;
     appointments: AppointmentResponse[];
     isPetLoading: boolean;
     isPetError: boolean;
@@ -74,7 +73,7 @@ function findNextAppointment(appointments: AppointmentResponse[]): AppointmentRe
 }
 
 export function TutorNextAppointmentCard({
-    pet,
+    hasPets,
     appointments,
     isPetLoading,
     isPetError,
@@ -102,12 +101,12 @@ export function TutorNextAppointmentCard({
             </View>
 
             {isPetLoading ? (
-                <LoadingState message="Carregando seu pet..." colors={colors} styles={styles} />
+                <LoadingState message="Carregando seus pets..." colors={colors} styles={styles} />
             ) : isPetError ? (
                 <Text style={styles.empty}>
-                    Não foi possível identificar o pet para consultar a agenda.
+                    Não foi possível identificar seus pets para consultar a agenda.
                 </Text>
-            ) : !pet ? (
+            ) : !hasPets ? (
                 <Text style={styles.empty}>Nenhuma consulta agendada.</Text>
             ) : isAppointmentLoading ? (
                 <LoadingState message="Consultando agenda..." colors={colors} styles={styles} />
@@ -132,7 +131,7 @@ export function TutorNextAppointmentCard({
                         <View style={styles.copy}>
                             <Text style={styles.title}>{nextAppointment.title}</Text>
                             <Text style={styles.petName}>
-                                {nextAppointment.petName ?? pet.name}
+                                {nextAppointment.petName ?? 'Pet não informado'}
                             </Text>
                         </View>
                         <View style={styles.when}>
@@ -158,11 +157,11 @@ export function TutorNextAppointmentCard({
             ) : (
                 <View style={styles.state}>
                     <Ionicons name="calendar-outline" size={25} color={colors.onPrimary} />
-                    <Text style={styles.empty}>Nenhuma consulta agendada para {pet.name}.</Text>
+                    <Text style={styles.empty}>Nenhuma consulta agendada.</Text>
                 </View>
             )}
 
-            {pet ? (
+            {hasPets ? (
                 <Pressable
                     accessibilityRole="button"
                     accessibilityLabel="Agendar consulta"

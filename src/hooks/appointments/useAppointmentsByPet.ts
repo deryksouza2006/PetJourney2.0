@@ -4,13 +4,13 @@ import { DEFAULT_PAGE_SIZE } from '../../types/pagination';
 
 export const APPOINTMENTS_QUERY_KEY = ['appointments'] as const;
 
-export function useAppointmentsByPet(
+export function appointmentsByPetQueryOptions(
     petId: number | null,
     page = 0,
     size = DEFAULT_PAGE_SIZE,
 ) {
-    return useQuery({
-        queryKey: [...APPOINTMENTS_QUERY_KEY, 'pet', petId, page, size],
+    return {
+        queryKey: [...APPOINTMENTS_QUERY_KEY, 'pet', petId, page, size] as const,
         queryFn: () => {
             if (petId === null) {
                 throw new Error('Pet não selecionado.');
@@ -19,5 +19,13 @@ export function useAppointmentsByPet(
             return getAppointmentsByPet(petId, page, size);
         },
         enabled: petId !== null,
-    });
+    };
+}
+
+export function useAppointmentsByPet(
+    petId: number | null,
+    page = 0,
+    size = DEFAULT_PAGE_SIZE,
+) {
+    return useQuery(appointmentsByPetQueryOptions(petId, page, size));
 }
