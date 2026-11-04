@@ -14,10 +14,7 @@ import { ClinicPetDetailsScreen } from '../screens/clinicAdmin/ClinicPetDetailsS
 import { ClinicAdminHomeScreen } from '../screens/clinicAdmin/ClinicAdminHomeScreen';
 import { ClinicAdminPrivacyScreen } from '../screens/clinicAdmin/ClinicAdminPrivacyScreen';
 import { ClinicAdminProfileScreen } from '../screens/clinicAdmin/ClinicAdminProfileScreen';
-import { ClinicPetReportScreen } from '../screens/clinicAdmin/ClinicPetReportScreen';
-import { ClinicPetWeightReportScreen } from '../screens/clinicAdmin/ClinicPetWeightReportScreen';
 import { ClinicProfileDetailsScreen } from '../screens/clinicAdmin/ClinicProfileDetailsScreen';
-import { ClinicReportsScreen } from '../screens/clinicAdmin/ClinicReportsScreen';
 import { PetFormScreen } from '../screens/clinicAdmin/PetFormScreen';
 import { PetListScreen } from '../screens/clinicAdmin/PetListScreen';
 import { TutorFormScreen } from '../screens/clinicAdmin/TutorFormScreen';
@@ -45,9 +42,6 @@ export type ClinicAdminStackParamList = {
     CreateVeterinarian: undefined;
     EditVeterinarian: { veterinarian: Veterinarian };
     ClinicProfileDetails: undefined;
-    ClinicReports: undefined;
-    ClinicPetReport: undefined;
-    ClinicPetWeightReport: undefined;
     ClinicPetDetails: { petId: number };
     CreatePet: undefined;
     EditPet: { pet: Pet };
@@ -185,21 +179,6 @@ export function ClinicAdminNavigator() {
                 name="ClinicProfileDetails"
                 component={ClinicProfileDetailsScreen}
                 options={{ title: 'Perfil da Clínica' }}
-            />
-            <Stack.Screen
-                name="ClinicReports"
-                component={ClinicReportsScreen}
-                options={{ title: 'Relatórios' }}
-            />
-            <Stack.Screen
-                name="ClinicPetReport"
-                component={ClinicPetReportScreen}
-                options={{ title: 'Relação de Pacientes' }}
-            />
-            <Stack.Screen
-                name="ClinicPetWeightReport"
-                component={ClinicPetWeightReportScreen}
-                options={{ title: 'Resumo de Peso Atual' }}
             />
             <Stack.Screen
                 name="CreatePet"
