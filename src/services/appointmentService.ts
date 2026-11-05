@@ -17,6 +17,25 @@ export async function getAppointmentsByPet(
     return response.data;
 }
 
+export async function getAppointmentsByDateRange(
+    start: string,
+    end: string,
+    page: number,
+    size: number,
+): Promise<AppointmentPage> {
+    const response = await api.get<AppointmentPage>('/appointments/search', {
+        params: {
+            start,
+            end,
+            page,
+            size,
+            sort: 'dateTime,asc',
+        },
+    });
+
+    return response.data;
+}
+
 export async function cancelAppointment(
     appointmentId: number,
 ): Promise<AppointmentResponse> {

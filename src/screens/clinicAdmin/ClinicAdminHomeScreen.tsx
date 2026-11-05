@@ -3,11 +3,20 @@ import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+    ActivityIndicator,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ClinicMetricGrid } from '../../components/clinicAdmin/ClinicMetricGrid';
 import { ClinicSmartCareSummary } from '../../components/clinicAdmin/ClinicSmartCareSummary';
+import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useClinicUpcomingAppointments } from '../../hooks/appointments/useClinicUpcomingAppointments';
 import { usePets } from '../../hooks/pets/usePets';
 import { useSmartCareRanking } from '../../hooks/smartCare/useSmartCareRanking';
 import { useVeterinarians } from '../../hooks/veterinarians/useVeterinarians';
@@ -16,6 +25,7 @@ import {
     ClinicAdminTabParamList,
 } from '../../navigation/ClinicAdminNavigator';
 import { radii, spacing, ThemeColors, typography } from '../../theme/tokens';
+import { formatLocalDateTime } from '../../utils/dateTimeFormatting';
 
 type Props = CompositeScreenProps<
     BottomTabScreenProps<ClinicAdminTabParamList, 'ClinicAdminHome'>,
@@ -23,10 +33,12 @@ type Props = CompositeScreenProps<
 >;
 
 export function ClinicAdminHomeScreen({ navigation }: Props) {
+    const { user } = useAuth();
     const { colors } = useTheme();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const pets = usePets(0, 1);
     const veterinarians = useVeterinarians(0, 3);
+    const upcomingAppointments = useClinicUpcomingAppointments(user?.clinicId ?? null);
     const smartCare = useSmartCareRanking();
     const alerts = useMemo(
         () => (smartCare.data?.analises ?? []).filter(
@@ -71,19 +83,66 @@ export function ClinicAdminHomeScreen({ navigation }: Props) {
 
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>PRÓXIMAS VISITAS</Text>
-                        <View style={styles.visitsState}>
-                            <View style={styles.visitsIcon}>
-                                <Ionicons name="calendar-outline" size={22} color={colors.primary} />
+                        {upcomingAppointments.isPending ? (
+                            <View style={styles.visitsState}>
+                                <ActivityIndicator size="small" color={colors.primary} />
+                                <Text style={styles.visitsStateText}>Carregando próximas visitas...</Text>
                             </View>
-                            <View style={styles.visitsCopy}>
-                                <Text style={styles.visitsTitle}>
-                                    Próximas visitas ainda não estão disponíveis
-                                </Text>
-                                <Text style={styles.visitsDescription}>
-                                    A consulta de agendamentos atual é vinculada individualmente a cada pet.
+                        ) : upcomingAppointments.isError ? (
+                            <View style={styles.visitsState}>
+                                <View style={styles.visitsIcon}>
+                                    <Ionicons name="alert-circle-outline" size={22} color={colors.danger} />
+                                </View>
+                                <View style={styles.visitsCopy}>
+                                    <Text style={styles.visitsTitle}>Agenda indisponível no momento.</Text>
+                                    <Pressable
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Tentar carregar as próximas visitas novamente"
+                                        hitSlop={8}
+                                        onPress={() => void upcomingAppointments.refetch()}
+                                    >
+                                        <Text style={styles.retryText}>Tentar novamente</Text>
+                                    </Pressable>
+                                </View>
+                            </View>
+                        ) : upcomingAppointments.data.length === 0 ? (
+                            <View style={styles.visitsState}>
+                                <View style={styles.visitsIcon}>
+                                    <Ionicons name="calendar-outline" size={22} color={colors.primary} />
+                                </View>
+                                <Text style={styles.visitsStateText}>
+                                    Nenhuma consulta futura agendada.
                                 </Text>
                             </View>
-                        </View>
+                        ) : (
+                            <View style={styles.visitsList}>
+                                {upcomingAppointments.data.map((appointment, index) => (
+                                    <View
+                                        key={appointment.id}
+                                        style={[
+                                            styles.visitRow,
+                                            index > 0 && styles.visitRowDivider,
+                                        ]}
+                                    >
+                                        <View style={styles.visitsIcon}>
+                                            <Ionicons name="calendar-outline" size={22} color={colors.primary} />
+                                        </View>
+                                        <View style={styles.visitsCopy}>
+                                            <Text style={styles.visitsTitle}>{appointment.title}</Text>
+                                            <Text style={styles.visitsDescription}>
+                                                {formatLocalDateTime(appointment.dateTime)}
+                                            </Text>
+                                            <Text style={styles.visitsDescription}>
+                                                {`${appointment.petName ?? 'Pet não informado'} • ${
+                                                    appointment.veterinarianName
+                                                    ?? 'Veterinário não informado'
+                                                }`}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
                     </View>
 
                     <ClinicSmartCareSummary
@@ -135,11 +194,30 @@ function createStyles(colors: ThemeColors) {
             minHeight: 96,
             flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'center',
+            gap: spacing.md,
             padding: spacing.lg,
             borderWidth: 1,
             borderColor: colors.border,
             borderRadius: radii.lg,
             backgroundColor: colors.card,
+        },
+        visitsList: {
+            overflow: 'hidden',
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: radii.lg,
+            backgroundColor: colors.card,
+        },
+        visitRow: {
+            minHeight: 96,
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: spacing.lg,
+        },
+        visitRowDivider: {
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: colors.border,
         },
         visitsIcon: {
             width: 44,
@@ -150,6 +228,12 @@ function createStyles(colors: ThemeColors) {
             backgroundColor: colors.primarySoft,
         },
         visitsCopy: { flex: 1, marginLeft: spacing.md },
+        visitsStateText: {
+            color: colors.textSecondary,
+            fontSize: typography.caption,
+            lineHeight: 20,
+            textAlign: 'center',
+        },
         visitsTitle: {
             color: colors.text,
             fontSize: typography.caption,
@@ -161,6 +245,12 @@ function createStyles(colors: ThemeColors) {
             color: colors.textSecondary,
             fontSize: typography.small,
             lineHeight: 17,
+        },
+        retryText: {
+            marginTop: spacing.sm,
+            color: colors.primary,
+            fontSize: typography.caption,
+            fontWeight: '800',
         },
     });
 }
