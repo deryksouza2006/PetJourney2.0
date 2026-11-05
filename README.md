@@ -278,4 +278,4 @@ npx expo start -c
 
 Link do vídeo da Sprint 4:
 
-https://youtu.be/SEU_LINK_AQUI
+https://youtube.com/shorts/Hif2wPYoPSc
